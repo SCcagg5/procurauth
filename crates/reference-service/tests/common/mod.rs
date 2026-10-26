@@ -152,8 +152,13 @@ pub fn start_pdp(data: &Value, options: Options) -> RunningServer {
         .unwrap()
 }
 
+/// The test PDP uses a fixed clock in the middle of a minute, so that a test never crosses the end of a window.
 pub fn stack() -> Stack {
-    stack_with(&pdp_data(), Options::default(), |_| {})
+    let options = Options {
+        clock_start: Some(1_700_000_010),
+        ..Options::default()
+    };
+    stack_with(&pdp_data(), options, |_| {})
 }
 
 pub fn stack_with(data: &Value, options: Options, tweak: impl FnOnce(&mut Value)) -> Stack {

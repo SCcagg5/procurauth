@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "access-conformance"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "base64",
  "clap",
@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "access-lint"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "procurauth-core",
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "access-token"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "base64",
  "clap",
@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "fake-pdp"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "ctrlc",
@@ -688,7 +688,7 @@ dependencies = [
 
 [[package]]
 name = "keycheck"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "jsonschema",
@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "procurauth-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "base64",
  "ed25519-dalek",
@@ -959,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "procurauth-pep"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "access-token",
  "fake-pdp",
@@ -970,7 +970,7 @@ dependencies = [
 
 [[package]]
 name = "procurauth-schema-check"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "jsonschema",
  "regex",
@@ -1032,7 +1032,7 @@ dependencies = [
 
 [[package]]
 name = "reference-edge"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "access-token",
  "base64",
@@ -1049,7 +1049,7 @@ dependencies = [
 
 [[package]]
 name = "reference-service"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "access-token",
  "base64",

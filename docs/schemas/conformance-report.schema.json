@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-report.schema.json",
+  "title": "Report of access-conformance",
+  "description": "The JSON result of a run of access-conformance. It has the role, the target, the counts and one entry for each case. The members and their order are stable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "version", "role", "target", "summary", "cases"],
+  "properties": {
+    "tool": {
+      "description": "The name of the program.",
+      "const": "access-conformance"
+    },
+    "version": {
+      "description": "The version of the program.",
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "description": "The implementation that the run tested.",
+      "enum": ["pep", "pdp", "edge"]
+    },
+    "target": {
+      "description": "The URL of the target, as the option --url gave it. It is null when the runner started fake-pdp.",
+      "type": ["string", "null"]
+    },
+    "summary": {
+      "description": "The counts of the run. The count of cases is the sum of the four other counts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cases", "passed", "failed", "skipped", "warned"],
+      "properties": {
+        "cases": { "description": "The number of cases in the run.", "type": "integer", "minimum": 0 },
+        "passed": { "description": "The cases that passed.", "type": "integer", "minimum": 0 },
+        "failed": { "description": "The cases that failed. A failed case of a MUST rule gives the exit code 1.", "type": "integer", "minimum": 0 },
+        "skipped": { "description": "The cases that do not apply to the target.", "type": "integer", "minimum": 0 },
+        "warned": { "description": "The cases of a SHOULD rule that failed. They do not change the exit code.", "type": "integer", "minimum": 0 }
+      }
+    },
+    "cases": {
+      "description": "One entry for each case, in the order of the run.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "case": {
+      "description": "The result of one case.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "paragraphs", "requirement", "status", "reason", "failures"],
+      "properties": {
+        "id": { "description": "The id of the case.", "type": "string", "pattern": "^[UDE][0-9]{2,3}$" },
+        "title": { "description": "The title of the case.", "type": "string" },
+        "paragraphs": {
+          "description": "The paragraphs that the case tests.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requirement": { "description": "The level of the rule.", "enum": ["MUST", "SHOULD"] },
+        "status": {
+          "description": "The result. A case of a SHOULD rule that fails has the status warn.",
+          "enum": ["pass", "fail", "skip", "warn"]
+        },
+        "reason": {
+          "description": "Why the runner skipped the case. It is null for the other statuses.",
+          "type": ["string", "null"]
+        },
+        "failures": {
+          "description": "The failed checks. The list is empty for a case that passed or that the runner skipped.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["step", "message"],
+            "properties": {
+              "step": { "description": "The name of the step, or null for a failure of the case.", "type": ["string", "null"] },
+              "message": { "description": "What went wrong, with the expected value and the value found.", "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "tool": "access-conformance",
+      "version": "1.0.0",
+      "role": "pep",
+      "target": "http://127.0.0.1:8000",
+      "summary": { "cases": 3, "passed": 1, "failed": 1, "skipped": 1, "warned": 0 },
+      "cases": [
+        {
+          "id": "U01",
+          "title": "The PEP sends the subject with the type user and the claim sub as the id.",
+          "paragraphs": ["3.3", "9.6"],
+          "requirement": "MUST",
+          "status": "pass",
+          "reason": null,
+          "failures": []
+        },
+        {
+          "id": "U04",
+          "title": "A false answer with budget_exceeded gives HTTP 429 with the header Retry-After.",
+          "paragraphs": ["6.4", "10.3", "11.1"],
+          "requirement": "MUST",
+          "status": "fail",
+          "reason": null,
+          "failures": [
+            { "step": "Use of an action that lists a budget", "message": "status: expected 429, found 403" }
+          ]
+        },
+        {
+          "id": "U05",
+          "title": "The options route asks a question with context.match equal to subtree for each child.",
+          "paragraphs": ["5.6"],
+          "requirement": "MUST",
+          "status": "skip",
+          "reason": "the service has no options route",
+          "failures": []
+        }
+      ]
+    }
+  ]
+}

@@ -20,7 +20,7 @@ $ fake-pdp --credential-file crates/access-conformance/examples/pdp-credential.t
 $ reference-service crates/reference-service/examples/conformance.json
 $ PROCURAUTH_PDP_CREDENTIAL=example-credential-of-the-service \
     reference-edge crates/reference-edge/examples/config.json
-reference-edge 0.1.0 on http://127.0.0.1:8090
+reference-edge 1.0.0 on http://127.0.0.1:8090
 ```
 
 The service and the edge need the same issuer and the public key of the edge. The example `examples/config.json` signs with the test key of `access-token`. The `jwks` of `crates/reference-service/examples/conformance.json` holds this public key.

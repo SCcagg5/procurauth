@@ -340,7 +340,7 @@ mod tests {
             result("U01", Status::Pass, &["3.3", "9.6"], "t"),
             result("U05", Status::Skip, &["5.6"], "no route"),
         ];
-        let text = render_json("pep", Some("http://127.0.0.1:1"), "0.1.0", &results);
+        let text = render_json("pep", Some("http://127.0.0.1:1"), "1.0.0", &results);
         let value: Value = serde_json::from_str(&text).unwrap();
         assert_eq!(value["summary"]["cases"], 2);
         assert_eq!(value["cases"][1]["reason"], "no route");

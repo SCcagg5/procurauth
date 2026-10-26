@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-case.schema.json",
+  "title": "Conformance case",
+  "description": "One conformance case: the data model of the directory conformance/. A case tests one role: a PEP (series U), a PDP (series D) or an edge (series E). It cites the paragraphs that it tests. It gives the data for the test, one or more steps, and the expected result of each step. The README of the directory conformance/ explains the model. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "role", "paragraphs", "requirement", "given", "steps"],
+  "properties": {
+    "id": {
+      "description": "The letter of the series and a number of two or three digits: U for a PEP, D for a PDP, E for an edge. The ids U18, U23, U25 to U31 and E01 are the ids of the MCP binding.",
+      "type": "string",
+      "pattern": "^[UDE][0-9]{2,3}$"
+    },
+    "title": {
+      "description": "One sentence in Simplified Technical English. It states the rule that the case tests.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "role": {
+      "description": "The implementation that the case tests.",
+      "enum": ["pep", "pdp", "edge"]
+    },
+    "paragraphs": {
+      "description": "The paragraphs that the case tests. A paragraph of the protocol is written as 6.4. A paragraph of the MCP binding has the prefix mcp:, for example mcp:5.3.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^(mcp:)?[0-9]{1,2}(\\.[0-9]{1,2}[a-z]?)?$" }
+    },
+    "requirement": {
+      "description": "The level of the rule in the text: MUST or SHOULD.",
+      "enum": ["MUST", "SHOULD"]
+    },
+    "skip_if": {
+      "description": "The conditions that make the runner skip the case. The case does not apply when one of them is true. The README gives the meaning of each condition.",
+      "$ref": "#/$defs/skip_conditions"
+    },
+    "notes": {
+      "description": "An optional remark for the reader of the case, in Simplified Technical English.",
+      "type": "string"
+    },
+    "given": { "$ref": "#/$defs/given" },
+    "steps": {
+      "description": "The steps, in the order of the run. Each step sends one request and checks the result.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "id": { "pattern": "^U" } }, "required": ["id"] },
+      "then": { "properties": { "role": { "const": "pep" } } }
+    },
+    {
+      "if": { "properties": { "id": { "pattern": "^D" } }, "required": ["id"] },
+      "then": { "properties": { "role": { "const": "pdp" } } }
+    },
+    {
+      "if": { "properties": { "id": { "pattern": "^E" } }, "required": ["id"] },
+      "then": { "properties": { "role": { "const": "edge" } } }
+    }
+  ],
+  "$defs": {
+    "skip_conditions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "no_budget_action",
+          "no_ceiling_action",
+          "no_options_route",
+          "no_answer_cache",
+          "no_token_cache",
+          "no_mcp_endpoint",
+          "no_budget_session",
+          "no_input_tool",
+          "no_approval_tool",
+          "no_multi_action",
+          "single_key_set"
+        ]
+      }
+    },
+    "matcher": {
+      "description": "One check of a value. A matcher has exactly one member: equals, absent, present, regex, not_regex or one_of. The README of the directory conformance/ explains each matcher.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["equals"],
+          "properties": { "equals": true }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["absent"],
+          "properties": { "absent": { "const": true } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present"],
+          "properties": { "present": { "const": true } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["regex"],
+          "properties": { "regex": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["not_regex"],
+          "properties": { "not_regex": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["one_of"],
+          "properties": { "one_of": { "type": "array", "minItems": 1 } }
+        }
+      ]
+    },
+    "header_matchers": {
+      "description": "Matchers for HTTP headers. The member name is a header name. The runner compares names without regard to case. A variable can give the name.",
+      "type": "object",
+      "propertyNames": { "pattern": "^([A-Za-z0-9-]+|\\{\\{[a-z_]+\\}\\})$" },
+      "additionalProperties": { "$ref": "#/$defs/matcher" }
+    },
+    "pointer_matchers": {
+      "description": "Matchers for the members of a JSON document. The member name is a JSON Pointer [RFC 6901]. The empty pointer names the whole document.",
+      "type": "object",
+      "propertyNames": { "pattern": "^(/([^/~]|~[01])*)*$" },
+      "additionalProperties": { "$ref": "#/$defs/matcher" }
+    },
+    "given": {
+      "description": "The data that the runner sets up before the first step. For a PDP, it loads the directory. For a PEP, it uses the directory and the script to build the test PDP. For an edge, it uses the tokens only when a step needs them.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "description": "The data of the test PDP. It is the name of a file in conformance/directories/, or the data itself, as the schema fake-pdp-data defines it.",
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*\\.json$" },
+            { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json" }
+          ]
+        },
+        "clock": {
+          "description": "A fixed clock that replaces the clock of the directory.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["now"],
+          "properties": { "now": { "type": "integer", "minimum": 0 } }
+        },
+        "counters": {
+          "description": "The first values of counters. They replace the entries of the directory for the same subject, limit and window.",
+          "type": "array",
+          "items": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/counter" }
+        },
+        "tokens": {
+          "description": "The identity tokens that the steps send. The member name is the name that a step uses.",
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "additionalProperties": { "$ref": "#/$defs/token" }
+        },
+        "pdp_script": {
+          "description": "For a PEP case: answers of the test PDP that replace the answer from the directory. The runner reads the rules in order, and the first rule that matches a question gives the answer. A question that no rule matches gets the answer from the directory. Without a directory, such a question is a fault of the case.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/script_rule" }
+        }
+      }
+    },
+    "token": {
+      "description": "An identity token that the runner makes with the signing key of the test edge. The runner sets iss, aud, iat and exp from the configuration of the service under test, unless the case overrides them. The value null in claims or in header removes the member.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject"],
+      "properties": {
+        "subject": { "description": "The claim sub.", "type": "string", "minLength": 1 },
+        "owner": { "description": "The claim owner.", "type": "string", "minLength": 1 },
+        "alg": { "description": "The algorithm. The default is Ed25519.", "enum": ["Ed25519", "ES256"] },
+        "claims": { "description": "Claims to set. They replace the claims that the runner sets.", "type": "object" },
+        "header": { "description": "Header members to set. They replace the members that the runner sets.", "type": "object" },
+        "defect": {
+          "description": "A named defect that makes the token bad. The README of the directory conformance/ explains each defect.",
+          "enum": [
+            "bad_signature", "expired", "future_iat", "long_life", "at_jwt",
+            "alg_none", "alg_hs256", "alg_eddsa", "wrong_issuer", "wrong_audience", "unknown_kid"
+          ]
+        }
+      }
+    },
+    "script_rule": {
+      "description": "One rule of the script of the test PDP.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "respond"],
+      "properties": {
+        "when": {
+          "description": "The rule matches a question when each member that it gives is equal to the question. An empty object matches each question.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "subject": { "type": "string" },
+            "action": { "type": "string" },
+            "resource": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/node_path" },
+            "usage": { "description": "True for a question with context.usage. False for a question without it.", "type": "boolean" },
+            "match": { "enum": ["node", "subtree"] }
+          }
+        },
+        "respond": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["body"],
+              "properties": {
+                "status": { "description": "The HTTP status. The default is 200.", "type": "integer", "minimum": 100, "maximum": 599 },
+                "body": { "description": "The body of the answer, as JSON.", "type": ["object", "string", "array", "number", "boolean", "null"] },
+                "delay_ms": { "type": "integer", "minimum": 1 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["no_answer"],
+              "properties": { "no_answer": { "const": true } }
+            }
+          ]
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request", "expect"],
+      "properties": {
+        "name": { "description": "A short name for the step, in Simplified Technical English.", "type": "string" },
+        "skip_if": {
+          "description": "The conditions that make the runner skip this step. The other steps of the case still run.",
+          "$ref": "#/$defs/skip_conditions"
+        },
+        "request": { "$ref": "#/$defs/request" },
+        "expect": { "$ref": "#/$defs/expect" }
+      }
+    },
+    "request": {
+      "description": "The request that the runner sends. It names its target in one way: an operation of a PEP, an endpoint of a PDP, or a method and a path.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "description": "For a PEP. The runner maps the operation to a request of the service under test with its profile. The README of the directory conformance/ explains each operation.",
+          "enum": [
+            "use_plain", "use_budget", "use_ceiling", "use_service", "use_multi", "read_actions", "list_options",
+            "mcp_call_plain", "mcp_call_budget", "mcp_call_input", "mcp_call_multi",
+            "mcp_call_approval", "mcp_approve", "mcp_refuse"
+          ]
+        },
+        "endpoint": {
+          "description": "For a PDP. The endpoint of the AuthZEN API: the runner reads its path in the metadata of the PDP, or it uses the default path.",
+          "enum": ["evaluation", "evaluations", "metadata"]
+        },
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
+        "path": {
+          "description": "The path of the request. It starts with a slash, or with a variable that gives the path.",
+          "type": "string",
+          "pattern": "^(/|\\{\\{[a-z_]+\\}\\})"
+        },
+        "headers": {
+          "description": "Request headers. A variable can give a name or a value.",
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "body": { "description": "The body of the request, as JSON.", "type": ["object", "array", "string", "number", "boolean", "null"] },
+        "body_text": { "description": "The body of the request, as text that the runner sends without change.", "type": "string" },
+        "token": {
+          "description": "The name of a token of given.tokens. The runner sends it in the way that suits the role: in the header of the identity token to a PEP.",
+          "type": "string"
+        }
+      },
+      "oneOf": [
+        { "required": ["operation"], "not": { "anyOf": [ { "required": ["endpoint"] }, { "required": ["method"] }, { "required": ["path"] } ] } },
+        { "required": ["endpoint"], "not": { "anyOf": [ { "required": ["operation"] }, { "required": ["method"] }, { "required": ["path"] } ] } },
+        { "required": ["method", "path"], "not": { "anyOf": [ { "required": ["operation"] }, { "required": ["endpoint"] } ] } }
+      ],
+      "not": { "required": ["body", "body_text"] }
+    },
+    "expect": {
+      "description": "The expected result of a step. The runner checks each member that the step gives.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "status": { "description": "The HTTP status of the answer.", "$ref": "#/$defs/matcher" },
+        "headers": { "description": "The headers of the answer.", "$ref": "#/$defs/header_matchers" },
+        "body_text": { "description": "The body of the answer as text. The text is empty for an empty body.", "$ref": "#/$defs/matcher" },
+        "json": { "description": "Members of the body of the answer, when the body is JSON.", "$ref": "#/$defs/pointer_matchers" },
+        "valid_as": {
+          "description": "The body of the answer is a good document of this kind, as the core library reads it. A value with no_warning also needs a reader report with no warning.",
+          "enum": ["action_document", "action_document_no_warning", "options_answer", "options_answer_no_warning"]
+        },
+        "pdp_connections": {
+          "description": "For a PEP. The number of connections that the test PDP accepted since the start of the case.",
+          "$ref": "#/$defs/matcher"
+        },
+        "pdp_questions": {
+          "description": "For a PEP. The questions that the test PDP received during the step. Each entry counts the questions that match each matcher of json. Without count, the entry expects exactly one question.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["json"],
+            "properties": {
+              "json": { "$ref": "#/$defs/pointer_matchers" },
+              "headers": { "description": "Matchers for the headers of the question. A question matches when its body matches json and its headers match headers.", "$ref": "#/$defs/header_matchers" },
+              "count": { "$ref": "#/$defs/matcher" }
+            }
+          }
+        },
+        "upstream": {
+          "description": "For an edge. The request that reached the service behind the edge. The runner acts as that service.",
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "count": { "description": "The number of requests that reached the service.", "$ref": "#/$defs/matcher" },
+            "headers": { "description": "The headers of the request that reached the service.", "$ref": "#/$defs/header_matchers" },
+            "token_header": {
+              "description": "The JOSE header of the identity token in the request that reached the service. The runner checks the token first, as for token_claims.",
+              "$ref": "#/$defs/pointer_matchers"
+            },
+            "token_claims": {
+              "description": "The claims of the identity token in the request that reached the service. The runner checks the token with the public keys of the test edge first.",
+              "$ref": "#/$defs/pointer_matchers"
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": "U03",
+      "title": "A token with a bad signature gets HTTP 401 and no question to the PDP.",
+      "role": "pep",
+      "paragraphs": ["9.4"],
+      "requirement": "MUST",
+      "given": {
+        "directory": "datastore.json",
+        "tokens": { "bad": { "subject": "alice", "defect": "bad_signature" } }
+      },
+      "steps": [
+        {
+          "name": "Use with a bad token",
+          "request": { "operation": "use_plain", "token": "bad" },
+          "expect": {
+            "status": { "equals": 401 },
+            "pdp_questions": [ { "json": {}, "count": { "equals": 0 } } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "U13",
+      "title": "The service answers a read of its action document with HTTP 200 and a good document, and it sends no question.",
+      "role": "pep",
+      "paragraphs": ["5.1", "5.2"],
+      "requirement": "MUST",
+      "given": { "pdp_script": [ { "when": {}, "respond": { "body": { "decision": true } } } ] },
+      "steps": [
+        {
+          "name": "Read the document with no token",
+          "request": { "method": "GET", "path": "/.well-known/procurauth/actions" },
+          "expect": {
+            "status": { "equals": 200 },
+            "valid_as": "action_document",
+            "json": { "/server": { "equals": "{{service}}" } },
+            "pdp_questions": [ { "json": {}, "count": { "equals": 0 } } ]
+          }
+        },
+        {
+          "name": "List the options, when the service has the route",
+          "skip_if": ["no_options_route"],
+          "request": { "operation": "list_options" },
+          "expect": { "status": { "equals": 401 }, "body_text": { "not_regex": "items" } }
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "The identity token has the header alg Ed25519 or ES256, the header typ JWT, and no claim that holds the text of the key.",
+      "role": "edge",
+      "paragraphs": ["9.2", "9.3"],
+      "requirement": "MUST",
+      "skip_if": ["single_key_set"],
+      "given": {},
+      "steps": [
+        {
+          "request": { "method": "GET", "path": "/probe", "headers": { "Authorization": "Bearer {{valid_key_text}}" } },
+          "expect": {
+            "upstream": {
+              "count": { "equals": 1 },
+              "token_header": { "/alg": { "one_of": ["Ed25519", "ES256"] }, "/typ": { "equals": "JWT" }, "/kid": { "present": true } },
+              "token_claims": { "/sub": { "not_regex": "{{valid_key_text}}" } }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

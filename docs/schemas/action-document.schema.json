@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/action-document.schema.json",
+  "title": "Action document",
+  "description": "The document that a service publishes at /.well-known/procurauth/actions (protocol 5.1, 5.2). It declares the types, the actions and the limits of the service. A schema cannot check the rules between members. For example, a type name occurs one time, a parent exists, and the depth is 4 at most. The tool access-lint checks them.",
+  "type": "object",
+  "required": ["server", "resource_types", "actions"],
+  "properties": {
+    "server": {
+      "description": "The id of the service. It is equal to the claim aud of the identity tokens of the service.",
+      "$ref": "#/$defs/id"
+    },
+    "resource_types": {
+      "description": "The tree of types below the service. The type service is the root, and the document does not declare it.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/resource_type" }
+    },
+    "actions": {
+      "description": "The actions of the service. The list never has the action access.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "resources": {
+      "description": "The nodes that the service names. Each path starts below the service.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/resource" }
+    },
+    "limits": {
+      "description": "The limit declarations of the service (protocol 6.1).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/limit_declaration" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "description": "An exact string of 1 to 256 characters, with no control character (protocol 4.1). The Rust reader counts bytes, and a schema counts characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "type_name": {
+      "description": "A type name or a limit name: 1 to 32 characters, a to z first, then a to z, 0 to 9 or underscore.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$"
+    },
+    "resource_type": {
+      "description": "One type below the service (protocol 5.2).",
+      "type": "object",
+      "required": ["name", "parent", "description"],
+      "properties": {
+        "name": {
+          "description": "The name of the type. It is not service.",
+          "allOf": [
+            { "$ref": "#/$defs/type_name" },
+            { "not": { "const": "service" } }
+          ]
+        },
+        "parent": {
+          "description": "The parent: service, or a type that the document declares.",
+          "$ref": "#/$defs/type_name"
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "action": {
+      "description": "One action of the service (protocol 5.2).",
+      "type": "object",
+      "required": ["name", "resource_types", "description"],
+      "properties": {
+        "name": {
+          "description": "The name of the action: 1 to 64 characters, parts of a to z, 0 to 9 and underscore, with a dot between the parts. It is not access.",
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+          "not": { "const": "access" }
+        },
+        "resource_types": {
+          "description": "The types on which a grant of the action is valid: service or declared types, each one time.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/type_name" }
+        },
+        "description": { "type": "string" },
+        "limits": {
+          "description": "The names of the limits of the action (protocol 6.2). Each name is declared in the member limits of the document.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/type_name" }
+        }
+      }
+    },
+    "resource": {
+      "description": "One node that the service names (protocol 5.2).",
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "description": "Segments of the form type:id, with a slash between them. The path does not hold the service. Each id is percent-encoded: each byte outside A-Z, a-z, 0-9, hyphen, dot, underscore and tilde becomes a percent sign and two upper-case hexadecimal digits. The path has 4 segments at most.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}:(?:[A-Za-z0-9._~-]|%[0-9A-F]{2})+(?:/[a-z][a-z0-9_]{0,31}:(?:[A-Za-z0-9._~-]|%[0-9A-F]{2})+){0,3}$"
+        },
+        "label": { "type": "string" },
+        "actions": {
+          "description": "The actions of the node. Each name is declared in the member actions of the document.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "limit_declaration": {
+      "description": "One limit declaration (protocol 6.1). An unknown member makes the document bad (protocol 5.3).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "label", "description", "unit", "kind"],
+      "properties": {
+        "name": { "$ref": "#/$defs/type_name" },
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "unit": { "type": "string" },
+        "kind": { "enum": ["ceiling", "budget"] },
+        "min": {
+          "description": "The lowest value of a ceiling. A whole number of 0 or more. It is not above max.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "description": "The highest value of a ceiling. A whole number of 0 or more.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "ceiling" } }, "required": ["kind"] },
+          "then": { "required": ["min", "max"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "budget" } }, "required": ["kind"] },
+          "then": {
+            "description": "A budget has neither min nor max. A budget name never starts with max_ (protocol 6.1, 7.1).",
+            "allOf": [
+              { "not": { "required": ["min"] } },
+              { "not": { "required": ["max"] } },
+              { "properties": { "name": { "not": { "pattern": "^max_" } } } }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "server": "datastore",
+      "resource_types": [
+        { "name": "host", "parent": "service", "description": "One database server." },
+        { "name": "database", "parent": "host", "description": "One database." },
+        { "name": "table", "parent": "database", "description": "One table." }
+      ],
+      "actions": [
+        {
+          "name": "data.read",
+          "resource_types": ["service", "host", "database", "table"],
+          "description": "Read data.",
+          "limits": ["requests", "max_rows", "max_duration"]
+        },
+        {
+          "name": "data.write",
+          "resource_types": ["service", "host", "database", "table"],
+          "description": "Change data.",
+          "limits": ["requests", "max_duration"]
+        }
+      ],
+      "resources": [ { "path": "host:prod", "label": "Production" } ],
+      "limits": [
+        { "name": "requests", "label": "Requests", "description": "Requests that run.", "unit": "request", "kind": "budget" },
+        { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000 },
+        { "name": "max_duration", "label": "Longest run", "description": "The longest run of one use, in seconds.", "unit": "second", "kind": "ceiling", "min": 1, "max": 600 }
+      ]
+    },
+    {
+      "server": "minimal",
+      "resource_types": [],
+      "actions": [
+        { "name": "mcp.session", "resource_types": ["service"], "description": "Open a session." }
+      ]
+    }
+  ]
+}

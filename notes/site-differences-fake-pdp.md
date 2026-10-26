@@ -4,7 +4,7 @@ This file lists the places where the tool `fake-pdp` differs from the page `docs
 
 ## Command line
 
-1. The page shows `fake-pdp 1.0 on ...`. The program shows the version of the crate, which is `0.1.0` in the workspace. The program prints `fake-pdp <version> on http://<address>`.
+1. The page shows `fake-pdp 1.0 on ...`. The program shows the version of the crate, which is `1.0.0` in the workspace. The program prints `fake-pdp <version> on http://<address>`.
 2. The page shows only the flag `--listen`. The program has six more flags: `--clock-start`, `--admin`, `--credential-file`, `--failures`, `--workers` and `--print-config`. The page says that the clock and the failures are in the data file. This is also true. The flags add the controls that the closed data schema cannot hold.
 3. The page shows `--listen` as optional and gives no default. The default is `127.0.0.1:8181`.
 4. The common rules of the page list `--format text|json` for each tool. The program has no `--format` option. Its output is the log of the questions.

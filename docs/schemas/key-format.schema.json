@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/key-format.schema.json",
+  "title": "Key format",
+  "description": "The format of the text of a key. The protocol defines no format (protocol 3.8), so the tool keycheck reads it as an input. The text is a prefix, a random part and an optional checksum. A schema cannot check the rules between members, for example that the alphabet has each digit of the encoding. The tool keycheck checks them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prefix", "length", "alphabet"],
+  "properties": {
+    "prefix": {
+      "description": "The text at the start of each key. It has 1 to 32 printable ASCII characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[!-~]+$"
+    },
+    "length": {
+      "description": "The number of characters of the whole text, the prefix included.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "alphabet": {
+      "description": "The characters that can follow the prefix, the checksum included. A range has the form x-y. A hyphen at the start or at the end is a character. No character occurs two times.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[!-~]+$"
+    },
+    "checksum": {
+      "description": "The checksum at the end of the text. A format without this member has no checksum.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "encoding", "characters"],
+      "properties": {
+        "algorithm": {
+          "description": "crc32 is the CRC-32 of zlib.",
+          "enum": ["crc32"]
+        },
+        "encoding": {
+          "description": "base62 uses the digits 0-9, A-Z and a-z. hex uses the digits 0-9 and a-f. The most significant digit is first.",
+          "enum": ["base62", "hex"]
+        },
+        "characters": {
+          "description": "The number of characters of the checksum. The encoder adds the digit zero on the left up to this number.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "covers": {
+          "description": "The text that the checksum covers. The default is random.",
+          "enum": ["random", "prefix_and_random"],
+          "default": "random"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "prefix": "mcp_",
+      "length": 53,
+      "alphabet": "A-Za-z0-9",
+      "checksum": { "algorithm": "crc32", "encoding": "base62", "characters": 6 }
+    },
+    {
+      "prefix": "k_",
+      "length": 18,
+      "alphabet": "0-9a-f",
+      "checksum": { "algorithm": "crc32", "encoding": "hex", "characters": 8, "covers": "prefix_and_random" }
+    },
+    { "prefix": "plain-", "length": 30, "alphabet": "a-z0-9-" }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/keycheck-output.schema.json",
+  "title": "Output of keycheck",
+  "description": "The JSON that keycheck prints with the flag --format json. It is one object on one line. The object never holds the text of the key.",
+  "oneOf": [
+    { "$ref": "#/$defs/good" },
+    { "$ref": "#/$defs/bad_prefix" },
+    { "$ref": "#/$defs/bad_length" },
+    { "$ref": "#/$defs/bad_alphabet" },
+    { "$ref": "#/$defs/bad_checksum" }
+  ],
+  "$defs": {
+    "good": {
+      "description": "The text has the format. The tool gives the SHA-256 digest of the whole text and a hint.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "sha256", "hint"],
+      "properties": {
+        "verdict": { "const": "good" },
+        "sha256": {
+          "description": "The SHA-256 digest of the text, in 64 lower-case hexadecimal digits.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hint": {
+          "description": "At most 4 of the first characters of the random part.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        }
+      }
+    },
+    "bad_prefix": {
+      "description": "The text does not start with the prefix of the format.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "cause", "message", "detail"],
+      "properties": {
+        "verdict": { "const": "bad" },
+        "cause": { "const": "prefix" },
+        "message": { "$ref": "#/$defs/message" },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected"],
+          "properties": {
+            "expected": { "description": "The prefix of the format.", "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "bad_length": {
+      "description": "The text has another length than the format gives.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "cause", "message", "detail"],
+      "properties": {
+        "verdict": { "const": "bad" },
+        "cause": { "const": "length" },
+        "message": { "$ref": "#/$defs/message" },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected", "found"],
+          "properties": {
+            "expected": { "description": "The length of the format, in characters.", "type": "integer", "minimum": 1 },
+            "found": { "description": "The length of the text, in characters.", "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "bad_alphabet": {
+      "description": "A character after the prefix is not in the alphabet.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "cause", "message", "detail"],
+      "properties": {
+        "verdict": { "const": "bad" },
+        "cause": { "const": "alphabet" },
+        "message": { "$ref": "#/$defs/message" },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["position", "alphabet"],
+          "properties": {
+            "position": { "description": "The position of the first bad character, from 1, in the whole text.", "type": "integer", "minimum": 1 },
+            "alphabet": { "description": "The alphabet of the format.", "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "bad_checksum": {
+      "description": "The checksum characters do not match the text. The member detail is empty.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "cause", "message", "detail"],
+      "properties": {
+        "verdict": { "const": "bad" },
+        "cause": { "const": "checksum" },
+        "message": { "$ref": "#/$defs/message" },
+        "detail": { "type": "object", "additionalProperties": false }
+      }
+    },
+    "message": {
+      "description": "The text that the text form prints after the word bad and a colon.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "examples": [
+    {
+      "verdict": "good",
+      "sha256": "a9985ef98e018b4c34f4e5cedd1e19cb5b31e533f30a18fc12834f378919b99f",
+      "hint": "aB3d"
+    },
+    {
+      "verdict": "bad",
+      "cause": "prefix",
+      "message": "prefix (expected the prefix mcp_)",
+      "detail": { "expected": "mcp_" }
+    },
+    {
+      "verdict": "bad",
+      "cause": "length",
+      "message": "length (expected 53 characters, found 47)",
+      "detail": { "expected": 53, "found": 47 }
+    },
+    {
+      "verdict": "bad",
+      "cause": "alphabet",
+      "message": "alphabet (the character at position 11 is not in the alphabet A-Za-z0-9)",
+      "detail": { "position": 11, "alphabet": "A-Za-z0-9" }
+    },
+    {
+      "verdict": "bad",
+      "cause": "checksum",
+      "message": "checksum (the checksum characters do not match the text)",
+      "detail": {}
+    }
+  ]
+}

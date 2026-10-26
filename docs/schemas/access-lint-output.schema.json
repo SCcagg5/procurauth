@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/access-lint-output.schema.json",
+  "title": "Output of access-lint",
+  "description": "The JSON output of the tool access-lint with the option --format json. It has one entry in inputs for the document, and one for each of the options --grants and --options. The schema is closed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "version", "ok", "inputs"],
+  "properties": {
+    "tool": { "description": "The name of the program.", "const": "access-lint" },
+    "version": { "description": "The version of the program.", "type": "string" },
+    "ok": { "description": "True when no input has an error. The exit code is then 0.", "type": "boolean" },
+    "inputs": {
+      "description": "The result for each input. The first entry is the document.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/input" }
+    }
+  },
+  "$defs": {
+    "input": {
+      "description": "The result for one input.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source", "errors", "warnings", "findings"],
+      "properties": {
+        "kind": { "description": "The input that the findings are about.", "enum": ["document", "grants", "options"] },
+        "source": { "description": "The file or the URL, as the user gave it.", "type": "string" },
+        "errors": { "description": "The number of findings with the severity error.", "type": "integer", "minimum": 0 },
+        "warnings": { "description": "The number of findings with the severity warning.", "type": "integer", "minimum": 0 },
+        "findings": {
+          "description": "The findings, in the order of the check.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/finding" }
+        }
+      }
+    },
+    "finding": {
+      "description": "One finding.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "path", "rule", "code", "summary", "message"],
+      "properties": {
+        "severity": { "description": "An error makes the exit code 1. A warning does not.", "enum": ["error", "warning"] },
+        "path": { "description": "The JSON path of the member, for example $.limits[0].min.", "type": "string", "pattern": "^\\$" },
+        "rule": { "description": "The paragraph of the protocol, for example 5.2.", "type": "string", "pattern": "^[0-9]+\\.[0-9]+[a-z]?$" },
+        "code": { "description": "A stable name for the kind of finding.", "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "summary": { "description": "The short text of the text output.", "type": "string" },
+        "message": { "description": "The full message, with the names and the values.", "type": "string" }
+      }
+    }
+  },
+  "examples": [
+    {
+      "tool": "access-lint",
+      "version": "1.0.0",
+      "ok": false,
+      "inputs": [
+        {
+          "kind": "document",
+          "source": "actions.json",
+          "errors": 2,
+          "warnings": 0,
+          "findings": [
+            {
+              "severity": "error",
+              "path": "$.actions[1].limits[2]",
+              "rule": "5.2",
+              "code": "undeclared_limit",
+              "summary": "undeclared limit",
+              "message": "Limit `ghost` is not declared in `limits`."
+            },
+            {
+              "severity": "error",
+              "path": "$.limits[0].min",
+              "rule": "6.1",
+              "code": "budget_with_min",
+              "summary": "budget with \"min\"",
+              "message": "A budget declaration has no `min`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tool": "access-lint",
+      "version": "1.0.0",
+      "ok": true,
+      "inputs": [ { "kind": "document", "source": "actions.json", "errors": 0, "warnings": 0, "findings": [] } ]
+    }
+  ]
+}

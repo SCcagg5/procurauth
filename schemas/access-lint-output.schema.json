@@ -54,7 +54,7 @@
   "examples": [
     {
       "tool": "access-lint",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "ok": false,
       "inputs": [
         {
@@ -85,7 +85,7 @@
     },
     {
       "tool": "access-lint",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "ok": true,
       "inputs": [ { "kind": "document", "source": "actions.json", "errors": 0, "warnings": 0, "findings": [] } ]
     }

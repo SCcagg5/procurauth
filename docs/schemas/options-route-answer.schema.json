@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/options-route-answer.schema.json",
+  "title": "Options route answer",
+  "description": "The answer of the route GET /.well-known/procurauth/resources (protocol 5.6 to 5.8). It lists the children of a node, one page at a time. A caller accepts an answer of 64 KiB with 50 items, an id of 256 bytes and a label of 60 characters. A service stays within these numbers, but a schema does not enforce them. The tool access-lint gives a warning above them. A receiver ignores a member that it does not know.",
+  "type": "object",
+  "required": ["items", "next"],
+  "properties": {
+    "items": {
+      "description": "The children of the node, in the order of the service.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "next": {
+      "description": "The cursor of the next page, or null on the last page. The caller treats it as opaque text.",
+      "type": ["string", "null"]
+    }
+  },
+  "$defs": {
+    "item": {
+      "description": "One child of the node (protocol 5.8).",
+      "type": "object",
+      "required": ["id", "label", "has_children"],
+      "properties": {
+        "id": {
+          "description": "The id of the child, as protocol 4.1 says. The service does not encode it.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "label": {
+          "description": "A short text for the form, for example the id itself.",
+          "type": "string"
+        },
+        "has_children": {
+          "description": "True when the route can list children below this child.",
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "items": [
+        { "id": "test1", "label": "test1", "has_children": true },
+        { "id": "test2", "label": "test2", "has_children": true }
+      ],
+      "next": null
+    },
+    { "items": [ { "id": "a/b c", "label": "a/b c", "has_children": false } ], "next": "c2" },
+    { "items": [], "next": null }
+  ]
+}

@@ -1,0 +1,1030 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-profile.schema.json",
+  "title": "Profile of a target for access-conformance",
+  "description": "The file that tells the runner access-conformance how to reach and wire the target. It has one section for each role: pep, pdp and edge. The run needs only the section of its role. A path in a file member starts at the directory of the profile. A secret comes only from a file. The tool checks the rules that a schema cannot state.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timeouts": {
+      "description": "The time limits of the run. A value that is out of range stops the program. The program never changes it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request_seconds": {
+          "description": "The time for one request to the target, in seconds. The default is 10.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "case_seconds": {
+          "description": "The time for one case, in seconds. A case that takes longer fails. The default is 60.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "settle_ms": {
+          "description": "The wait in milliseconds before the runner counts the questions of the PDP and the requests of the upstream. The default is 25.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        }
+      }
+    },
+    "pep": {
+      "$ref": "#/$defs/pep"
+    },
+    "pdp": {
+      "$ref": "#/$defs/pdp"
+    },
+    "edge": {
+      "$ref": "#/$defs/edge"
+    }
+  },
+  "$defs": {
+    "address": {
+      "description": "A listen address with a numeric host and a port, for example 127.0.0.1:8181.",
+      "type": "string",
+      "pattern": "^(\\[[0-9a-fA-F:.]+\\]|[0-9]{1,3}(\\.[0-9]{1,3}){3}):[0-9]{1,5}$"
+    },
+    "file": {
+      "description": "A path to a file. A relative path starts at the directory of the profile.",
+      "type": "string",
+      "minLength": 1
+    },
+    "http_url": {
+      "description": "An http URL with the host and the port of a service.",
+      "type": "string",
+      "pattern": "^http://[^\\s/?#@]+([/?][^\\s#]*)?$"
+    },
+    "http_method": {
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS"
+      ]
+    },
+    "service_id": {
+      "description": "The id of the service. It has 1 to 256 bytes and no control character (protocol 4.1).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "token_header": {
+      "description": "The name of the header with the identity token. It is never Authorization, Proxy-Authorization or Cookie (protocol 9.4).",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-]+$"
+    },
+    "operation": {
+      "description": "One operation of the data model. It gives the method, the path, the headers and the body of the request, and the variables that the cases use.",
+      "type": "object",
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "body",
+          "body_text"
+        ]
+      },
+      "properties": {
+        "method": {
+          "description": "The HTTP method of the operation.",
+          "$ref": "#/$defs/http_method"
+        },
+        "path": {
+          "description": "The path of the operation. It starts with a slash or with a variable. It can hold variables, for example {{resource_id}}.",
+          "type": "string",
+          "pattern": "^(/|\\{\\{)"
+        },
+        "headers": {
+          "description": "Headers of the operation. A variable can give a name or a value.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "description": "The body template, as JSON. A variable can give a value. Do not give it with body_text."
+        },
+        "body_text": {
+          "description": "The body template, as text. Do not give it with body.",
+          "type": "string"
+        },
+        "action": {
+          "description": "The variable action: the action that the service asks the PDP for.",
+          "type": "string",
+          "minLength": 1
+        },
+        "resource_type": {
+          "description": "The variable resource_type: the type of the node of the operation.",
+          "type": "string",
+          "minLength": 1
+        },
+        "resource_id": {
+          "description": "The variable resource_id: the id of the node of the operation.",
+          "type": "string",
+          "minLength": 1
+        },
+        "ancestors": {
+          "description": "The variable ancestors: the chain of the node, from the service down. Each object has type and id only.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "tool": {
+          "description": "The variable tool: the name of the tool of an MCP call.",
+          "type": "string",
+          "minLength": 1
+        },
+        "ceiling": {
+          "description": "The variable ceiling: the name of a ceiling that the action lists.",
+          "type": "string",
+          "minLength": 1
+        },
+        "ceiling_value": {
+          "description": "The variable ceiling_value: a value of that ceiling, from its min to its max.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "arguments": {
+          "description": "The arguments of the tool of an MCP call. The default is an empty object."
+        },
+        "capture": {
+          "description": "Names for members of the JSON answer to the step before. Each value is a JSON Pointer. The templates of the operation read each name as a variable.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^(/([^/~]|~[01])*)*$"
+          }
+        }
+      }
+    },
+    "pep": {
+      "description": "The profile of a service under test (series U). The runner acts as the edge and as the PDP.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "token",
+        "pdp",
+        "operations"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/service_id"
+        },
+        "token": {
+          "description": "How the service reads the identity token, and the keys of the test edge.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "header",
+            "iss",
+            "max_age_seconds",
+            "skew_seconds",
+            "keys"
+          ],
+          "properties": {
+            "header": {
+              "$ref": "#/$defs/token_header"
+            },
+            "iss": {
+              "description": "The issuer that the service expects.",
+              "type": "string",
+              "minLength": 1
+            },
+            "max_age_seconds": {
+              "description": "The longest life of a token that the service accepts, in seconds.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31536000
+            },
+            "skew_seconds": {
+              "description": "The clock skew of the service, in seconds.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400
+            },
+            "keys": {
+              "description": "The private keys of the test edge. The service trusts the public keys. Each algorithm occurs one time.",
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "alg",
+                  "file"
+                ],
+                "properties": {
+                  "alg": {
+                    "enum": [
+                      "Ed25519",
+                      "ES256"
+                    ]
+                  },
+                  "kid": {
+                    "description": "The header kid of the tokens that this key signs.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "file": {
+                    "description": "The file with the private key, in PKCS#8 PEM form. The key is a secret.",
+                    "$ref": "#/$defs/file"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pdp": {
+          "description": "The test PDP. The service has the address and the credential.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "listen"
+          ],
+          "properties": {
+            "listen": {
+              "$ref": "#/$defs/address"
+            },
+            "credential_file": {
+              "description": "The file with the credential that the service sends to the PDP. The credential is a secret.",
+              "$ref": "#/$defs/file"
+            }
+          }
+        },
+        "answer_cache": {
+          "description": "True when the PEP keeps answers (protocol 10.1). The default is false.",
+          "type": "boolean"
+        },
+        "reset": {
+          "description": "A request that clears the state of the service before each case, for example the kept answers.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "method",
+            "path"
+          ],
+          "properties": {
+            "method": {
+              "$ref": "#/$defs/http_method"
+            },
+            "path": {
+              "description": "The path of the request. It starts with a slash.",
+              "type": "string",
+              "pattern": "^/"
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "options_type": {
+          "description": "The type of the nodes at the first level of the options route. The member says that the service has the route.",
+          "type": "string",
+          "minLength": 1
+        },
+        "mcp": {
+          "description": "The MCP endpoint of the service.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "description": "The path of the endpoint. It starts with a slash.",
+              "type": "string",
+              "pattern": "^/"
+            },
+            "session_budget": {
+              "description": "True when the action mcp.session lists a budget. The default is false.",
+              "type": "boolean"
+            }
+          }
+        },
+        "operations": {
+          "description": "The operations of the data model that the service has. An operation that is absent makes the runner skip the steps that use it.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "use_plain": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "method",
+                    "path",
+                    "action",
+                    "resource_type",
+                    "resource_id",
+                    "ancestors"
+                  ]
+                }
+              ]
+            },
+            "use_budget": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "method",
+                    "path",
+                    "action",
+                    "resource_type",
+                    "resource_id",
+                    "ancestors"
+                  ]
+                }
+              ]
+            },
+            "use_ceiling": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "method",
+                    "path",
+                    "action",
+                    "resource_type",
+                    "resource_id",
+                    "ancestors",
+                    "ceiling",
+                    "ceiling_value"
+                  ]
+                }
+              ]
+            },
+            "use_service": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "method",
+                    "path",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "use_multi": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "method",
+                    "path",
+                    "action",
+                    "resource_type",
+                    "resource_id",
+                    "ancestors"
+                  ]
+                }
+              ]
+            },
+            "read_actions": {
+              "$ref": "#/$defs/operation"
+            },
+            "list_options": {
+              "$ref": "#/$defs/operation"
+            },
+            "mcp_call_plain": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "tool",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "mcp_call_budget": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "tool",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "mcp_call_input": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "tool",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "mcp_call_multi": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "tool",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "mcp_call_approval": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "tool",
+                    "action"
+                  ]
+                }
+              ]
+            },
+            "mcp_approve": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "body"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "body_text"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "mcp_refuse": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "body"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "body_text"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "operations"
+            ],
+            "properties": {
+              "operations": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "mcp_call_plain"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_call_budget"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_call_input"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_call_multi"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_call_approval"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_approve"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mcp_refuse"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "mcp"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "operations"
+            ],
+            "properties": {
+              "operations": {
+                "required": [
+                  "list_options"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "options_type"
+            ]
+          }
+        }
+      ]
+    },
+    "pdp": {
+      "description": "The profile of a PDP under test (series D). The runner sends the questions.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spawn_fake_pdp": {
+          "description": "True to start fake-pdp in the process, with the directory of each case. Do not give it with the option --url. The default is false.",
+          "type": "boolean"
+        },
+        "credential_file": {
+          "description": "The file with the credential that the PDP asks for. The credential is a secret.",
+          "$ref": "#/$defs/file"
+        },
+        "directory_check": {
+          "description": "How the runner proves that the PDP holds the directory of a case. The runner asks control questions and compares the answers.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "description": "The value control_questions asks the questions. The value none asks nothing. The default is control_questions.",
+              "enum": [
+                "control_questions",
+                "none"
+              ]
+            },
+            "max_questions": {
+              "description": "The most control questions for one directory. The default is 100.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          }
+        },
+        "load": {
+          "description": "A request that loads the data of a case in the PDP under test. The body is a document of the schema fake-pdp-data.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url"
+          ],
+          "properties": {
+            "url": {
+              "$ref": "#/$defs/http_url"
+            },
+            "method": {
+              "description": "The method of the request. The default is PUT.",
+              "enum": [
+                "PUT",
+                "POST"
+              ]
+            }
+          }
+        },
+        "reset_url": {
+          "description": "A URL that the runner posts to before each case, to put the counters back to their first values.",
+          "$ref": "#/$defs/http_url"
+        },
+        "clock_admin_url": {
+          "description": "A URL that the runner posts to, with the body {\"set\": T}, to set the clock of the PDP to T seconds.",
+          "$ref": "#/$defs/http_url"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "spawn_fake_pdp"
+            ],
+            "properties": {
+              "spawn_fake_pdp": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "load"
+                  ]
+                },
+                {
+                  "required": [
+                    "reset_url"
+                  ]
+                },
+                {
+                  "required": [
+                    "clock_admin_url"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "edge": {
+      "description": "The profile of an edge under test (series E). The runner acts as the client, as the service behind the edge and as the PDP.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "token_header",
+        "trust",
+        "keys",
+        "upstream",
+        "pdp"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/service_id"
+        },
+        "token_header": {
+          "$ref": "#/$defs/token_header"
+        },
+        "trust": {
+          "description": "The public keys of the edge, and the values that the identity token must have.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "iss",
+            "max_age_seconds",
+            "skew_seconds"
+          ],
+          "anyOf": [
+            {
+              "required": [
+                "jwks_file"
+              ]
+            },
+            {
+              "required": [
+                "pem_keys"
+              ]
+            }
+          ],
+          "properties": {
+            "iss": {
+              "description": "The issuer that the edge writes in the tokens.",
+              "type": "string",
+              "minLength": 1
+            },
+            "max_age_seconds": {
+              "description": "The longest life of a token, in seconds.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31536000
+            },
+            "skew_seconds": {
+              "description": "The clock skew, in seconds.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400
+            },
+            "jwks_file": {
+              "description": "A file with a JWK Set of the public keys of the edge.",
+              "$ref": "#/$defs/file"
+            },
+            "pem_keys": {
+              "description": "Public keys in PEM form.",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "$ref": "#/$defs/file"
+                  },
+                  "kid": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "keys": {
+          "description": "The key texts that the edge knows. Each text is a secret in a file.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "no_access",
+            "unknown"
+          ],
+          "properties": {
+            "valid": {
+              "description": "A key that the edge accepts.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "text_file",
+                "subject",
+                "owner"
+              ],
+              "properties": {
+                "text_file": {
+                  "$ref": "#/$defs/file"
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "owner": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "no_access": {
+              "description": "A key that the edge knows, and whose subject has no true decision for the action access.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "text_file"
+              ],
+              "properties": {
+                "text_file": {
+                  "$ref": "#/$defs/file"
+                }
+              }
+            },
+            "unknown": {
+              "description": "A text with the format of a key that the edge does not know.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "text_file"
+              ],
+              "properties": {
+                "text_file": {
+                  "$ref": "#/$defs/file"
+                }
+              }
+            }
+          }
+        },
+        "upstream": {
+          "description": "The listener that stands for the service behind the edge.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "listen"
+          ],
+          "properties": {
+            "listen": {
+              "$ref": "#/$defs/address"
+            }
+          }
+        },
+        "pdp": {
+          "description": "The PDP that the edge calls for the action access. The runner starts fake-pdp with this data.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "listen"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "directory"
+              ]
+            },
+            {
+              "required": [
+                "directory_file"
+              ]
+            }
+          ],
+          "properties": {
+            "listen": {
+              "$ref": "#/$defs/address"
+            },
+            "directory": {
+              "description": "The name of a directory file of the conformance cases, for example access.json.",
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]*\\.json$"
+            },
+            "directory_file": {
+              "description": "A data file of the schema fake-pdp-data.",
+              "$ref": "#/$defs/file"
+            },
+            "credential_file": {
+              "description": "The file with the credential that the edge sends to the PDP. The credential is a secret.",
+              "$ref": "#/$defs/file"
+            }
+          }
+        },
+        "mcp_path": {
+          "description": "The path of the MCP endpoint. The member says that the edge has one.",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "token_cache": {
+          "description": "True when the edge keeps identity tokens (protocol 9.9). The default is false.",
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "pep": {
+        "service": "datastore",
+        "token": {
+          "header": "X-Identity-Token",
+          "iss": "https://edge.example",
+          "max_age_seconds": 300,
+          "skew_seconds": 30,
+          "keys": [
+            {
+              "alg": "Ed25519",
+              "kid": "edge-ed25519",
+              "file": "test-edge-ed25519.pem"
+            },
+            {
+              "alg": "ES256",
+              "kid": "edge-es256",
+              "file": "test-edge-es256.pem"
+            }
+          ]
+        },
+        "pdp": {
+          "listen": "127.0.0.1:8181",
+          "credential_file": "pdp-credential.txt"
+        },
+        "operations": {
+          "use_plain": {
+            "method": "GET",
+            "path": "/write/orders",
+            "action": "data.write",
+            "resource_type": "table",
+            "resource_id": "orders",
+            "ancestors": [
+              {
+                "type": "service",
+                "id": "datastore"
+              },
+              {
+                "type": "host",
+                "id": "prod"
+              },
+              {
+                "type": "database",
+                "id": "test1"
+              }
+            ]
+          },
+          "use_service": {
+            "method": "GET",
+            "path": "/service",
+            "action": "data.write"
+          }
+        }
+      },
+      "timeouts": {
+        "request_seconds": 5
+      }
+    },
+    {
+      "pdp": {
+        "spawn_fake_pdp": true
+      }
+    },
+    {
+      "pdp": {
+        "credential_file": "pdp-credential.txt",
+        "directory_check": {
+          "mode": "control_questions",
+          "max_questions": 50
+        },
+        "load": {
+          "url": "http://127.0.0.1:8181/__load",
+          "method": "PUT"
+        },
+        "clock_admin_url": "http://127.0.0.1:8181/__fake/clock"
+      }
+    },
+    {
+      "edge": {
+        "service": "datastore",
+        "token_header": "X-Identity-Token",
+        "trust": {
+          "iss": "https://edge.example",
+          "max_age_seconds": 300,
+          "skew_seconds": 30,
+          "jwks_file": "edge-jwks.json"
+        },
+        "keys": {
+          "valid": {
+            "text_file": "valid-key.txt",
+            "subject": "key:ann-k1",
+            "owner": "ann"
+          },
+          "no_access": {
+            "text_file": "no-access-key.txt"
+          },
+          "unknown": {
+            "text_file": "unknown-key.txt"
+          }
+        },
+        "upstream": {
+          "listen": "127.0.0.1:9000"
+        },
+        "pdp": {
+          "listen": "127.0.0.1:8181",
+          "directory": "access.json"
+        },
+        "mcp_path": "/mcp"
+      }
+    }
+  ]
+}

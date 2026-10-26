@@ -20,7 +20,7 @@ Start the test PDP and the service. The data of the PDP has the action document 
 $ fake-pdp --credential-file crates/fake-pdp/examples/pep-credential.txt \
     crates/reference-service/examples/pdp-data.json
 $ reference-service crates/reference-service/examples/config.json
-reference-service 0.1.0 on http://127.0.0.1:8080
+reference-service 1.0.0 on http://127.0.0.1:8080
 ```
 
 The service writes one line to the standard error for each request. The line has the method, the path and the status. It never has a header, a query or a body. A refusal also shows its cause in the line. The client never gets the cause.

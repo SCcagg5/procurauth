@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json",
+  "title": "Data of the test PDP",
+  "description": "The data file of the tool fake-pdp. It holds the directory: subjects, owners, grants and limit values. It also holds the action document of each service. Some settings make a test repeatable: a fixed clock, the first values of the counters, the metadata of the PDP and the failures to make. The conformance cases use the same data, and the schema is closed. A schema cannot check the rules between members, but the Rust reader checks them, for example that a grant names a declared action.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["services", "subjects"],
+  "properties": {
+    "clock": {
+      "description": "A fixed clock. Without this member, the PDP uses the system clock.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["now"],
+      "properties": {
+        "now": {
+          "description": "The time in whole seconds since the Unix epoch. The windows of the counters follow this time (protocol 6.3).",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "metadata": {
+      "description": "The values of the metadata members of the PDP (protocol 6.9, 10.7, 10.7a). A member that the file does not give is not in the metadata.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "usage_max_seconds": { "description": "The member procurauth_usage_max_seconds.", "type": "integer", "minimum": 1 },
+        "idle_max_seconds": { "description": "The member procurauth_idle_max_seconds.", "type": "integer", "minimum": 1 },
+        "evaluations_max_bytes": { "description": "The member procurauth_evaluations_max_bytes.", "type": "integer", "minimum": 1 },
+        "evaluations_max_items": { "description": "The member procurauth_evaluations_max_items.", "type": "integer", "minimum": 1 }
+      }
+    },
+    "services": {
+      "description": "The services that the PDP knows.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/service" }
+    },
+    "subjects": {
+      "description": "The persons and the keys.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/subject" }
+    },
+    "counters": {
+      "description": "The first values of counters. Without an entry, a counter starts at zero.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/counter" }
+    },
+    "failures": {
+      "description": "The failures that the PDP makes, to test the PEP (protocol 6.9, 10.3).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/failure" }
+    }
+  },
+  "$defs": {
+    "node_path": {
+      "description": "A full path in the notation of protocol section 13: segments of the form type:id with a slash between them, from service:id down. Each id is percent-encoded as protocol 5.2 says. A path has 4 segments below the service at most.",
+      "type": "string",
+      "pattern": "^service:(?:[A-Za-z0-9._~-]|%[0-9A-F]{2})+(?:/[a-z][a-z0-9_]{0,31}:(?:[A-Za-z0-9._~-]|%[0-9A-F]{2})+){0,4}$"
+    },
+    "service": {
+      "description": "One service.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "description": "The id of the service. It is equal to the member server of its document.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "document": {
+          "description": "The last good action document. Without it, the PDP has no good document of the service (protocol 11.1).",
+          "$ref": "https://sccagg5.github.io/procurauth/schemas/action-document.schema.json"
+        },
+        "credential_sha256": {
+          "description": "The SHA-256 digest of the credential of the service, in 64 lower-case hexadecimal digits (protocol 12). Without it, the test PDP accepts any credential.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "subject": {
+      "description": "A person, or a key. The id of a person has no colon (protocol 3.1). The id of a key is key:local-part (protocol 3.2). A key has an owner, and it can have a state. A person has neither.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "owner": {
+          "description": "The id of the owner of a key, a person. The owner can be absent from the file. The key is then an unknown subject (protocol 11.1).",
+          "type": "string",
+          "pattern": "^[^:]+$"
+        },
+        "state": {
+          "description": "The state of a key. A revoked key and an expired key are unknown subjects (protocol 11.1). The default is active.",
+          "enum": ["active", "revoked", "expired"],
+          "default": "active"
+        },
+        "grants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/grant" }
+        }
+      },
+      "oneOf": [
+        {
+          "properties": { "id": { "pattern": "^[^:]+$" } },
+          "not": {
+            "anyOf": [
+              { "required": ["owner"] },
+              { "required": ["state"] }
+            ]
+          }
+        },
+        {
+          "properties": { "id": { "pattern": "^key:[a-z0-9_-]{1,64}$" } },
+          "required": ["owner"]
+        }
+      ]
+    },
+    "grant": {
+      "description": "A right to do an action on a node (protocol 3.5). The grant covers the node and each node below it (protocol 4.3). The action access opens the service to the subject, and its grant gives the budgets (protocol 8.3).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "resource"],
+      "properties": {
+        "action": {
+          "description": "The name of an action of the document, or access.",
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
+        },
+        "resource": { "$ref": "#/$defs/node_path" },
+        "limits": { "$ref": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json" }
+      }
+    },
+    "counter": {
+      "description": "The first value of one counter: the units that the subject spent in the current window of the fixed clock (protocol 6.7).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "limit", "window", "used"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1 },
+        "limit": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+        "window": { "enum": ["second", "minute", "hour", "day"] },
+        "used": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "failure": {
+      "description": "One failure to make. The rule applies to a question that matches each member of when. Without when, it applies to each question.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "description": "error_503 answers HTTP 503. delay waits for delay_ms and then answers as usual. no_answer never answers.",
+          "enum": ["error_503", "delay", "no_answer"]
+        },
+        "delay_ms": { "type": "integer", "minimum": 1 },
+        "times": {
+          "description": "How many times the rule applies. Without this member, the rule applies each time.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "when": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "subject": { "type": "string" },
+            "action": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$" },
+            "resource": { "$ref": "#/$defs/node_path" },
+            "usage": { "description": "True for a question with context.usage.", "type": "boolean" },
+            "endpoint": { "enum": ["evaluation", "evaluations", "metadata"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "delay" } }, "required": ["kind"] },
+          "then": { "required": ["delay_ms"] },
+          "else": { "not": { "required": ["delay_ms"] } }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "clock": { "now": 1792569648 },
+      "services": [
+        {
+          "id": "datastore",
+          "document": {
+            "server": "datastore",
+            "resource_types": [
+              { "name": "host", "parent": "service", "description": "One database server." },
+              { "name": "database", "parent": "host", "description": "One database." }
+            ],
+            "actions": [
+              {
+                "name": "data.read",
+                "resource_types": ["service", "host", "database"],
+                "description": "Read data.",
+                "limits": ["requests", "max_rows"]
+              }
+            ],
+            "limits": [
+              { "name": "requests", "label": "Requests", "description": "Requests that run.", "unit": "request", "kind": "budget" },
+              { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000 }
+            ]
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "id": "alice",
+          "grants": [
+            {
+              "action": "access",
+              "resource": "service:datastore",
+              "limits": { "requests": [ { "amount": 10, "window": "second" } ] }
+            },
+            { "action": "data.read", "resource": "service:datastore/host:prod/database:test1", "limits": { "max_rows": 1000 } }
+          ]
+        },
+        {
+          "id": "key:9b1c04e2aa71f0c3",
+          "owner": "alice",
+          "grants": [
+            { "action": "data.read", "resource": "service:datastore/host:prod/database:test1" }
+          ]
+        }
+      ],
+      "counters": [ { "subject": "alice", "limit": "requests", "window": "second", "used": 9 } ],
+      "failures": [ { "kind": "delay", "delay_ms": 250, "when": { "subject": "alice", "usage": true }, "times": 1 } ],
+      "metadata": { "usage_max_seconds": 5, "idle_max_seconds": 30 }
+    },
+    { "services": [], "subjects": [] }
+  ]
+}

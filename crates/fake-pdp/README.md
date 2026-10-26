@@ -18,7 +18,7 @@ Start the server with the example data of protocol section 13.
 
 ```text
 $ fake-pdp --listen 127.0.0.1:8181 crates/fake-pdp/examples/datastore.json
-fake-pdp 0.1.0 on http://127.0.0.1:8181
+fake-pdp 1.0.0 on http://127.0.0.1:8181
 metadata /.well-known/authzen-configuration
 ```
 
