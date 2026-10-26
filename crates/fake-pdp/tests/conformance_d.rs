@@ -1,4 +1,4 @@
-//! Run the cases of the series D of `conformance/D/` against the server over HTTP.
+//! Run the cases of the series D of `conformance/cases/D/` against the server over HTTP.
 //!
 //! The runner is local and small. It reads the case as JSON and uses the
 //! matchers of `conformance/README.md`. The real runner is `access-conformance`.
@@ -152,7 +152,7 @@ fn run_case(path: &std::path::Path) -> usize {
 
 #[test]
 fn the_server_passes_every_case_of_the_series_d() {
-    let mut paths: Vec<_> = fs::read_dir(conformance_dir().join("D"))
+    let mut paths: Vec<_> = fs::read_dir(conformance_dir().join("cases/D"))
         .unwrap()
         .map(|e| e.unwrap().path())
         .collect();

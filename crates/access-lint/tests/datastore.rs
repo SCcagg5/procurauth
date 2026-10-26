@@ -86,7 +86,13 @@ fn p_13_the_directory_files_of_the_conformance_data_lint_clean() {
         let path = entry.unwrap().path();
         let value: Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
         for service in value["services"].as_array().unwrap() {
-            let findings = check_document(&text(&service["document"])).1;
+            // A service of the test data can have no document on purpose.
+            if service["document"].is_null() {
+                continue;
+            }
+            // The compact form is the size that a service sends. The file holds a document of the maximum size.
+            let compact = serde_json::to_string(&service["document"]).unwrap();
+            let findings = check_document(&compact).1;
             assert!(findings.is_empty(), "{}: {findings:?}", path.display());
         }
     }
