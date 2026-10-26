@@ -122,11 +122,19 @@ pub fn write(dir: &Path, name: &str, content: &str) -> String {
     path.display().to_string()
 }
 
-/// A port that is free at this moment.
+/// A port that is free at this moment. The ports of one test process differ from each other.
+/// They are below the range of the ports that the system gives to a connection.
 pub fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+    use std::sync::atomic::{AtomicU16, Ordering};
+    static NEXT: AtomicU16 = AtomicU16::new(0);
+    loop {
+        let step = NEXT.fetch_add(1, Ordering::SeqCst);
+        let offset = (std::process::id() as u16)
+            .wrapping_mul(37)
+            .wrapping_add(step.wrapping_mul(7));
+        let port = 20_000 + offset % 10_000;
+        if TcpListener::bind(("127.0.0.1", port)).is_ok() {
+            return port;
+        }
+    }
 }

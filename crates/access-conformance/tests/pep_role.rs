@@ -7,11 +7,21 @@
 
 mod common;
 
-use common::mock_pep::{self, CREDENTIAL, Defects, MockPep};
+use common::mock_pep::{self, CREDENTIAL, Defects, Features, MockPep};
 use common::*;
 
 /// Run the cases of the series U against a mock with the given defects.
 fn run_pep_with(name: &str, defects: Defects, enforce_credential: bool, extra: &[&str]) -> Out {
+    run_pep_features(name, defects, enforce_credential, Features::basic(), extra)
+}
+
+fn run_pep_features(
+    name: &str,
+    defects: Defects,
+    enforce_credential: bool,
+    features: Features,
+    extra: &[&str],
+) -> Out {
     let dir = temp_dir(name);
     let pdp_port = free_port();
     let credential = write(&dir, "credential.txt", &format!("{CREDENTIAL}\n"));
@@ -19,10 +29,11 @@ fn run_pep_with(name: &str, defects: Defects, enforce_credential: bool, extra: &
         format!("127.0.0.1:{pdp_port}").parse().unwrap(),
         defects.clone(),
     );
-    let profile = mock_pep::profile(
+    let profile = mock_pep::profile_with(
         pdp_port,
         enforce_credential.then_some(credential.as_str()),
         defects.cache_true_answers,
+        features,
     );
     let profile_path = write(&dir, "profile.json", &profile.to_string());
     let url = mock.url();
@@ -293,12 +304,11 @@ fn the_json_form_lists_the_failures_and_the_reasons_of_the_skips() {
         "status: expected 429, found 403"
     );
     assert_eq!(cases[2]["reason"], "the service has no options route");
-    assert_eq!(
+    assert!(
         report["target"]
             .as_str()
             .unwrap()
-            .starts_with("http://127.0.0.1:"),
-        true
+            .starts_with("http://127.0.0.1:")
     );
 }
 
@@ -356,4 +366,128 @@ fn a_service_that_is_not_reachable_gives_exit_code_2_before_any_request() {
     assert_eq!(out.code, 2);
     assert_eq!(out.stdout, "");
     assert!(out.stderr.contains("is not reachable"), "{}", out.stderr);
+}
+
+fn full(name: &str, defects: Defects, extra: &[&str]) -> Out {
+    run_pep_features(name, defects, true, Features::full(), extra)
+}
+
+#[test]
+fn a_correct_service_with_the_options_route_and_mcp_passes_98_cases_and_skips_the_session_budget() {
+    let out = full("pep_full", Defects::default(), &[]);
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert_eq!(out.summary(), "99 cases: 98 passed, 0 failed, 1 skipped");
+    assert_eq!(out.ids_with("skip"), vec!["U95"]);
+    assert!(
+        out.line("U95")
+            .ends_with("the action mcp.session lists no budget")
+    );
+}
+
+#[test]
+fn a_service_whose_session_action_lists_a_budget_passes_all_99_cases() {
+    let out = run_pep_features(
+        "pep_full_session",
+        Defects {
+            session_budget: true,
+            ..Defects::default()
+        },
+        true,
+        Features {
+            session_budget: true,
+            ..Features::full()
+        },
+        &[],
+    );
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert_eq!(out.summary(), "99 cases: 99 passed, 0 failed, 0 skipped");
+}
+
+#[test]
+fn p_5_7_a_route_that_accepts_a_bad_parameter_fails_the_cases_of_the_status_400() {
+    let out = full(
+        "pep_options_bad",
+        Defects {
+            options_accept_bad_parameters: true,
+            ..Defects::default()
+        },
+        &[],
+    );
+    assert_eq!(out.code, 1);
+    assert_eq!(failing(&out), vec!["U76", "U77", "U78", "U79", "U80"]);
+}
+
+#[test]
+fn p_mcp_a_refused_tool_with_another_error_than_an_unknown_tool_fails_the_cases_of_the_same_refusal()
+ {
+    let out = full(
+        "pep_tool_differs",
+        Defects {
+            refused_tool_differs: true,
+            ..Defects::default()
+        },
+        &[],
+    );
+    assert_eq!(out.code, 1);
+    assert_eq!(failing(&out), vec!["U26", "U89", "U92", "U97"]);
+}
+
+#[test]
+fn p_10_1a_a_service_that_asks_with_usage_before_the_other_permission_fails_the_cases_of_the_order()
+{
+    let out = full(
+        "pep_usage_first",
+        Defects {
+            usage_before_other_permission: true,
+            ..Defects::default()
+        },
+        &[],
+    );
+    assert_eq!(out.code, 1);
+    assert_eq!(failing(&out), vec!["U35", "U97"]);
+}
+
+#[test]
+fn a_case_that_takes_longer_than_the_case_timeout_stops_with_a_message() {
+    let silent = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", silent.local_addr().unwrap());
+    std::thread::spawn(move || {
+        let mut held = Vec::new();
+        for stream in silent.incoming().flatten() {
+            held.push(stream);
+        }
+    });
+    let dir = temp_dir("pep_case_timeout");
+    let pdp_port = free_port();
+    let mut profile = mock_pep::profile(pdp_port, None, false);
+    profile["timeouts"] =
+        serde_json::json!({"request_seconds": 30, "case_seconds": 1, "settle_ms": 0});
+    let path = write(&dir, "profile.json", &profile.to_string());
+    let started = std::time::Instant::now();
+    let out = run_cli(&[
+        "--role",
+        "pep",
+        "--profile",
+        &path,
+        "--url",
+        &url,
+        "--format",
+        "json",
+        "--cases",
+        "U01",
+    ]);
+    assert!(started.elapsed() < std::time::Duration::from_secs(10));
+    assert_eq!(out.code, 1, "{}", out.stdout);
+    let report = out.json();
+    let failures = report["cases"][0]["failures"].as_array().unwrap();
+    assert!(
+        failures[0]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("the request failed: ")
+    );
+    assert_eq!(
+        failures.last().unwrap()["message"],
+        "the case took more than 1 seconds"
+    );
 }

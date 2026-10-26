@@ -192,6 +192,17 @@ struct Prepared {
     expect: Expect,
 }
 
+static DEFAULT_OPERATION: std::sync::LazyLock<crate::profile::OpDef> =
+    std::sync::LazyLock::new(crate::profile::OpDef::default);
+
+/// The result of the steps of a case.
+struct StepsOutcome {
+    /// The failed checks.
+    failures: Vec<Failure>,
+    /// Why the case does not apply: no step could run with this profile.
+    skip: Option<String>,
+}
+
 /// What a PDP case needs from the PDP.
 struct Needs {
     clock: bool,
@@ -263,11 +274,21 @@ impl Runner<'_> {
         }
     }
 
+    /// The definition of an operation. The reads of the action document and of the options
+    /// route have a default, so the profile needs no entry for them.
     fn pep_def(&self, operation: Operation) -> Option<&crate::profile::OpDef> {
-        match &self.env {
-            Env::Pep(env) => env.profile.operations.get(&operation),
-            _ => None,
-        }
+        let Env::Pep(env) = &self.env else {
+            return None;
+        };
+        let default = match operation {
+            Operation::ReadActions => true,
+            Operation::ListOptions => env.profile.options_type.is_some(),
+            _ => false,
+        };
+        env.profile
+            .operations
+            .get(&operation)
+            .or_else(|| default.then(|| &*DEFAULT_OPERATION))
     }
 
     fn service(&self) -> &str {
@@ -661,10 +682,11 @@ impl Runner<'_> {
         endpoints: Option<&Endpoints>,
         deadline: Instant,
         hooks: &mut dyn Hooks,
-    ) -> Vec<Failure> {
+    ) -> StepsOutcome {
         let mut failures = Vec::new();
         let mut previous: Option<Value> = None;
         let mut ran = 0;
+        let mut skip: Option<String> = None;
         for (index, step) in case.steps.iter().enumerate() {
             if self.caps.first_held(&step.skip_if).is_some() {
                 continue;
@@ -683,7 +705,10 @@ impl Runner<'_> {
             let prepared = match self.prepare_step(step, vars, endpoints, previous.as_ref(), false)
             {
                 Ok(prepared) => prepared,
-                Err(Prep::Skip(_)) => continue,
+                Err(Prep::Skip(reason)) => {
+                    skip.get_or_insert(reason);
+                    continue;
+                }
                 Err(Prep::Error(why)) => {
                     failures.push(failure(Some(&name), why));
                     break;
@@ -707,13 +732,10 @@ impl Runner<'_> {
                 failures.push(failure(Some(&name), message));
             }
         }
-        if ran == 0 && failures.is_empty() {
-            failures.push(failure(
-                None,
-                "no step of the case could run with this profile",
-            ));
+        StepsOutcome {
+            failures,
+            skip: if ran == 0 { skip } else { None },
         }
-        failures
     }
 
     fn settle(&self, expect: &Expect) {
@@ -760,6 +782,7 @@ impl Runner<'_> {
         }
         env.pdp.begin_case(rules, fallback);
         let mut failures = Vec::new();
+        let mut skip = None;
         if let Some(reset) = &env.profile.reset
             && let Some(target) = &self.target
         {
@@ -793,7 +816,9 @@ impl Runner<'_> {
                 mark: 0,
                 now: self.now,
             };
-            failures = self.steps(case, vars, None, deadline, &mut hooks);
+            let outcome = self.steps(case, vars, None, deadline, &mut hooks);
+            skip = outcome.skip;
+            failures = outcome.failures;
             for fault in env.pdp.faults() {
                 failures.push(failure(None, format!("fault of the case: {fault}")));
             }
@@ -802,7 +827,10 @@ impl Runner<'_> {
         if let Some(server) = fake {
             server.shutdown();
         }
-        CaseResult::from_failures(case, failures)
+        match skip {
+            Some(reason) if failures.is_empty() => CaseResult::skipped(case, reason),
+            _ => CaseResult::from_failures(case, failures),
+        }
     }
 
     fn run_edge(&self, case: &Case, env: &EdgeEnv, vars: &Vars, deadline: Instant) -> CaseResult {
@@ -812,8 +840,11 @@ impl Runner<'_> {
             mark: 0,
             now: self.now,
         };
-        let failures = self.steps(case, vars, None, deadline, &mut hooks);
-        CaseResult::from_failures(case, failures)
+        let outcome = self.steps(case, vars, None, deadline, &mut hooks);
+        match outcome.skip {
+            Some(reason) if outcome.failures.is_empty() => CaseResult::skipped(case, reason),
+            _ => CaseResult::from_failures(case, outcome.failures),
+        }
     }
 
     /// The client of a PDP under test.
@@ -1109,11 +1140,14 @@ impl Runner<'_> {
             }
         }
         let mut hooks = PdpHooks;
-        let failures = self.steps(case, vars, Some(&endpoints), deadline, &mut hooks);
+        let outcome = self.steps(case, vars, Some(&endpoints), deadline, &mut hooks);
         if let Some(server) = spawned {
             server.shutdown();
         }
-        Ok(CaseResult::from_failures(case, failures))
+        Ok(match outcome.skip {
+            Some(reason) if outcome.failures.is_empty() => CaseResult::skipped(case, reason),
+            _ => CaseResult::from_failures(case, outcome.failures),
+        })
     }
 }
 

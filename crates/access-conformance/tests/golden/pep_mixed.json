@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "failures": [],
+      "id": "U01",
+      "paragraphs": [
+        "3.3",
+        "9.6"
+      ],
+      "reason": null,
+      "requirement": "MUST",
+      "status": "pass",
+      "title": "The PEP sends the subject with the type user and the claim sub as the id."
+    },
+    {
+      "failures": [
+        {
+          "message": "status: expected 429, found 403",
+          "step": "Use of an action that lists a budget"
+        },
+        {
+          "message": "header Retry-After: expected \"12\", found no value",
+          "step": "Use of an action that lists a budget"
+        }
+      ],
+      "id": "U04",
+      "paragraphs": [
+        "6.4",
+        "10.3",
+        "11.1"
+      ],
+      "reason": null,
+      "requirement": "MUST",
+      "status": "fail",
+      "title": "A false answer with budget_exceeded gives HTTP 429 with the header Retry-After."
+    },
+    {
+      "failures": [],
+      "id": "U05",
+      "paragraphs": [
+        "5.6"
+      ],
+      "reason": "the service has no options route",
+      "requirement": "MUST",
+      "status": "skip",
+      "title": "The options route asks a question with context.match equal to subtree for each child."
+    },
+    {
+      "failures": [
+        {
+          "message": "connections of the PDP: expected one of [1, 2], found 4",
+          "step": "The fourth use"
+        }
+      ],
+      "id": "U69",
+      "paragraphs": [
+        "10.7"
+      ],
+      "reason": null,
+      "requirement": "SHOULD",
+      "status": "warn",
+      "title": "The PEP keeps its connection to the PDP open between questions."
+    }
+  ],
+  "role": "pep",
+  "summary": {
+    "cases": 4,
+    "failed": 1,
+    "passed": 1,
+    "skipped": 1,
+    "warned": 1
+  },
+  "target": "http://127.0.0.1:<port>",
+  "tool": "access-conformance",
+  "version": "0.1.0"
+}

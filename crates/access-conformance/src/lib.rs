@@ -85,6 +85,15 @@ pub fn reference_table() -> String {
     reference::reference_table()
 }
 
+/// Check the text of a profile with the strict reader of the program.
+/// The directory `base` resolves the relative paths. The function reads no file of the profile.
+///
+/// # Errors
+/// Returns every error of the profile, each with the path of its member.
+pub fn check_profile(text: &str, base: &Path) -> Result<(), Vec<String>> {
+    Profile::parse(text, base).map(|_| ())
+}
+
 /// An error that stops the program with the exit code 2.
 struct Fault(Vec<String>);
 

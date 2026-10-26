@@ -1,0 +1,5 @@
+U01  pass  3.3,9.6        The PEP sends the subject with the type user and the claim sub as the id.
+U04  fail  6.4,10.3,11.1  step "Use of an action that lists a budget": status: expected 429, found 403 (and 1 more)
+U05  skip  5.6            the service has no options route
+U69  warn  10.7           step "The fourth use": connections of the PDP: expected one of [1, 2], found 4
+4 cases: 1 passed, 1 failed, 1 skipped, 1 warned

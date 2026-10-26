@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "failures": [],
+      "id": "D01",
+      "paragraphs": [
+        "4.3",
+        "7.3"
+      ],
+      "reason": null,
+      "requirement": "MUST",
+      "status": "pass",
+      "title": "A grant covers the node and each node below it, also a node that the service adds later."
+    },
+    {
+      "failures": [],
+      "id": "D05",
+      "paragraphs": [
+        "7.3",
+        "8.1",
+        "8.4"
+      ],
+      "reason": null,
+      "requirement": "MUST",
+      "status": "pass",
+      "title": "A ceiling takes the lowest value among the grants of the asked action, and a key never goes above its owner."
+    },
+    {
+      "failures": [],
+      "id": "D41",
+      "paragraphs": [
+        "6.3",
+        "11.1"
+      ],
+      "reason": null,
+      "requirement": "MUST",
+      "status": "pass",
+      "title": "When the counter of a window of a second is full, the answer is false with budget_exceeded and retry_after 1, with HTTP 200."
+    }
+  ],
+  "role": "pdp",
+  "summary": {
+    "cases": 3,
+    "failed": 0,
+    "passed": 3,
+    "skipped": 0,
+    "warned": 0
+  },
+  "target": null,
+  "tool": "access-conformance",
+  "version": "0.1.0"
+}

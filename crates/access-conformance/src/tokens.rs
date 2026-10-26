@@ -351,7 +351,7 @@ mod tests {
                 },
                 SigningEntry {
                     alg: TokenAlg::Es256,
-                    kid: None,
+                    kid: Some("k2".into()),
                     key: SigningKey::from_es256_scalar(&[9; 32]).unwrap(),
                 },
             ],
@@ -367,7 +367,7 @@ mod tests {
             SigningKey::from_ed25519_seed(&ED_SEED).public_key(Some("k1")),
             SigningKey::from_es256_scalar(&[9; 32])
                 .unwrap()
-                .public_key(None),
+                .public_key(Some("k2")),
         ])
     }
 
@@ -427,7 +427,8 @@ mod tests {
             (Defect::FutureIat, "iat"),
             (Defect::LongLife, "life"),
             (Defect::AtJwt, "typ"),
-            (Defect::AlgNone, "alg"),
+            // The core reads the empty third part of the token as a failure of the structure.
+            (Defect::AlgNone, "structure"),
             (Defect::AlgHs256, "alg"),
             (Defect::AlgEddsa, "alg"),
             (Defect::WrongIssuer, "iss"),

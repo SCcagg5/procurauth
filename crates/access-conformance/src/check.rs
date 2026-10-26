@@ -180,17 +180,9 @@ fn check_upstream(
 /// Check the expectation of a step. The expectation has no variable left.
 pub(crate) fn check(expect: &Expect, observed: &Observed<'_>) -> Vec<String> {
     let mut out = Vec::new();
-    let needs_reply = expect.status.is_some()
-        || !expect.headers.is_empty()
-        || expect.body_text.is_some()
-        || !expect.json.is_empty()
-        || expect.valid_as.is_some();
+    // When the request failed, the runner has already reported it. The answer has no check.
     match observed.reply {
-        None => {
-            if needs_reply {
-                out.push("the request failed, so the answer cannot be checked".to_owned());
-            }
-        }
+        None => {}
         Some(reply) => {
             if let Some(matcher) = &expect.status
                 && let Some(message) = matcher.verdict("status", Some(&json!(reply.status)))
@@ -323,7 +315,7 @@ mod tests {
         assert!(check(&e, &observed(Some(&ok))).is_empty());
         let bad = reply(200, &[("Location", "/x")], "hi");
         let out = check(&e, &observed(Some(&bad)));
-        assert_eq!(out.len(), 5, "{out:?}");
+        assert_eq!(out.len(), 4, "{out:?}");
         assert!(
             out[0].starts_with("status: expected 401, found 200"),
             "{out:?}"
@@ -331,15 +323,11 @@ mod tests {
     }
 
     #[test]
-    fn a_failed_request_fails_each_check_of_the_answer_once() {
+    fn a_failed_request_has_no_check_of_the_answer() {
         let mut e = expect();
         e.status = Some(Matcher::Equals(json!(200)));
         e.body_text = Some(Matcher::Present);
-        let out = check(&e, &observed(None));
-        assert_eq!(
-            out,
-            vec!["the request failed, so the answer cannot be checked"]
-        );
+        assert!(check(&e, &observed(None)).is_empty());
     }
 
     #[test]
