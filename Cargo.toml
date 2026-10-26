@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/procurauth-core", "conformance/schema-check"]
+members = ["crates/*", "conformance/schema-check"]
 
 [workspace.package]
 version = "0.1.0"

@@ -12,7 +12,8 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 image="procurauth-dev:1"
 registry_volume="procurauth-cargo-registry"
-target_volume="procurauth-target"
+# One target volume for each checkout: a worktree never shares build files with another.
+target_volume="procurauth-target-$(printf %s "$root" | sha1sum | cut -c1-8)"
 uid="$(id -u)"
 gid="$(id -g)"
 
