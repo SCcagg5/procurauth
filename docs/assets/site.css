@@ -489,3 +489,15 @@ details.more > .code-wrap, details.more > .tablewrap { margin-top: 18px; margin-
   table.tight td[data-label] { display: flex; gap: 10px; align-items: baseline; padding-top: 2px; padding-bottom: 2px; }
   table.tight td[data-label]::before { display: inline; flex: none; min-width: 5.5em; }
 }
+
+/* ------------------------------------------------------- justified text */
+.prose p, .prose li, .lede, .doc .intro p, .pbody p, .pbody li, .doc .terms li, .doc .refs li, .card p {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.pbody li p, .pbody pre, .pbody code { hyphens: manual; }
+@media (max-width: 559px) {
+  .prose p, .prose li, .lede, .pbody p, .pbody li, .card p { text-align: left; hyphens: manual; }
+}
