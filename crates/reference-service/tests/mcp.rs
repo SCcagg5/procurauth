@@ -51,6 +51,39 @@ fn mcp_3_6a_a_method_with_no_tool_asks_mcp_session_and_gets_a_result() {
 }
 
 #[test]
+fn mcp_3_6a_a_method_with_no_tool_is_one_use_when_the_action_lists_a_budget() {
+    let s = stack_with(&pdp_data(), Options::default(), |config| {
+        config["mcp_session_budget"] = json!(true);
+    });
+    let token = s.edge.token("alice");
+    let reply = s.mcp(Some(&token), &rpc(7, "ping", json!({})));
+    assert_eq!(reply.status, 200);
+    let log = s.pdp.log();
+    assert_eq!(log.len(), 1);
+    assert_eq!(log[0].action, "mcp.session");
+    assert!(
+        log[0].usage,
+        "the ping is one use: the question has context.usage"
+    );
+    // The document lists the budget on the action.
+    let document = send(
+        s.service.local_addr(),
+        "GET",
+        "/.well-known/procurauth/actions",
+        &[],
+        None,
+    )
+    .json();
+    let session = document["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|a| a["name"] == "mcp.session")
+        .unwrap();
+    assert_eq!(session["limits"], json!(["requests"]));
+}
+
+#[test]
 fn mcp_5_1b_a_false_answer_for_a_method_with_no_tool_gives_403_and_32001() {
     let s = stack();
     // The PDP does not know this subject.

@@ -1,0 +1,6 @@
+{
+  "keys": [
+    { "sha256": "e527e657b9fdff803d7543d1a9d01532839a5b5a3ea18cf8cf5a984202347562", "subject": "key:ann-k1", "owner": "ann" },
+    { "sha256": "f8ed56108d1db15e2820b33c200f8d7f543c21e9dcb4d4ade83c0fd214598478", "subject": "key:ann-k2", "owner": "ann" }
+  ]
+}

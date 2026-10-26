@@ -4,6 +4,18 @@ This file maps each operation of the conformance cases to a request of the refer
 
 The service is the `datastore` example. Its action document is in `src/document.rs`. Its test data is in `examples/pdp-data.json`.
 
+## Profile files
+
+The profiles of the runner are in `examples/`. They name the keys of the test edge in `crates/access-conformance/examples/`.
+
+| File | Content |
+| --- | --- |
+| `conformance-profile.json` | The profile for the default configuration. The case U95 is skipped. |
+| `conformance-profile-session-budget.json` | The profile for `conformance-session-budget.json`. All 99 cases run. |
+| `conformance-session-budget.json` | The configuration of `conformance.json`, with `mcp_session_budget` set to true. |
+
+The script `scripts/conformance.sh pep` runs both profiles against the service.
+
 ## Setup
 
 | Item | Value |
@@ -116,7 +128,7 @@ The form of the request for input follows the draft of the MCP revision 2026-07-
 | `no_options_route` | false |
 | `no_answer_cache` | true with the default `cache_ttl_seconds` of 0. The service keeps no answer. |
 | `no_mcp_endpoint` | false |
-| `no_budget_session` | true. The action `mcp.session` lists no budget. |
+| `no_budget_session` | True by default: the action `mcp.session` lists no budget. False with the key `mcp_session_budget` set to true. |
 | `no_input_tool` | false |
 | `no_approval_tool` | false |
 | `no_multi_action` | false |

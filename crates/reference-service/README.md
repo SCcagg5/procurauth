@@ -96,6 +96,8 @@ The key `cache_ttl_seconds` has the default 0. A kept answer can show an old rig
 
 - `examples/config.json` runs the service with `fake-pdp` on the loopback address.
 - `examples/conformance.json` is the configuration for the runner of the conformance cases. It trusts the two test keys of the edge. It reads the credential from the variable `PROCURAUTH_PDP_CREDENTIAL`. It uses a short timeout, so that a case with a PDP that does not answer ends quickly.
+- `examples/conformance-session-budget.json` is the same file with `mcp_session_budget` set to true. The case U95 then runs.
+- `examples/conformance-profile.json` and `examples/conformance-profile-session-budget.json` are the profiles of the runner. `scripts/conformance.sh pep` uses them.
 - `examples/pdp-data.json` is the data file of `fake-pdp` for this service. It has the action document of the service, Alice, her key, Bob, his key and Carol.
 
 ## The data

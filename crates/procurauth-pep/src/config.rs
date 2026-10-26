@@ -258,7 +258,7 @@ impl PepConfig {
                 "0",
             ));
         }
-        self.check_pdp(&mut errors);
+        check_pdp(&self.pdp, &mut errors);
         if !self.cache_ttl.is_zero() && self.cache_max_entries == 0 {
             errors.push(ConfigError::new(
                 "cache_max_entries",
@@ -279,67 +279,83 @@ impl PepConfig {
             Err(errors)
         }
     }
+}
 
-    fn check_pdp(&self, errors: &mut Vec<ConfigError>) {
-        let pdp = &self.pdp;
-        match Url::parse(&pdp.url) {
-            Err(error) => errors.push(ConfigError::new(
-                "pdp.url",
-                "an absolute `https` URL, or an `http` URL with `pdp.allow_insecure_pdp_link`",
-                if pdp.url.contains('@') {
-                    format!("a URL with user information (the value stays hidden): {error}")
-                } else {
-                    format!("{:?} ({error})", pdp.url)
-                },
-            )),
-            Ok(url) => {
-                if url.scheme == Scheme::Http && !pdp.allow_insecure_pdp_link {
-                    errors.push(ConfigError::new(
+impl PdpConfig {
+    /// Check every key of the link to the PDP. The function returns all the
+    /// errors, and it changes nothing.
+    ///
+    /// # Errors
+    /// Returns one error for each key with a bad value.
+    pub fn check(&self) -> Result<(), Vec<ConfigError>> {
+        let mut errors = Vec::new();
+        check_pdp(self, &mut errors);
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+}
+
+fn check_pdp(pdp: &PdpConfig, errors: &mut Vec<ConfigError>) {
+    match Url::parse(&pdp.url) {
+        Err(error) => errors.push(ConfigError::new(
+            "pdp.url",
+            "an absolute `https` URL, or an `http` URL with `pdp.allow_insecure_pdp_link`",
+            if pdp.url.contains('@') {
+                format!("a URL with user information (the value stays hidden): {error}")
+            } else {
+                format!("{:?} ({error})", pdp.url)
+            },
+        )),
+        Ok(url) => {
+            if url.scheme == Scheme::Http && !pdp.allow_insecure_pdp_link {
+                errors.push(ConfigError::new(
                         "pdp.url",
                         "an `https` URL, because the link to the PDP must be secured (10.0, step 4) and `pdp.allow_insecure_pdp_link` is false",
                         format!("{:?}", pdp.url),
                     ));
-                }
             }
         }
-        let credential = pdp.credential.expose();
-        if credential.is_empty() {
-            errors.push(ConfigError::new(
-                "pdp.credential",
-                "a text that is not empty",
-                "an empty text",
-            ));
-        } else if credential.bytes().any(|b| !(0x21..0x7f).contains(&b)) {
-            errors.push(ConfigError::new(
-                "pdp.credential",
-                "visible ASCII characters only, with no space",
-                "a value with another character (the value stays hidden)",
-            ));
+    }
+    let credential = pdp.credential.expose();
+    if credential.is_empty() {
+        errors.push(ConfigError::new(
+            "pdp.credential",
+            "a text that is not empty",
+            "an empty text",
+        ));
+    } else if credential.bytes().any(|b| !(0x21..0x7f).contains(&b)) {
+        errors.push(ConfigError::new(
+            "pdp.credential",
+            "visible ASCII characters only, with no space",
+            "a value with another character (the value stays hidden)",
+        ));
+    }
+    for (key, value) in [
+        ("pdp.request_timeout", pdp.request_timeout),
+        ("pdp.idle_close_after", pdp.idle_close_after),
+        ("pdp.metadata_max_age", pdp.metadata_max_age),
+    ] {
+        if value.is_zero() {
+            errors.push(ConfigError::new(key, "a duration of more than 0", "0"));
         }
-        for (key, value) in [
-            ("pdp.request_timeout", pdp.request_timeout),
-            ("pdp.idle_close_after", pdp.idle_close_after),
-            ("pdp.metadata_max_age", pdp.metadata_max_age),
-        ] {
-            if value.is_zero() {
-                errors.push(ConfigError::new(key, "a duration of more than 0", "0"));
-            }
-        }
-        if pdp.max_connections == 0 {
-            errors.push(ConfigError::new(
-                "pdp.max_connections",
-                "a whole number of 1 or more",
-                "0",
-            ));
-        }
-        for (key, value) in [
-            ("pdp.evaluations_max_bytes", pdp.evaluations_max_bytes),
-            ("pdp.evaluations_max_items", pdp.evaluations_max_items),
-            ("pdp.max_response_bytes", pdp.max_response_bytes),
-        ] {
-            if value == 0 {
-                errors.push(ConfigError::new(key, "a whole number of 1 or more", "0"));
-            }
+    }
+    if pdp.max_connections == 0 {
+        errors.push(ConfigError::new(
+            "pdp.max_connections",
+            "a whole number of 1 or more",
+            "0",
+        ));
+    }
+    for (key, value) in [
+        ("pdp.evaluations_max_bytes", pdp.evaluations_max_bytes),
+        ("pdp.evaluations_max_items", pdp.evaluations_max_items),
+        ("pdp.max_response_bytes", pdp.max_response_bytes),
+    ] {
+        if value == 0 {
+            errors.push(ConfigError::new(key, "a whole number of 1 or more", "0"));
         }
     }
 }

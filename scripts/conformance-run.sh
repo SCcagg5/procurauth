@@ -108,6 +108,18 @@ run_pdp() {
     stop_all
 }
 
+# The series E. The runner starts fake-pdp and the service behind the edge in its own
+# process. It binds 127.0.0.1:8181 and 127.0.0.1:9000, so the edge starts first.
+run_edge() {
+    local dir=crates/reference-edge/examples
+    start edge "$bin/reference-edge" "$dir/conformance.json"
+    wait_port 8090 || { show_logs edge; failed=1; return; }
+    run_runner "E (reference-edge)" --role edge \
+        --profile "$dir/conformance-profile.json" --url http://127.0.0.1:8090 \
+        || show_logs edge
+    stop_all
+}
+
 case "$mode" in
     pep) run_pep ;;
     pdp) run_pdp ;;
@@ -115,6 +127,7 @@ case "$mode" in
     all)
         run_pep
         run_pdp
+        run_edge
         ;;
 esac
 

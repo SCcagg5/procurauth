@@ -523,3 +523,21 @@ fn the_messages_of_the_code_follow_the_rules() {
     assert!(paragraphs.len() > 50, "the messages are missing");
     report("messages", &check_all(&paragraphs, false));
 }
+
+#[test]
+fn the_lint_reads_the_readme_of_each_crate() {
+    let root = repository_root();
+    let read: Vec<PathBuf> = markdown_files(&root);
+    for entry in fs::read_dir(root.join("crates")).unwrap() {
+        let dir = entry.unwrap().path();
+        if dir.join("Cargo.toml").is_file() {
+            let readme = dir.join("README.md");
+            assert!(readme.is_file(), "{} has no README.md", dir.display());
+            assert!(
+                read.contains(&readme),
+                "the lint does not read {}",
+                readme.display()
+            );
+        }
+    }
+}

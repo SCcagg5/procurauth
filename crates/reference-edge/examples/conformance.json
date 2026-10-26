@@ -1,0 +1,25 @@
+{
+  "listen": "127.0.0.1:8090",
+  "service_id": "datastore",
+  "issuer": "https://edge.example",
+  "token_life_seconds": 60,
+  "max_token_age_seconds": 300,
+  "token_cache_max_entries": 1000,
+  "key_format_file": "crates/reference-edge/examples/key-format.test-only.json",
+  "keys_file": "crates/reference-edge/examples/keys.test-only.json",
+  "upstream": {
+    "url": "http://127.0.0.1:9000",
+    "connect_timeout_ms": 1000,
+    "response_timeout_seconds": 5
+  },
+  "signing": {
+    "key_file": "crates/access-conformance/examples/test-edge-ed25519.pem",
+    "kid": "edge-ed25519"
+  },
+  "pdp": {
+    "url": "http://127.0.0.1:8181",
+    "credential_file": "crates/access-conformance/examples/pdp-credential.txt",
+    "allow_insecure_pdp_link": true,
+    "request_timeout_ms": 2000
+  }
+}

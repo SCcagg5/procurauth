@@ -157,7 +157,7 @@ impl Shared {
     }
 
     /// Replace the data. The body is a data file. A member of `metadata` that differs
-    /// from the running values is an error: the listener keeps the values that it started with.
+    /// from the values of the start is an error: the listener keeps the values that it started with.
     fn admin_load(&self, request: &Request) -> Action {
         let value = match parse_slice(&request.body) {
             Ok(value) => value,

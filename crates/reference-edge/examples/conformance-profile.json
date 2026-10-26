@@ -1,0 +1,40 @@
+{
+  "edge": {
+    "service": "datastore",
+    "token_header": "X-Identity-Token",
+    "trust": {
+      "iss": "https://edge.example",
+      "max_age_seconds": 300,
+      "skew_seconds": 30,
+      "jwks_file": "../../access-conformance/examples/edge-jwks.json"
+    },
+    "keys": {
+      "valid": {
+        "text_file": "../../access-conformance/examples/edge-valid-key.txt",
+        "subject": "key:ann-k1",
+        "owner": "ann"
+      },
+      "no_access": {
+        "text_file": "../../access-conformance/examples/edge-no-access-key.txt"
+      },
+      "unknown": {
+        "text_file": "../../access-conformance/examples/edge-unknown-key.txt"
+      }
+    },
+    "upstream": {
+      "listen": "127.0.0.1:9000"
+    },
+    "pdp": {
+      "listen": "127.0.0.1:8181",
+      "directory": "access.json",
+      "credential_file": "../../access-conformance/examples/pdp-credential.txt"
+    },
+    "mcp_path": "/mcp",
+    "token_cache": true
+  },
+  "timeouts": {
+    "request_seconds": 10,
+    "case_seconds": 60,
+    "settle_ms": 50
+  }
+}

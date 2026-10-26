@@ -9,7 +9,7 @@ This document is for the developers of the ProcurAuth tools. It describes the cr
 | `procurauth-core` | `crates/procurauth-core` | The shared library. Each tool uses it. |
 | `procurauth-schema-check` | `conformance/schema-check` | Loads the JSON Schemas and checks the data files. |
 
-Each tool is a crate in `crates/`. It depends on `procurauth-core`. The tools are `access-lint`, `fake-pdp`, `access-token`, `keycheck` and `access-conformance`. The PEP library is a sixth crate.
+Each tool is a crate in `crates/`. It depends on `procurauth-core`. The tools are `access-lint`, `fake-pdp`, `access-token`, `keycheck` and `access-conformance`. The PEP library `procurauth-pep` is a sixth crate. Two reference programs use it: `reference-service` (the test subject of the series U) and `reference-edge` (the test subject of the series E).
 
 Other directories:
 
@@ -17,7 +17,7 @@ Other directories:
 | --- | --- |
 | `schemas/` | The JSON Schemas, one file for each document. |
 | `conformance/` | The conformance cases and the test directories. See its README. |
-| `scripts/` | `cargo.sh` and `ci.sh`. They run cargo in Docker. |
+| `scripts/` | `cargo.sh`, `conformance.sh` and `ci.sh`. They run in Docker. |
 | `notes/` | The decisions, the questions about the protocol, and the differences from the site. |
 
 ## The core crate
@@ -76,9 +76,21 @@ scripts/cargo.sh clippy --workspace --all-targets -- -D warnings
 scripts/ci.sh
 ```
 
-The script builds the image `procurauth-dev:1` one time. The image is `rust:1-bookworm` with `rustfmt` and `clippy`. The script runs as the host user. The cargo registry and the target directory are in the Docker volumes `procurauth-cargo-registry` and `procurauth-target`. The first run gives them to the host user. No root-owned file appears in the repository.
+The script builds the image `procurauth-dev:1` one time. The image is `rust:1-bookworm` with `rustfmt` and `clippy`. The script runs as the host user. The cargo registry and the target directory are in Docker volumes: `procurauth-cargo-registry` and one target volume for each checkout. The first run gives them to the host user. No root-owned file appears in the repository.
 
-`scripts/ci.sh` runs the format check, clippy and the tests. It stops at the first failure. `scripts/msrv.sh` checks that the workspace builds with the `rust-version` of the root `Cargo.toml`.
+`scripts/ci.sh` runs the format check, clippy, the tests and the conformance runs. It stops at the first failure. `scripts/msrv.sh` checks that the workspace builds with the `rust-version` of the root `Cargo.toml`.
+
+### Conformance runs
+
+`scripts/conformance.sh [pep|pdp|edge|all]` runs the runner `access-conformance` against the reference programs. It builds them with `scripts/cargo.sh`. It then starts one container with no network, and it starts all the processes in it, on the loopback address. The container holds the repository read only, and it stops by itself after a time limit. No port opens on the host.
+
+| Mode | Series | Target |
+| --- | --- | --- |
+| `pep` | U | `reference-service`, with and without a budget on the action `mcp.session`. |
+| `pdp` | D | `fake-pdp`, in the process of the runner and as a separate process. |
+| `edge` | E | `reference-edge`. |
+
+The profiles are in the `examples/` directory of each target crate. The exit code is 0 when no case failed.
 
 ### Test files
 

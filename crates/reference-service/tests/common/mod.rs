@@ -16,7 +16,7 @@ use access_token::make::{Shape, make_token};
 use fake_pdp::{Options, RunningServer, Server};
 use procurauth_core::jws::SigningKey;
 use reference_service::config::{Sources, load};
-use reference_service::service::{RunningService, build_app};
+use reference_service::service::{RunningService, build_app_with};
 use serde_json::{Value, json};
 
 pub const SERVICE: &str = "datastore";
@@ -177,9 +177,10 @@ pub fn stack_with(data: &Value, options: Options, tweak: impl FnOnce(&mut Value)
     )
     .unwrap();
     let log = Log::default();
-    let app = build_app(
+    let app = build_app_with(
         loaded.settings.pep,
         loaded.settings.mcp_path,
+        loaded.settings.mcp_session_budget,
         Box::new(log.clone()),
     )
     .unwrap();

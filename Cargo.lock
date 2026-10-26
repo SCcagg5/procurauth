@@ -1031,6 +1031,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "reference-edge"
+version = "0.1.0"
+dependencies = [
+ "access-token",
+ "base64",
+ "clap",
+ "ctrlc",
+ "fake-pdp",
+ "hex",
+ "procurauth-core",
+ "procurauth-pep",
+ "procurauth-schema-check",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "reference-service"
 version = "0.1.0"
 dependencies = [

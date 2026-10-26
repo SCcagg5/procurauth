@@ -577,3 +577,22 @@ fn the_data_file_of_the_test_pdp_follows_its_schema_and_is_read_by_the_core() {
     assert!(directory.is_some(), "{:?}", report.findings());
     assert!(report.findings().is_empty(), "{:?}", report.findings());
 }
+
+#[cfg(feature = "mcp")]
+#[test]
+fn the_session_budget_is_off_by_default_and_needs_the_mcp_path() {
+    let loaded = load_value(&base()).unwrap();
+    assert!(!loaded.settings.mcp_session_budget);
+    let mut value = base();
+    value["mcp_session_budget"] = json!(true);
+    // The key contradicts the absence of `mcp_path`.
+    assert!(has(
+        &errors(&value),
+        &["mcp_session_budget", "contradiction", "mcp_path"]
+    ));
+    value["mcp_path"] = json!("/mcp");
+    let loaded = load_value(&value).unwrap();
+    assert!(loaded.settings.mcp_session_budget);
+    value["mcp_session_budget"] = json!("yes");
+    assert!(has(&errors(&value), &["mcp_session_budget", "a boolean"]));
+}
