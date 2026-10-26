@@ -1,0 +1,2 @@
+tests/fixtures/document/5.3c_above_reader_minimum/fail.json: 1 warning
+  $.resources[0].label  rule 5.3c  warning: above the minimum of a reader

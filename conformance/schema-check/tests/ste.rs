@@ -112,24 +112,24 @@ fn files_with(dir: &Path, extension: &str, out: &mut Vec<PathBuf>) {
     out.sort();
 }
 
-/// The files with this name in the crates, one level down: `crates/<crate>/<name>`.
-fn files_with_name(dir: &Path, name: &str, out: &mut Vec<PathBuf>) {
-    let mut found: Vec<PathBuf> = fs::read_dir(dir)
-        .unwrap()
-        .map(|entry| entry.unwrap().path().join(name))
-        .filter(|path| path.is_file())
-        .collect();
-    found.sort();
-    out.extend(found);
-}
-
 fn markdown_files(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     files_with(&root.join("devdocs"), "md", &mut out);
     files_with(&root.join("notes"), "md", &mut out);
     out.push(root.join("conformance/README.md"));
     out.push(root.join("conformance/schema-check/README.md"));
-    files_with_name(&root.join("crates"), "README.md", &mut out);
+    // The README and the rules file of each crate.
+    if let Ok(entries) = fs::read_dir(root.join("crates")) {
+        for entry in entries {
+            let dir = entry.unwrap().path();
+            for name in ["README.md", "RULES.md"] {
+                if dir.join(name).is_file() {
+                    out.push(dir.join(name));
+                }
+            }
+        }
+    }
+    out.sort();
     out
 }
 

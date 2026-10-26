@@ -1,0 +1,12 @@
+tests/fixtures/context/document.json: no finding
+grants.json: 3 errors, 2 warnings
+  $.grants[0].limits.requests[1].window  rule 6.1   duplicate window
+  $.grants[1].limits.ghost               rule 6.10  warning: limit is not declared, the value gives nothing
+  $.grants[1].limits.max_rows            rule 6.1   value of a ceiling is out of range
+  $.grants[2].resource                   rule 5.2   action is not valid on the type
+  $.grants[3].limits.requests            rule 8.3   warning: the PDP ignores this budget
+options.json: 2 errors, 2 warnings
+  $.query                         rule 5.7  type does not follow the parent
+  $.answer.items[1].id            rule 4.2  warning: duplicate id
+  $.answer.items                  rule 5.7  more items than the limit
+  $.answer.items[0].has_children  rule 5.8  warning: has_children, but the type has no child type

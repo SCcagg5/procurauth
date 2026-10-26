@@ -7,3 +7,6 @@
 *.pem
 *.swp
 .DS_Store
+
+# The test keys of access-token are public on purpose: they sign nothing real.
+!/crates/access-token/examples/*.pem

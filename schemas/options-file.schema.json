@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/options-file.schema.json",
+  "title": "File of the options route",
+  "description": "The input of the option --options of the tool access-lint. It is an answer of the options route (protocol 5.8), or an envelope with the member answer and the query of the request. The query lets the tool check the answer against the action document.",
+  "oneOf": [
+    { "$ref": "https://sccagg5.github.io/procurauth/schemas/options-route-answer.schema.json" },
+    { "$ref": "#/$defs/envelope" }
+  ],
+  "$defs": {
+    "envelope": {
+      "description": "An answer with the query string of its request. The envelope is closed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["answer"],
+      "properties": {
+        "query": {
+          "description": "The query string of the request, without the question mark. Each value is percent-encoded as protocol 5.7 says.",
+          "type": "string"
+        },
+        "answer": {
+          "description": "The body of the answer of the service.",
+          "$ref": "https://sccagg5.github.io/procurauth/schemas/options-route-answer.schema.json"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "items": [
+        { "id": "test1", "label": "test1", "has_children": true },
+        { "id": "test2", "label": "test2", "has_children": true }
+      ],
+      "next": null
+    },
+    {
+      "query": "parent=host%3Aprod&type=database&q=test&limit=2",
+      "answer": {
+        "items": [
+          { "id": "test1", "label": "test1", "has_children": true },
+          { "id": "test2", "label": "test2", "has_children": true }
+        ],
+        "next": null
+      }
+    }
+  ]
+}

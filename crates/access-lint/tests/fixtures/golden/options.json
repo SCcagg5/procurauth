@@ -1,0 +1,18 @@
+{
+  "query": "type=database&limit=1",
+  "answer": {
+    "items": [
+      {
+        "id": "a",
+        "label": "a",
+        "has_children": true
+      },
+      {
+        "id": "a",
+        "label": "b",
+        "has_children": false
+      }
+    ],
+    "next": "c2"
+  }
+}

@@ -3,6 +3,17 @@
 version = 4
 
 [[package]]
+name = "access-lint"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "procurauth-core",
+ "procurauth-schema-check",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "access-token"
 version = "0.1.0"
 dependencies = [

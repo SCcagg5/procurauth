@@ -1,0 +1,14 @@
+{
+  "tool": "access-lint",
+  "version": "VERSION",
+  "ok": true,
+  "inputs": [
+    {
+      "kind": "document",
+      "source": "tests/fixtures/context/document.json",
+      "errors": 0,
+      "warnings": 0,
+      "findings": []
+    }
+  ]
+}

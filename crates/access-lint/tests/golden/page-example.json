@@ -1,0 +1,31 @@
+{
+  "tool": "access-lint",
+  "version": "VERSION",
+  "ok": false,
+  "inputs": [
+    {
+      "kind": "document",
+      "source": "actions.json",
+      "errors": 2,
+      "warnings": 0,
+      "findings": [
+        {
+          "severity": "error",
+          "path": "$.actions[1].limits[2]",
+          "rule": "5.2",
+          "code": "undeclared_limit",
+          "summary": "undeclared limit",
+          "message": "Limit `ghost` is not declared in `limits`."
+        },
+        {
+          "severity": "error",
+          "path": "$.limits[0].min",
+          "rule": "6.1",
+          "code": "budget_with_min",
+          "summary": "budget with \"min\"",
+          "message": "A budget declaration has no `min`."
+        }
+      ]
+    }
+  ]
+}

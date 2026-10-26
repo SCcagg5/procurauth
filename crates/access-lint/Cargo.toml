@@ -1,0 +1,29 @@
+[package]
+name = "access-lint"
+description = "Checks an action document of ProcurAuth, a file of grants and an answer of the options route."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+name = "access_lint"
+path = "src/lib.rs"
+
+[[bin]]
+name = "access-lint"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+procurauth-core = { path = "../procurauth-core" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+procurauth-schema-check = { path = "../../conformance/schema-check" }
