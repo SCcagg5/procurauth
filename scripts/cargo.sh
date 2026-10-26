@@ -9,18 +9,8 @@
 # in the repository.
 set -euo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-image="procurauth-dev:1"
-registry_volume="procurauth-cargo-registry"
-# One target volume for each checkout: a worktree never shares build files with another.
-target_volume="procurauth-target-$(printf %s "$root" | sha1sum | cut -c1-8)"
-uid="$(id -u)"
-gid="$(id -g)"
-
-# Build the development image one time: rust:1-bookworm with fmt and clippy.
-if ! docker image inspect "$image" >/dev/null 2>&1; then
-    docker build --quiet --tag "$image" --file "$root/scripts/Dockerfile.dev" "$root/scripts" >/dev/null
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/docker-env.sh"
+ensure_image
 
 # Create each volume one time, and give it to the host user with a root container.
 for volume in "$registry_volume" "$target_volume"; do

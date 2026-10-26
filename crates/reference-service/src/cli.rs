@@ -120,7 +120,12 @@ fn serve(loaded: Loaded, io: &mut Io<'_>) -> u8 {
     }
     say(io.stderr, &effective);
     let log = std::mem::replace(&mut io.log, Box::new(std::io::sink()));
-    let app = match service::build_app(settings.pep, settings.mcp_path, log) {
+    let app = match service::build_app_with(
+        settings.pep,
+        settings.mcp_path,
+        settings.mcp_session_budget,
+        log,
+    ) {
         Ok(app) => Arc::new(app),
         Err(errors) => {
             for error in errors {

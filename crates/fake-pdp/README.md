@@ -193,6 +193,7 @@ The flag `--admin` enables the admin endpoints. They share the listener of the P
 | --- | --- |
 | `GET /__fake/clock` | `{"now": T, "now_millis": M, "fixed": true}`. |
 | `POST /__fake/clock` | Body `{"advance": N}` or `{"set": T}`, in whole seconds. |
+| `PUT /__fake/load` | Body: a data file. Replace the directory, the counters, the failures and the credentials of the services. |
 | `POST /__fake/reset` | Put the counters back to the first values of the data file. |
 | `GET /__fake/counters` | The counters of the current windows. |
 | `GET /__fake/log` | The last questions, with the answers and the counters. |

@@ -1,0 +1,15 @@
+{
+  "pdp": {
+    "credential_file": "../../access-conformance/examples/pdp-credential.txt",
+    "directory_check": {
+      "mode": "control_questions",
+      "max_questions": 100
+    },
+    "load": {
+      "url": "http://127.0.0.1:8181/__fake/load",
+      "method": "PUT"
+    },
+    "reset_url": "http://127.0.0.1:8181/__fake/reset",
+    "clock_admin_url": "http://127.0.0.1:8181/__fake/clock"
+  }
+}

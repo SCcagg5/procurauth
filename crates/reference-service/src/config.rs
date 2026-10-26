@@ -116,7 +116,7 @@ macro_rules! key {
 pub const DEFAULT_LISTEN: &str = "127.0.0.1:8080";
 
 /// The table of keys, in the order of the effective configuration.
-pub const KEYS: [Key; 23] = [
+pub const KEYS: [Key; 24] = [
     key!(
         "",
         "listen",
@@ -236,6 +236,14 @@ pub const KEYS: [Key; 23] = [
         "path that starts with a slash",
         "none",
         "The path of the MCP endpoint. Without it, the service has no MCP endpoint."
+    ),
+    key!(
+        "",
+        "mcp_session_budget",
+        plain,
+        "boolean",
+        "false",
+        "List the budget `requests` on the action `mcp.session`, so that a method with no tool is one use (binding 3.6a). It needs `mcp_path`."
     ),
     key!(
         "pdp",
@@ -399,6 +407,8 @@ pub struct Settings {
     pub pep: PepConfig,
     /// The path of the MCP endpoint.
     pub mcp_path: Option<String>,
+    /// True when the action `mcp.session` lists a budget.
+    pub mcp_session_budget: bool,
 }
 
 /// The settings and the effective configuration.
@@ -759,6 +769,7 @@ fn read_all(reader: &mut Reader<'_>, obj: &mut Obj<'_>, report: &mut Report) -> 
     let cache_entries = reader.whole(obj, "cache_max_entries", 0, 10_000_000);
     let display = reader.whole(obj, "display_max_questions", 1, 1000);
     let mcp_path = read_mcp_path(reader, obj);
+    let session_budget = read_session_budget(reader, obj, mcp_path.is_some());
 
     // The section `pdp`.
     let pdp = obj.object_opt("pdp", "config", Unknown::Error, report);
@@ -798,7 +809,33 @@ fn read_all(reader: &mut Reader<'_>, obj: &mut Obj<'_>, report: &mut Report) -> 
         },
         pep,
         mcp_path,
+        mcp_session_budget: session_budget,
     })
+}
+
+fn read_session_budget(reader: &mut Reader<'_>, obj: &mut Obj<'_>, has_mcp: bool) -> bool {
+    let key = key_of("mcp_session_budget");
+    match obj.optional(key.leaf) {
+        None => {
+            reader.line(key, "false".to_owned(), Source::Default);
+            false
+        }
+        Some(Value::Bool(value)) => {
+            reader.line(key, value.to_string(), Source::File);
+            if *value && !has_mcp {
+                reader.error(
+                    "mcp_session_budget",
+                    "false, because there is no MCP endpoint (contradiction with `mcp_path`)",
+                    "true",
+                );
+            }
+            *value
+        }
+        Some(other) => {
+            reader.error("mcp_session_budget", "a boolean", &other.to_string());
+            false
+        }
+    }
 }
 
 fn read_jwks(reader: &mut Reader<'_>, obj: &mut Obj<'_>) -> Option<KeySet> {

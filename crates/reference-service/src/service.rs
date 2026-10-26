@@ -19,7 +19,7 @@ use procurauth_pep::http_client::{HttpTransport, HttpTransportConfig};
 
 use crate::app::App;
 use crate::data::Store;
-use crate::document::reference_document;
+use crate::document::reference_document_with;
 use crate::http::{Connection, Limits, ReadResult};
 
 /// The most connections that wait for a free worker.
@@ -36,7 +36,21 @@ pub fn build_app(
     mcp_path: Option<String>,
     log: Box<dyn Write + Send>,
 ) -> Result<App, Vec<String>> {
-    let document = reference_document(&pep.service_id)
+    build_app_with(pep, mcp_path, false, log)
+}
+
+/// Build the service as [`build_app`] does, with the option `mcp_session_budget`:
+/// when it is true, the action `mcp.session` lists a budget (binding 3.6a).
+///
+/// # Errors
+/// Returns every error of the configuration of the PEP, of the action document and of the map of the tools.
+pub fn build_app_with(
+    pep: PepConfig,
+    mcp_path: Option<String>,
+    session_budget: bool,
+    log: Box<dyn Write + Send>,
+) -> Result<App, Vec<String>> {
+    let document = reference_document_with(&pep.service_id, session_budget)
         .map_err(|text| vec![format!("The action document is not valid: {text}.")])?;
     let transport = Arc::new(HttpTransport::new(HttpTransportConfig::from_pdp(&pep.pdp)));
     let pep = Pep::new(pep, document, transport)

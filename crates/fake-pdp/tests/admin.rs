@@ -258,3 +258,71 @@ fn the_admin_endpoints_share_the_listener_with_the_pdp() {
     );
     assert_eq!(client.get("/.well-known/authzen-configuration").status, 200);
 }
+
+#[test]
+fn the_load_endpoint_replaces_the_directory_the_counters_and_the_clock() {
+    let server = start_admin(&datastore());
+    let q = question("alice", "data.read", TEST1, true);
+    assert_eq!(ask(&server, &q)["decision"], true);
+    // A data file with no subject: nobody has a right.
+    let mut empty = datastore();
+    empty["subjects"] = json!([]);
+    empty["clock"] = json!({"now": 1_792_569_700_u64});
+    let reply = Client::connect(server.local_addr()).send(
+        "PUT",
+        "/__fake/load",
+        &[],
+        Some(empty.to_string().as_bytes()),
+    );
+    assert_eq!(reply.status, 200, "{}", reply.text());
+    assert_eq!(reply.json()["loaded"], true);
+    assert_eq!(ask(&server, &q)["decision"], false);
+    assert_eq!(server.clock().now_seconds(), 1_792_569_700);
+    // The old data comes back with a second load. POST works as PUT.
+    let reply = post(&server, "/__fake/load", &datastore().to_string());
+    assert_eq!(reply.status, 200, "{}", reply.text());
+    assert_eq!(ask(&server, &q)["decision"], true);
+}
+
+#[test]
+fn the_load_endpoint_refuses_bad_data_and_keeps_the_old_data() {
+    let server = start_admin(&datastore());
+    let q = question("alice", "data.read", TEST1, true);
+    assert_eq!(post(&server, "/__fake/load", "{not json").status, 400);
+    let reply = post(&server, "/__fake/load", r#"{"services": 1}"#);
+    assert_eq!(reply.status, 400);
+    assert!(reply.json()["findings"].is_array());
+    let mut moved = datastore();
+    moved["metadata"] = json!({"usage_max_seconds": 77});
+    assert_eq!(
+        post(&server, "/__fake/load", &moved.to_string()).status,
+        400
+    );
+    assert_eq!(ask(&server, &q)["decision"], true);
+    let reply = Client::connect(server.local_addr()).send("GET", "/__fake/load", &[], None);
+    assert_eq!(reply.status, 405);
+}
+
+#[test]
+fn p_12_the_load_endpoint_installs_the_credentials_of_the_services() {
+    let server = start_admin(&datastore());
+    let mut data = datastore();
+    let digest = {
+        use sha2::{Digest as _, Sha256};
+        Sha256::digest(b"datastore-secret")
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
+    };
+    data["services"][0]["credential_sha256"] = json!(digest);
+    assert_eq!(post(&server, "/__fake/load", &data.to_string()).status, 200);
+    let q = question("alice", "data.read", TEST1, false);
+    let denied = Client::connect(server.local_addr()).post_json("/access/v1/evaluation", &q);
+    assert_eq!(denied.status, 401);
+    let allowed = Client::connect(server.local_addr()).post_json_with(
+        "/access/v1/evaluation",
+        &[("Authorization", "Bearer datastore-secret")],
+        &q,
+    );
+    assert_eq!(allowed.status, 200);
+}

@@ -76,6 +76,7 @@ The section `pdp` is an object. Its keys have the prefix `pdp.` in the table.
 | `cache_max_entries` | whole number from 0 to 10000000 | 10000 | none | The most kept answers (10.1b). The value 0 contradicts a `cache_ttl_seconds` above 0. |
 | `display_max_questions` | whole number from 1 to 1000 | 50 | none | The most questions that one request to the options route asks (5.6). |
 | `mcp_path` | path that starts with a slash | none | none | The path of the MCP endpoint. Without it, the service has no MCP endpoint. |
+| `mcp_session_budget` | boolean | false | none | List the budget `requests` on the action `mcp.session`, so that a method with no tool is one use (binding 3.6a). It needs `mcp_path`. |
 | `pdp.url` | URL with the scheme `http` (this program has no TLS client) | none, mandatory | `_env` and `_file` | The URL of the PDP. |
 | `pdp.credential` | text that is not empty, with visible ASCII characters | none, mandatory | `_env` and `_file` only | The credential of the service for the PDP. The service sends it in `Authorization: Bearer` (10.0). |
 | `pdp.allow_insecure_pdp_link` | boolean | false | none | Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. |

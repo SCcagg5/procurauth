@@ -327,7 +327,7 @@ impl Server {
             diagnostics: Mutex::new(options.diagnostics),
             clock,
             settings: settings.clone(),
-            auth,
+            auth: Mutex::new(auth),
             stop: Arc::clone(&stop),
             addr,
         });
@@ -357,7 +357,7 @@ impl Server {
     }
 }
 
-fn digest_from_hex(text: &str) -> Option<[u8; 32]> {
+pub(crate) fn digest_from_hex(text: &str) -> Option<[u8; 32]> {
     if text.len() != 64 {
         return None;
     }

@@ -22,6 +22,21 @@ pub const SESSION: &str = "mcp.session";
 /// Returns the findings as text when the document is not good. The document is
 /// fixed, and a test checks it.
 pub fn reference_document(service_id: &str) -> Result<ActionDocument, String> {
+    reference_document_with(service_id, false)
+}
+
+/// The action document of the service, with an option for the action `mcp.session`.
+/// When `session_budget` is true, this action lists the budget `requests`, so that
+/// each MCP method with no tool is one use (binding 3.6a). The option has no effect
+/// when the program has no MCP endpoint.
+///
+/// # Errors
+/// Returns the findings as text when the document is not good. The document is
+/// fixed, and a test checks it.
+pub fn reference_document_with(
+    service_id: &str,
+    session_budget: bool,
+) -> Result<ActionDocument, String> {
     let all = ["service", "host", "database", "table"];
     let mut builder = ActionDocumentBuilder::new(service_id)
         .resource_type("host", "service", "One database server.")
@@ -40,7 +55,7 @@ pub fn reference_document(service_id: &str) -> Result<ActionDocument, String> {
             SESSION,
             &["service"],
             "Use the MCP endpoint without a tool.",
-            &[],
+            if session_budget { &["requests"] } else { &[] },
         );
     }
     builder
@@ -97,6 +112,15 @@ mod tests {
                 .action(SESSION)
                 .is_some()
         );
+    }
+
+    #[cfg(feature = "mcp")]
+    #[test]
+    fn mcp_3_6a_the_session_action_lists_a_budget_only_when_the_option_is_on() {
+        let off = reference_document_with("datastore", false).unwrap();
+        assert!(!off.action_lists_budget(SESSION));
+        let on = reference_document_with("datastore", true).unwrap();
+        assert!(on.action_lists_budget(SESSION));
     }
 
     #[test]

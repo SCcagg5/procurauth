@@ -100,7 +100,7 @@ pub(crate) struct Shared {
     pub diagnostics: Mutex<Option<Box<dyn Write + Send>>>,
     pub clock: Clock,
     pub settings: Settings,
-    pub auth: Auth,
+    pub auth: Mutex<Auth>,
     pub stop: Arc<AtomicBool>,
     pub addr: SocketAddr,
 }
@@ -205,7 +205,8 @@ impl Shared {
 
     /// Check the credential of the caller (12). The metadata needs none.
     pub(crate) fn authenticate(&self, request: &Request) -> Result<Caller, Response> {
-        if !self.auth.required() {
+        let auth = self.auth.lock().unwrap_or_else(PoisonError::into_inner);
+        if !auth.required() {
             return Ok(Caller::Any);
         }
         let token = request.header("authorization").and_then(|value| {
@@ -213,7 +214,7 @@ impl Shared {
             let token = token.trim_matches(' ');
             (scheme.eq_ignore_ascii_case("bearer") && !token.is_empty()).then_some(token)
         });
-        match token.and_then(|t| self.auth.identify(t)) {
+        match token.and_then(|t| auth.identify(t)) {
             Some(caller) => Ok(caller),
             None => {
                 self.diagnostic(&format!("rejected 401 {} {}", request.method, request.path));

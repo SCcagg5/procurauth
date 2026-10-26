@@ -9,6 +9,7 @@
 //! | --- | --- |
 //! | `GET /__fake/clock` | The time of the clock. |
 //! | `POST /__fake/clock` | Body `{"advance": N}` or `{"set": T}`, in whole seconds. |
+//! | `PUT /__fake/load` or `POST /__fake/load` | Body: a data file. Replace the directory, the counters, the failures and the credentials of the services. |
 //! | `POST /__fake/reset` | Put the counters back to the first values of the data. |
 //! | `GET /__fake/counters` | The counters of the current windows. |
 //! | `GET /__fake/log` | The last questions, with the answers and the counters. |
@@ -16,7 +17,9 @@
 //! | `GET /__fake/failures` | The failure rules, with the uses that each one has left. |
 //! | `POST /__fake/failures` | Body `{"failures": [...]}`. It replaces all the rules. |
 
-use procurauth_core::directory::Endpoint;
+use std::sync::PoisonError;
+
+use procurauth_core::directory::{Endpoint, analyze_value};
 use procurauth_core::finding::{Finding, JsonPath, Report, Severity};
 use procurauth_core::json::parse_slice;
 use procurauth_core::read::{Obj, Unknown};
@@ -25,6 +28,8 @@ use serde_json::{Value, json};
 use crate::faults::{Fault, FaultKind, read_faults};
 use crate::http::{Request, Response};
 use crate::log::counters_to_value;
+use crate::pdp::Pdp;
+use crate::server::digest_from_hex;
 use crate::service::{Action, Shared};
 
 fn findings_response(status: u16, findings: &[Finding]) -> Action {
@@ -90,6 +95,7 @@ impl Shared {
         }
         let (allowed, handler): (&[&str], Handler) = match request.path.as_str() {
             "/__fake/clock" => (&["GET", "POST"], Self::admin_clock),
+            "/__fake/load" => (&["PUT", "POST"], Self::admin_load),
             "/__fake/reset" => (&["POST"], Self::admin_reset),
             "/__fake/counters" => (&["GET"], Self::admin_counters),
             "/__fake/log" => (&["GET", "DELETE"], Self::admin_log),
@@ -148,6 +154,65 @@ impl Shared {
             "now_millis": self.clock.now_millis(),
             "fixed": self.clock.is_fixed(),
         })
+    }
+
+    /// Replace the data. The body is a data file. A member of `metadata` that differs
+    /// from the running values is an error: the listener keeps the values that it started with.
+    fn admin_load(&self, request: &Request) -> Action {
+        let value = match parse_slice(&request.body) {
+            Ok(value) => value,
+            Err(error) => {
+                return message_response(400, &format!("The body is not valid JSON: {error}."));
+            }
+        };
+        let (directory, report) = analyze_value(&value);
+        let Some(directory) = directory else {
+            return findings_response(400, report.findings());
+        };
+        let s = &self.settings;
+        let meta = &directory.metadata;
+        let differs = |new: Option<u64>, old: u64| new.is_some_and(|n| n != old);
+        if differs(meta.usage_max_seconds, s.usage_max_seconds)
+            || differs(meta.idle_max_seconds, s.idle_max_seconds)
+            || differs(meta.evaluations_max_bytes, s.evaluations_max_bytes)
+            || differs(meta.evaluations_max_items, s.evaluations_max_items)
+        {
+            return message_response(
+                400,
+                "The member `metadata` differs from the values that the server started with. Restart the server to change them.",
+            );
+        }
+        if let Some(now) = directory.clock_now
+            && let Err(error) = self.clock.set(now)
+        {
+            return message_response(400, &error.to_string());
+        }
+        let services = directory
+            .services
+            .iter()
+            .filter_map(|svc| {
+                svc.credential_sha256
+                    .as_deref()
+                    .and_then(digest_from_hex)
+                    .map(|digest| (svc.id.clone(), digest))
+            })
+            .collect();
+        let faults: Vec<Fault> = directory.failures.iter().map(Fault::from_core).collect();
+        let (services_count, subjects_count) = (directory.services.len(), directory.subjects.len());
+        let now = self.now_seconds();
+        {
+            let mut state = self.state();
+            state.pdp = Pdp::new(directory, now);
+            state.faults.replace(faults);
+        }
+        self.auth
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .services = services;
+        Action::Respond(Response::json(
+            200,
+            &json!({"loaded": true, "services": services_count, "subjects": subjects_count}),
+        ))
     }
 
     fn admin_reset(&self, request: &Request) -> Action {
