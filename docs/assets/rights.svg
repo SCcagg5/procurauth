@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-label="The rights of a key are the rights of its owner that the key also asks for">
+  <rect width="960" height="400" rx="20" fill="#12142a"/>
+  <g font-family="Inter, 'Segoe UI', -apple-system, Helvetica, Arial, sans-serif">
+    <text x="40" y="52" font-size="24" font-weight="700" fill="#ffffff">A key never has more rights than its owner</text>
+    <text x="40" y="82" font-size="15" fill="#9ca3d4">The rights of a key are the rights that its owner has and that the key also holds.</text>
+    <circle cx="250" cy="225" r="112" fill="#4338ca" fill-opacity="0.35" stroke="#818cf8" stroke-width="2.5"/>
+    <circle cx="390" cy="225" r="112" fill="#0ea5e9" fill-opacity="0.28" stroke="#38bdf8" stroke-width="2.5"/>
+    <path d="M320 128.6a112 112 0 0 1 0 192.8a112 112 0 0 1 0-192.8z" fill="#ffffff" fill-opacity="0.9"/>
+    <text x="190" y="215" font-size="17" font-weight="700" fill="#e0e7ff" text-anchor="middle">Owner</text>
+    <text x="190" y="238" font-size="14" fill="#c7d2fe" text-anchor="middle">rights of</text>
+    <text x="190" y="256" font-size="14" fill="#c7d2fe" text-anchor="middle">the person</text>
+    <text x="450" y="215" font-size="17" font-weight="700" fill="#e0f2fe" text-anchor="middle">Key</text>
+    <text x="450" y="238" font-size="14" fill="#bae6fd" text-anchor="middle">rights set</text>
+    <text x="450" y="256" font-size="14" fill="#bae6fd" text-anchor="middle">for the agent</text>
+    <text x="320" y="222" font-size="16" font-weight="800" fill="#312e81" text-anchor="middle">Rights</text>
+    <text x="320" y="243" font-size="16" font-weight="800" fill="#312e81" text-anchor="middle">of the key</text>
+    <g font-size="16" fill="#e0e7ff">
+      <rect x="590" y="130" width="330" height="62" rx="12" fill="#1c1f3d" stroke="#2c3070"/>
+      <text x="608" y="156" font-weight="700" fill="#a5b4fc">Coverage</text>
+      <text x="608" y="178" font-size="14" fill="#c7d2fe">A grant on a node covers its children.</text>
+      <rect x="590" y="206" width="330" height="62" rx="12" fill="#1c1f3d" stroke="#2c3070"/>
+      <text x="608" y="232" font-weight="700" fill="#a5b4fc">Ceilings</text>
+      <text x="608" y="254" font-size="14" fill="#c7d2fe">The lowest value wins. The service applies it.</text>
+      <rect x="590" y="282" width="330" height="62" rx="12" fill="#1c1f3d" stroke="#2c3070"/>
+      <text x="608" y="308" font-weight="700" fill="#a5b4fc">Budgets</text>
+      <text x="608" y="330" font-size="14" fill="#c7d2fe">The PDP counts each use, for each window.</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" width="960" height="380" role="img" aria-label="191 conformance cases: 99 for a PEP, 74 for a PDP and 18 for an edge">
+<rect width="960" height="380" rx="20" fill="#12142a"/>
+<g font-family="Inter, 'Segoe UI', -apple-system, Helvetica, Arial, sans-serif">
+<text x="40" y="52" font-size="24" font-weight="700" fill="#ffffff">191 conformance cases</text>
+<text x="40" y="82" font-size="15" fill="#9ca3d4">Each case cites a paragraph of the protocol. The reference programs pass all of them.</text>
+<text x="40" y="149" font-size="22" font-weight="800" fill="#818cf8">U</text>
+<text x="72" y="148" font-size="15" fill="#c7d2fe">A PEP: the service side</text>
+<rect x="300" y="122" width="544" height="38" rx="9" fill="#818cf8" fill-opacity="0.9"/>
+<text x="858" y="148" font-size="20" font-weight="700" fill="#ffffff">99</text>
+<text x="40" y="211" font-size="22" font-weight="800" fill="#38bdf8">D</text>
+<text x="72" y="210" font-size="15" fill="#c7d2fe">A PDP: decisions and counters</text>
+<rect x="300" y="184" width="407" height="38" rx="9" fill="#38bdf8" fill-opacity="0.9"/>
+<text x="721" y="210" font-size="20" font-weight="700" fill="#ffffff">74</text>
+<text x="40" y="273" font-size="22" font-weight="800" fill="#34d399">E</text>
+<text x="72" y="272" font-size="15" fill="#c7d2fe">An edge: keys and tokens</text>
+<rect x="300" y="246" width="99" height="38" rx="9" fill="#34d399" fill-opacity="0.9"/>
+<text x="413" y="272" font-size="20" font-weight="700" fill="#ffffff">18</text>
+<line x1="40" y1="312" x2="920" y2="312" stroke="#2c3070"/>
+<text x="40" y="347" font-size="16" fill="#9ca3d4">Check a PEP, a PDP or an edge with <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#e0e7ff">access-conformance</tspan>.</text>
+</g></svg>
