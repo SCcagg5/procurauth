@@ -59,8 +59,23 @@ impl Claims {
     /// # Errors
     /// Returns a finding for each claim that is absent or has a wrong type.
     pub fn from_value(value: &Value) -> Result<Self, Vec<Finding>> {
+        Self::read(value, false)
+    }
+
+    /// Read the claims as a PEP does. The claim `owner` is for logs and for
+    /// approvals only, and a PEP never uses it in a decision (9.5). Thus an
+    /// `owner` that is not a string, or that is empty, is read as no owner and
+    /// is not an error. Every other claim follows [`Claims::from_value`].
+    ///
+    /// # Errors
+    /// Returns a finding for each claim that is absent or has a wrong type.
+    pub fn from_value_for_pep(value: &Value) -> Result<Self, Vec<Finding>> {
+        Self::read(value, true)
+    }
+
+    fn read(value: &Value, ignore_bad_owner: bool) -> Result<Self, Vec<Finding>> {
         let mut report = Report::new();
-        let claims = read_claims(value, &mut report);
+        let claims = read_claims(value, ignore_bad_owner, &mut report);
         match claims {
             Some(claims) if !report.has_errors() => Ok(claims),
             _ => Err(report.into_findings()),
@@ -94,14 +109,20 @@ impl Claims {
     }
 }
 
-fn read_claims(value: &Value, report: &mut Report) -> Option<Claims> {
+fn read_claims(value: &Value, ignore_bad_owner: bool, report: &mut Report) -> Option<Claims> {
     let mut obj = Obj::new(value, &JsonPath::root(), "9.3", Unknown::Ignore, report)?;
     let iss = obj.string("iss", report);
     let sub = obj.string("sub", report);
     let aud = read_aud(&mut obj, report);
     let iat = obj.whole("iat", report);
     let exp = obj.whole("exp", report);
-    let owner = obj.string_opt("owner", report);
+    let owner = if ignore_bad_owner {
+        obj.optional("owner")
+            .and_then(Value::as_str)
+            .filter(|text| !text.is_empty())
+    } else {
+        obj.string_opt("owner", report)
+    };
     for (key, text) in [("iss", iss), ("sub", sub), ("owner", owner)] {
         if text == Some("") {
             report.error(
@@ -368,7 +389,25 @@ pub fn verify(
     policy: &TokenPolicy,
     now: u64,
 ) -> Result<VerifiedToken, TokenError> {
-    let inspection = inspect(token, keys, policy, now);
+    first_failure_or_token(inspect(token, keys, policy, now))
+}
+
+/// Check a token as a PEP does, and stop at the first failure. It is the same
+/// as [`verify`], except for the claim `owner`: a PEP ignores an `owner` that
+/// is not a text (9.5, [`Claims::from_value_for_pep`]).
+///
+/// # Errors
+/// Returns the first check that fails.
+pub fn verify_for_pep(
+    token: &str,
+    keys: &KeySet,
+    policy: &TokenPolicy,
+    now: u64,
+) -> Result<VerifiedToken, TokenError> {
+    first_failure_or_token(inspect_with(token, keys, policy, now, true))
+}
+
+fn first_failure_or_token(inspection: Inspection) -> Result<VerifiedToken, TokenError> {
     if let Some(check) = inspection.first_failure() {
         return Err(TokenError {
             check: check.name,
@@ -437,6 +476,16 @@ impl Builder {
 
 /// Run every check of 9.4 on a token.
 pub fn inspect(token: &str, keys: &KeySet, policy: &TokenPolicy, now: u64) -> Inspection {
+    inspect_with(token, keys, policy, now, false)
+}
+
+fn inspect_with(
+    token: &str,
+    keys: &KeySet,
+    policy: &TokenPolicy,
+    now: u64,
+    ignore_bad_owner: bool,
+) -> Inspection {
     let mut b = Builder::new();
     let mut result = Inspection {
         checks: Vec::new(),
@@ -578,7 +627,7 @@ pub fn inspect(token: &str, keys: &KeySet, policy: &TokenPolicy, now: u64) -> In
 
     // claims
     let payload_value = payload_value.unwrap_or(Value::Null);
-    match Claims::from_value(&payload_value) {
+    match Claims::read(&payload_value, ignore_bad_owner) {
         Ok(claims) => {
             b.set(CheckName::Claims, true, "iss, sub, aud, iat, exp");
             result.claims = Some(claims);
@@ -1196,6 +1245,43 @@ mod tests {
         let mut c = claims();
         c.as_object_mut().unwrap().remove("owner");
         assert_eq!(Claims::from_value(&c).unwrap().owner, None);
+    }
+
+    #[test]
+    fn p_9_5_a_pep_ignores_an_owner_that_is_not_a_text() {
+        let key = ed();
+        let set = set_for(&key);
+        for owner in [json!(42), json!(""), json!(null), json!(["a"])] {
+            let mut c = claims();
+            c["owner"] = owner;
+            let token = sign_compact(&header("Ed25519"), &c, &key);
+            assert!(verify(&token, &set, &policy(), NOW).is_err());
+            let verified = verify_for_pep(&token, &set, &policy(), NOW).unwrap();
+            assert_eq!(verified.claims.owner, None);
+        }
+        let token = sign_compact(&header("Ed25519"), &claims(), &key);
+        let verified = verify_for_pep(&token, &set, &policy(), NOW).unwrap();
+        assert_eq!(verified.claims.owner.as_deref(), Some("alice"));
+    }
+
+    #[test]
+    fn p_9_5_a_pep_check_is_as_strict_as_verify_for_every_other_claim() {
+        let key = ed();
+        let set = set_for(&key);
+        for member in ["iss", "sub", "aud", "iat", "exp"] {
+            let mut c = claims();
+            c.as_object_mut().unwrap().remove(member);
+            let token = sign_compact(&header("Ed25519"), &c, &key);
+            assert!(
+                verify_for_pep(&token, &set, &policy(), NOW).is_err(),
+                "{member}"
+            );
+        }
+        let token = sign_compact(&header("Ed25519"), &claims(), &key);
+        assert!(verify_for_pep(&token, &set, &policy(), 1_792_569_900 + 31).is_err());
+        let other = SigningKey::from_ed25519_seed(&[8; 32]);
+        let forged = sign_compact(&header("Ed25519"), &claims(), &other);
+        assert!(verify_for_pep(&forged, &set, &policy(), NOW).is_err());
     }
 
     #[test]
