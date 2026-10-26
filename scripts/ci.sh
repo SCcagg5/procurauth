@@ -11,4 +11,6 @@ echo "== cargo clippy"
 "$here/cargo.sh" clippy --workspace --all-targets -- -D warnings
 echo "== cargo test"
 "$here/cargo.sh" test --workspace
+echo "== cargo test without the feature mcp"
+"$here/cargo.sh" test -p procurauth-pep -p reference-service --no-default-features
 echo "== all checks passed"

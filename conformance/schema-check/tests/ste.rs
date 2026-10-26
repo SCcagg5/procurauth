@@ -123,7 +123,7 @@ fn markdown_files(root: &Path) -> Vec<PathBuf> {
     if let Ok(entries) = fs::read_dir(root.join("crates")) {
         for entry in entries {
             let dir = entry.unwrap().path();
-            for name in ["README.md", "RULES.md"] {
+            for name in ["README.md", "RULES.md", "PROFILE.md"] {
                 if dir.join(name).is_file() {
                     out.push(dir.join(name));
                 }

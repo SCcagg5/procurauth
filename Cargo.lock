@@ -943,6 +943,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "procurauth-pep"
+version = "0.1.0"
+dependencies = [
+ "access-token",
+ "fake-pdp",
+ "procurauth-core",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "procurauth-schema-check"
 version = "0.1.0"
 dependencies = [
@@ -1002,6 +1013,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "reference-service"
+version = "0.1.0"
+dependencies = [
+ "access-token",
+ "base64",
+ "clap",
+ "ctrlc",
+ "fake-pdp",
+ "procurauth-core",
+ "procurauth-pep",
+ "procurauth-schema-check",
+ "regex",
+ "serde_json",
 ]
 
 [[package]]
