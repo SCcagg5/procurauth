@@ -1,0 +1,165 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "max_duration"
+            ]
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      },
+      "credential_sha256": "62ed15815b6340d4c11c5dd660cb3f2831c3eec84682a24279c75f46d7cebb28"
+    },
+    {
+      "id": "mailbox",
+      "document": {
+        "server": "mailbox",
+        "resource_types": [
+          {
+            "name": "folder",
+            "parent": "service",
+            "description": "One folder."
+          },
+          {
+            "name": "message",
+            "parent": "folder",
+            "description": "One message."
+          }
+        ],
+        "actions": [
+          {
+            "name": "mail.read",
+            "resource_types": [
+              "service",
+              "folder",
+              "message"
+            ],
+            "description": "Read mail."
+          }
+        ]
+      },
+      "credential_sha256": "feee63bba44c7d91d806492612e23ff0a2c087ed00bd7a8b8636b0abdd4a45b4"
+    },
+    {
+      "id": "ledger",
+      "credential_sha256": "61727000d3b21832aa4a8d0db02b81120c9159241b50a465f1ecc1eeb1b5008c"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "ari",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "access",
+          "resource": "service:mailbox"
+        },
+        {
+          "action": "access",
+          "resource": "service:ledger"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "mail.read",
+          "resource": "service:mailbox"
+        }
+      ]
+    },
+    {
+      "id": "bea",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        }
+      ]
+    }
+  ]
+}
