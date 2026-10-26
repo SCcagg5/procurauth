@@ -1,0 +1,45 @@
+{
+  "id": "U38",
+  "title": "The PEP ignores context.limits in a false answer.",
+  "role": "pep",
+  "paragraphs": [
+    "7.6"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "limits": {
+                "max_conformance_unknown": 5
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers false with a ceiling that the service does not know",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        }
+      }
+    }
+  ]
+}

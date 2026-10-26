@@ -1,0 +1,200 @@
+{
+  "id": "D19",
+  "title": "A chain whose types do not follow the parents of the action document gets false with invalid_resource.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.1",
+    "5.2",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "A table with a chain that skips the database",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "A database before its host",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "A database below the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "A chain with the same type two times",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                },
+                {
+                  "type": "database",
+                  "id": "test2"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "U49",
+  "title": "The service refuses a token that has no sub.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "none": {
+        "subject": "alice",
+        "claims": {
+          "sub": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "No sub",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

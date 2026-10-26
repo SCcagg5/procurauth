@@ -1,0 +1,55 @@
+{
+  "id": "U73",
+  "title": "A service stays within the numbers that a caller must accept. These are 64 KiB, 50 items, an id of 256 bytes and a label of 60 characters.",
+  "role": "pep",
+  "paragraphs": [
+    "5.8"
+  ],
+  "requirement": "SHOULD",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "notes": "Question 13 in notes/spec-questions-cases.md asks about the warnings that the case uses.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "List the first level",
+      "request": {
+        "operation": "list_options",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "valid_as": "options_answer_no_warning"
+      }
+    }
+  ]
+}

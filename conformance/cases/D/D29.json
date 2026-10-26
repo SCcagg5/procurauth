@@ -1,0 +1,163 @@
+{
+  "id": "D29",
+  "title": "A grant on a column covers only that column.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "tree.json"
+  },
+  "steps": [
+    {
+      "name": "The column",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "colm"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "column",
+            "id": "email",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "main"
+                },
+                {
+                  "type": "table",
+                  "id": "users"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Another column of the table",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "colm"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "column",
+            "id": "name",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "main"
+                },
+                {
+                  "type": "table",
+                  "id": "users"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The table",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "colm"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "users",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "main"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

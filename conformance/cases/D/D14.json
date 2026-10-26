@@ -1,0 +1,185 @@
+{
+  "id": "D14",
+  "title": "A key with a narrow grant has a narrow right, also when its owner has a wide grant.",
+  "role": "pdp",
+  "paragraphs": [
+    "3.5",
+    "4.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "subtree.json"
+  },
+  "steps": [
+    {
+      "name": "The key on the database of its grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The key on a table below that database",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The key on another database of the host of its owner",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test2",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The key on the host",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "U10",
+  "title": "The PEP does not use the claim owner in a decision. A token with no owner, or with an odd owner, gets the answer of the PDP.",
+  "role": "pep",
+  "paragraphs": [
+    "9.5"
+  ],
+  "requirement": "MUST",
+  "notes": "Question 10 in notes/spec-questions-cases.md asks if a service must accept a key token with no owner.",
+  "given": {
+    "tokens": {
+      "no_owner": {
+        "subject": "key:9b1c04e2aa71f0c3",
+        "claims": {
+          "owner": null
+        }
+      },
+      "odd_owner": {
+        "subject": "key:9b1c04e2aa71f0c3",
+        "claims": {
+          "owner": 42
+        }
+      },
+      "person_owner": {
+        "subject": "alice",
+        "owner": "bob"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A key token with no owner",
+      "request": {
+        "operation": "use_plain",
+        "token": "no_owner"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "key:9b1c04e2aa71f0c3"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A key token with an owner that is not a text",
+      "request": {
+        "operation": "use_plain",
+        "token": "odd_owner"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "key:9b1c04e2aa71f0c3"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A person token with an owner",
+      "request": {
+        "operation": "use_plain",
+        "token": "person_owner"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

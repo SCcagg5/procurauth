@@ -1,0 +1,120 @@
+{
+  "id": "D21",
+  "title": "A node of depth 4 is valid, and a chain of more than 4 steps gets false with invalid_resource.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.1",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "tree.json"
+  },
+  "steps": [
+    {
+      "name": "A column, at depth 4",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "colm"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "column",
+            "id": "email",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "main"
+                },
+                {
+                  "type": "table",
+                  "id": "users"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A column below a column",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "colm"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "column",
+            "id": "x",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "main"
+                },
+                {
+                  "type": "table",
+                  "id": "users"
+                },
+                {
+                  "type": "column",
+                  "id": "email"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    }
+  ]
+}

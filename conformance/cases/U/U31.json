@@ -1,0 +1,71 @@
+{
+  "id": "U31",
+  "title": "The test PDP answers false with no reason for a server/discover. The answer is HTTP 403 with the body that the binding gives.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.1b"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A server/discover",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "server/discover",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "": {
+            "equals": {
+              "jsonrpc": "2.0",
+              "id": 7,
+              "error": {
+                "code": -32001,
+                "message": "forbidden"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "U50",
+  "title": "The service refuses a token with a kid that the key set of the edge does not hold.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "unknown": {
+        "subject": "alice",
+        "defect": "unknown_kid"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An unknown kid",
+      "request": {
+        "operation": "use_plain",
+        "token": "unknown"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

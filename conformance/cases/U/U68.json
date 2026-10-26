@@ -1,0 +1,63 @@
+{
+  "id": "U68",
+  "title": "The PEP does not send a question with context.usage again after a lost answer.",
+  "role": "pep",
+  "paragraphs": [
+    "10.6"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "no_answer": true
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP does not answer the question with usage",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

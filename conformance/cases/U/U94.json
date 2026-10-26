@@ -1,0 +1,108 @@
+{
+  "id": "U94",
+  "title": "An error of the service has a fixed message and copies no value of the request.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.6",
+    "mcp:5.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      },
+      "bad": {
+        "subject": "alice",
+        "defect": "bad_signature"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An unknown tool whose name is a marker",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "INJECTED-MARKER-7f3a",
+            "arguments": {
+              "x": "INJECTED-MARKER-7f3a"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "body_text": {
+          "not_regex": "INJECTED-MARKER-7f3a"
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          }
+        }
+      }
+    },
+    {
+      "name": "A bad token with a marker in the header",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "X-Marker": "INJECTED-MARKER-7f3a"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "not_regex": "INJECTED-MARKER-7f3a"
+        }
+      }
+    }
+  ]
+}

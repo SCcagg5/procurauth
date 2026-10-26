@@ -1,0 +1,99 @@
+{
+  "id": "D15",
+  "title": "A key with a wide grant has the rights of its owner only: a node that the owner does not cover gets false.",
+  "role": "pdp",
+  "paragraphs": [
+    "3.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "subtree.json"
+  },
+  "steps": [
+    {
+      "name": "The database of the owner",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:uma-up"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Another database, where only the key has a grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:uma-up"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test2",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

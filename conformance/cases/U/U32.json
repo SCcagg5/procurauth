@@ -1,0 +1,66 @@
+{
+  "id": "U32",
+  "title": "A true answer to a question with context.usage that has no context.usage.units counts as false.",
+  "role": "pep",
+  "paragraphs": [
+    "6.12",
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers true without units",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

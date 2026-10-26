@@ -1,0 +1,76 @@
+{
+  "id": "U43",
+  "title": "The service refuses a token whose iss is not the issuer of its configuration, or that has no iss.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "wrong": {
+        "subject": "alice",
+        "defect": "wrong_issuer"
+      },
+      "none": {
+        "subject": "alice",
+        "claims": {
+          "iss": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Another issuer",
+      "request": {
+        "operation": "use_plain",
+        "token": "wrong"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "No iss",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

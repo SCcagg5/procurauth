@@ -1,0 +1,38 @@
+{
+  "id": "U64",
+  "title": "When the PDP does not answer, the PEP gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "no_answer": true
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP does not answer",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "id": "D62",
+  "title": "An Access Evaluations request without items can carry context.usage, and it counts one unit.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.11"
+  ],
+  "requirement": "MUST",
+  "notes": "Question 5 in notes/spec-questions-cases.md asks for the shape of the answer to a request without items. The case checks the status and the count only.",
+  "given": {
+    "directory": "budgets.json"
+  },
+  "steps": [
+    {
+      "name": "A request without items",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "once"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        }
+      }
+    },
+    {
+      "name": "The next use has no unit",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "once"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 12
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

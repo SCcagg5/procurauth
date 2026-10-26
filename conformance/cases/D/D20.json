@@ -1,0 +1,107 @@
+{
+  "id": "D20",
+  "title": "A type that the action document does not declare gets false with invalid_resource.",
+  "role": "pdp",
+  "paragraphs": [
+    "11.1",
+    "5.2"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "The type of the resource",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "volume",
+            "id": "v1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "The type of an ancestor",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "volume",
+                  "id": "v1"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    }
+  ]
+}

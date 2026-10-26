@@ -1,0 +1,220 @@
+{
+  "id": "D54",
+  "title": "A key with no budget of its own takes units from the counters of its owner.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.7",
+    "6.12"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "budgets.json"
+  },
+  "steps": [
+    {
+      "name": "Key, use 1",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:olga-bare"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Key, use 2",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:olga-bare"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Key, use 3",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:olga-bare"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Key, use 4",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:olga-bare"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 12
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

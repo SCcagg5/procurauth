@@ -1,0 +1,125 @@
+{
+  "id": "D33",
+  "title": "For subtree, a key and an owner with grants on two nodes that no node joins get false. A wide key with a narrow owner gets true.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.4",
+    "3.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "subtree.json"
+  },
+  "steps": [
+    {
+      "name": "The key on test2 and the owner on test1, on the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:uma-other"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The same key, on the host",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:uma-other"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The key on the host and the owner on test1, on the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:uma-up"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

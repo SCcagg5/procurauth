@@ -1,0 +1,167 @@
+{
+  "id": "D61",
+  "title": "A request that gets HTTP 400 for context.usage counts nothing.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.11",
+    "6.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "budgets.json"
+  },
+  "steps": [
+    {
+      "name": "A request with items and usage",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "once"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          },
+          "evaluations": [
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "A use, with the one unit of the budget",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "once"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "The next use",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "once"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 12
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

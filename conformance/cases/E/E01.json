@@ -1,0 +1,148 @@
+{
+  "id": "E01",
+  "title": "An MCP request with a key text that the edge does not know gets HTTP 401 and an empty body. Bearer has invalid_token and no resource_metadata. The edge never answers 400, 404 or 405.",
+  "role": "edge",
+  "paragraphs": [
+    "mcp:6.1",
+    "mcp:6.2",
+    "mcp:6.3",
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {},
+  "steps": [
+    {
+      "name": "A JSON-RPC request",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Authorization": "Bearer {{unknown_key_text}}"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "A body that is not JSON",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Authorization": "Bearer {{unknown_key_text}}"
+        },
+        "body_text": "{not json"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "A GET request",
+      "request": {
+        "method": "GET",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Accept": "text/event-stream",
+          "Authorization": "Bearer {{unknown_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "A DELETE request",
+      "request": {
+        "method": "DELETE",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Authorization": "Bearer {{unknown_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

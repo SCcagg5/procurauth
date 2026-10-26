@@ -1,0 +1,49 @@
+{
+  "id": "U48",
+  "title": "The service refuses a token whose life, exp minus iat, is more than its maximum age.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "long": {
+        "subject": "alice",
+        "defect": "long_life"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A token with a long life",
+      "request": {
+        "operation": "use_plain",
+        "token": "long"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

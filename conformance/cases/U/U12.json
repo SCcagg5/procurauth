@@ -1,0 +1,62 @@
+{
+  "id": "U12",
+  "title": "A true answer for context.match equal to subtree never lets an operation run.",
+  "role": "pep",
+  "paragraphs": [
+    "4.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP says true for subtree and false for the node",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/match": {
+                "equals": "subtree"
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

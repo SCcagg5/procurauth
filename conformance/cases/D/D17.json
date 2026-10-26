@@ -1,0 +1,82 @@
+{
+  "id": "D17",
+  "title": "A resource below the service with no chain, or with an empty chain, gets false with invalid_resource.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.1",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "No properties",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "An empty array",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": []
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    }
+  ]
+}

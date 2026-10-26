@@ -1,0 +1,76 @@
+{
+  "id": "U47",
+  "title": "The service refuses a token whose iat is later than its clock plus the skew, or that has no iat.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "future": {
+        "subject": "alice",
+        "defect": "future_iat"
+      },
+      "none": {
+        "subject": "alice",
+        "claims": {
+          "iat": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An iat in the future",
+      "request": {
+        "operation": "use_plain",
+        "token": "future"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "No iat",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

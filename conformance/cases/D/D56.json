@@ -1,0 +1,172 @@
+{
+  "id": "D56",
+  "title": "A grant with two windows has a counter for each window: the window of the second refuses first.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.1",
+    "6.7",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "budgets.json"
+  },
+  "steps": [
+    {
+      "name": "Use 1",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "duo"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Use 2",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "duo"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Use 3: the counter of the second is full, and the counter of the minute is not",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "duo"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 1
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

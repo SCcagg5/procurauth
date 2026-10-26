@@ -1,0 +1,57 @@
+{
+  "id": "U77",
+  "title": "A request to the route with a parameter that occurs more than one time gets HTTP 400.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The type occurs two times",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?type={{options_type}}&type={{options_type}}",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "The limit occurs two times",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?type={{options_type}}&limit=2&limit=2",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

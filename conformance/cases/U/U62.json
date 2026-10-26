@@ -1,0 +1,66 @@
+{
+  "id": "U62",
+  "title": "A false answer with budget_exceeded gives HTTP 429, and the body does not show the reason.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 12
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers budget_exceeded",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "equals": "12"
+          }
+        },
+        "body_text": {
+          "not_regex": "budget_exceeded"
+        }
+      }
+    }
+  ]
+}

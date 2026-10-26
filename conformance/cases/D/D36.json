@@ -1,0 +1,103 @@
+{
+  "id": "D36",
+  "title": "A request with one evaluation and a chain that is not an array of objects with type and id gets HTTP 400.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.1",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "The chain is a text",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": "service:datastore"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "An item of the chain is a text",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                "datastore",
+                "prod"
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "An item of the chain has no id",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

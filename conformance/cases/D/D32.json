@@ -1,0 +1,178 @@
+{
+  "id": "D32",
+  "title": "For subtree, a key needs one node that a grant of the key and a grant of its owner both cover. Here the owner is wide and the key is narrow.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.4",
+    "3.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "subtree.json"
+  },
+  "steps": [
+    {
+      "name": "The service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The host",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The database of the key",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Another database",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:tia-deep"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test2",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

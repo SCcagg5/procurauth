@@ -1,0 +1,100 @@
+{
+  "id": "U29",
+  "title": "A ping asks the action mcp.session on the resource of type service. When the test PDP answers false, the ping gets HTTP 403 and the code -32001.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:3.6a",
+    "mcp:5.1",
+    "mcp:5.1b"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "action": "mcp.session"
+        },
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A ping",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32001
+          },
+          "/error/message": {
+            "equals": "forbidden"
+          },
+          "/error/data": {
+            "absent": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/action/name": {
+                "equals": "mcp.session"
+              },
+              "/resource/type": {
+                "equals": "service"
+              },
+              "/resource/id": {
+                "equals": "{{service}}"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

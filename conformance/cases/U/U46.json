@@ -1,0 +1,76 @@
+{
+  "id": "U46",
+  "title": "The service refuses a token that is past exp plus the clock skew, or that has no exp.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "expired": {
+        "subject": "alice",
+        "defect": "expired"
+      },
+      "none": {
+        "subject": "alice",
+        "claims": {
+          "exp": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An expired token",
+      "request": {
+        "operation": "use_plain",
+        "token": "expired"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "No exp",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

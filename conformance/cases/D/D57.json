@@ -1,0 +1,111 @@
+{
+  "id": "D57",
+  "title": "A grant with no limit value gives no limit: the answer has no context.limits.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.10",
+    "8.2"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Bob reads test1, and no grant gives a ceiling",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "bob"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Bob reads test1 with usage, and his budget counts one unit",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "bob"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          },
+          "/context/limits": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

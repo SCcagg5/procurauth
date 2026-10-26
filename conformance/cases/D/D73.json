@@ -1,0 +1,76 @@
+{
+  "id": "D73",
+  "title": "A false answer has no ceiling, no usage and no reason when no grant covers the node, and it shows no grant.",
+  "role": "pdp",
+  "paragraphs": [
+    "7.6",
+    "11.2"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Alice writes test1 with usage, and she has no grant of data.write there",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/reason": {
+            "absent": true
+          },
+          "/context/grants": {
+            "absent": true
+          },
+          "/context/retry_after": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "id": "U41",
+  "title": "The service refuses a token whose alg is not Ed25519 or ES256: none, HS256 and the deprecated name EdDSA.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "none": {
+        "subject": "alice",
+        "defect": "alg_none"
+      },
+      "hs256": {
+        "subject": "alice",
+        "defect": "alg_hs256"
+      },
+      "eddsa": {
+        "subject": "alice",
+        "defect": "alg_eddsa"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The algorithm none",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The algorithm HS256",
+      "request": {
+        "operation": "use_plain",
+        "token": "hs256"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The deprecated algorithm name EdDSA",
+      "request": {
+        "operation": "use_plain",
+        "token": "eddsa"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

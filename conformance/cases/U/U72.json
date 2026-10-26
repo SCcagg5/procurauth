@@ -1,0 +1,70 @@
+{
+  "id": "U72",
+  "title": "The route lists the children that the PDP accepts for subtree, with the members id, label and has_children.",
+  "role": "pep",
+  "paragraphs": [
+    "5.6",
+    "5.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "notes": "The service lists at least one child at the first level.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP says true for each child",
+      "request": {
+        "operation": "list_options",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/items/0/id": {
+            "regex": "^.+$"
+          },
+          "/items/0/label": {
+            "regex": "^.*$"
+          },
+          "/items/0/has_children": {
+            "regex": "^(true|false)$"
+          },
+          "/next": {
+            "present": true
+          }
+        },
+        "valid_as": "options_answer"
+      }
+    }
+  ]
+}

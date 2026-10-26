@@ -1,0 +1,55 @@
+{
+  "id": "U45",
+  "title": "The service accepts a token whose aud is an array that holds its id.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "array": {
+        "subject": "alice",
+        "claims": {
+          "aud": [
+            "other-service",
+            "{{service}}"
+          ]
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An array with the service",
+      "request": {
+        "operation": "use_plain",
+        "token": "array"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

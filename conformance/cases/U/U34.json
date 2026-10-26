@@ -1,0 +1,96 @@
+{
+  "id": "U34",
+  "title": "An operation with one more permission asks that permission without context.usage, and it asks the action of the use with it.",
+  "role": "pep",
+  "paragraphs": [
+    "5.5",
+    "5.5a",
+    "10.1a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action",
+    "no_multi_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use that needs two permissions",
+      "request": {
+        "operation": "use_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              },
+              "/action/name": {
+                "equals": "{{action}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "U14",
+  "title": "The service answers a read of its action document with HTTP 200 also when the token is not valid.",
+  "role": "pep",
+  "paragraphs": [
+    "5.1",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "bad": {
+        "subject": "alice",
+        "defect": "bad_signature"
+      }
+    }
+  },
+  "steps": [
+    {
+      "name": "Read with a bad signature",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/actions",
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/server": {
+            "equals": "{{service}}"
+          }
+        }
+      }
+    }
+  ]
+}

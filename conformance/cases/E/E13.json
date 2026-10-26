@@ -1,0 +1,40 @@
+{
+  "id": "E13",
+  "title": "When the key set of the edge holds more than one key, the header of the identity token has a kid of that set.",
+  "role": "edge",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "single_key_set"
+  ],
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "token_header": {
+            "/kid": {
+              "present": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}

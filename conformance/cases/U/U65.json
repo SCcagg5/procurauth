@@ -1,0 +1,185 @@
+{
+  "id": "U65",
+  "title": "When the PDP answers with an HTTP error status, the PEP gives HTTP 503, also for the statuses 401, 403 and 429.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "s400": {
+        "subject": "user-400"
+      },
+      "s401": {
+        "subject": "user-401"
+      },
+      "s403": {
+        "subject": "user-403"
+      },
+      "s404": {
+        "subject": "user-404"
+      },
+      "s429": {
+        "subject": "user-429"
+      },
+      "s502": {
+        "subject": "user-502"
+      },
+      "s503": {
+        "subject": "user-503"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-400"
+        },
+        "respond": {
+          "status": 400,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-401"
+        },
+        "respond": {
+          "status": 401,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-403"
+        },
+        "respond": {
+          "status": 403,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-404"
+        },
+        "respond": {
+          "status": 404,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-429"
+        },
+        "respond": {
+          "status": 429,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-502"
+        },
+        "respond": {
+          "status": 502,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-503"
+        },
+        "respond": {
+          "status": 503,
+          "body": {}
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers HTTP 400",
+      "request": {
+        "operation": "use_plain",
+        "token": "s400"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 401",
+      "request": {
+        "operation": "use_plain",
+        "token": "s401"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 403",
+      "request": {
+        "operation": "use_plain",
+        "token": "s403"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 404",
+      "request": {
+        "operation": "use_plain",
+        "token": "s404"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 429",
+      "request": {
+        "operation": "use_plain",
+        "token": "s429"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 502",
+      "request": {
+        "operation": "use_plain",
+        "token": "s502"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers HTTP 503",
+      "request": {
+        "operation": "use_plain",
+        "token": "s503"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

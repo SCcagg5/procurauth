@@ -1,0 +1,55 @@
+{
+  "id": "U39",
+  "title": "The PEP sends no member that opts in to an extension, and it sends no context.limits.",
+  "role": "pep",
+  "paragraphs": [
+    "7.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of an action that lists no budget",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/supported_mandatory_extensions": {
+                "absent": true
+              },
+              "/context/supported_mandatory_extensions": {
+                "absent": true
+              },
+              "/context/limits": {
+                "absent": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

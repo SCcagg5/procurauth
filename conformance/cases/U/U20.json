@@ -1,0 +1,77 @@
+{
+  "id": "U20",
+  "title": "A use of an action that lists no budget sends no question with context.usage.",
+  "role": "pep",
+  "paragraphs": [
+    "6.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of an action that lists no budget",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/action/name": {
+                "equals": "{{action}}"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          },
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

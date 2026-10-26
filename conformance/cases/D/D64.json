@@ -1,0 +1,213 @@
+{
+  "id": "D64",
+  "title": "A ceiling takes the lowest value among the grants of the asked action that cover the node.",
+  "role": "pdp",
+  "paragraphs": [
+    "7.1",
+    "7.3",
+    "8.1",
+    "5.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "ceilings.json"
+  },
+  "steps": [
+    {
+      "name": "A table of test1: the grants give 1000 and 50",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "t",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 50
+          },
+          "/context/limits/max_duration": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A table of test2: the grants give 1000 and 5000",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "t",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test2"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 1000
+          },
+          "/context/limits/max_duration": {
+            "equals": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "The table orders of test2: the duration comes from the grant on the table",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test2"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 1000
+          },
+          "/context/limits/max_duration": {
+            "equals": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "The host: one grant covers it",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 1000
+          },
+          "/context/limits/max_duration": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

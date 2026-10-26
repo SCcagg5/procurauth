@@ -1,0 +1,83 @@
+{
+  "id": "U67",
+  "title": "A budget_exceeded answer with a retry_after that is not a whole number of 1 or more is not valid, and the PEP gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "notes": "Question 2 in notes/spec-questions-cases.md asks if the protocol makes this answer not valid.",
+  "given": {
+    "tokens": {
+      "zero": {
+        "subject": "user-zero"
+      },
+      "text": {
+        "subject": "user-text"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-zero"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 0
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-text"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": "12"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The value 0",
+      "skip_if": [
+        "no_budget_action"
+      ],
+      "request": {
+        "operation": "use_budget",
+        "token": "zero"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The value is a text",
+      "skip_if": [
+        "no_budget_action"
+      ],
+      "request": {
+        "operation": "use_budget",
+        "token": "text"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

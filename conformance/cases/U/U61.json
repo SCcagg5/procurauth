@@ -1,0 +1,142 @@
+{
+  "id": "U61",
+  "title": "A false answer with a reason other than budget_exceeded gives HTTP 403, and the PEP does not send the reason to the client.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "t0": {
+        "subject": "user-0"
+      },
+      "t1": {
+        "subject": "user-1"
+      },
+      "t2": {
+        "subject": "user-2"
+      },
+      "t3": {
+        "subject": "user-3"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-0"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "unknown_subject"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-1"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "invalid_resource"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-2"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "invalid_request"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-3"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "other_reason"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The reason is unknown_subject",
+      "request": {
+        "operation": "use_plain",
+        "token": "t0"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "body_text": {
+          "not_regex": "unknown_subject"
+        }
+      }
+    },
+    {
+      "name": "The reason is invalid_resource",
+      "request": {
+        "operation": "use_plain",
+        "token": "t1"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "body_text": {
+          "not_regex": "invalid_resource"
+        }
+      }
+    },
+    {
+      "name": "The reason is invalid_request",
+      "request": {
+        "operation": "use_plain",
+        "token": "t2"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "body_text": {
+          "not_regex": "invalid_request"
+        }
+      }
+    },
+    {
+      "name": "The reason is other_reason",
+      "request": {
+        "operation": "use_plain",
+        "token": "t3"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "body_text": {
+          "not_regex": "other_reason"
+        }
+      }
+    }
+  ]
+}

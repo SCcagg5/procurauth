@@ -1,0 +1,67 @@
+{
+  "id": "U99",
+  "title": "A service behind an edge refuses a request that has a standalone key and no identity token.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:7.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {},
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A standalone key in Authorization and no token",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Authorization": "Bearer mcp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "E08",
+  "title": "An edge accepts the text of a key in the header Authorization with the scheme Bearer, and it sends the request to the service.",
+  "role": "edge",
+  "paragraphs": [
+    "1.4"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          }
+        }
+      }
+    }
+  ]
+}

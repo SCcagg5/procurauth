@@ -1,0 +1,55 @@
+{
+  "id": "U11",
+  "title": "Each object of the chain has the members type and id only, and the first object is the service.",
+  "role": "pep",
+  "paragraphs": [
+    "4.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A node below the service",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/resource/properties/ancestors/0": {
+                "equals": {
+                  "type": "service",
+                  "id": "{{service}}"
+                }
+              },
+              "/resource/properties/ancestors": {
+                "equals": "{{ancestors}}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "id": "D67",
+  "title": "The answer has ceilings only: no budget value appears, also for a use that counts a budget.",
+  "role": "pdp",
+  "paragraphs": [
+    "7.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Alice, with usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 1000
+          },
+          "/context/limits/requests": {
+            "absent": true
+          },
+          "/context/usage/units": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Alice, without usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 1000
+          },
+          "/context/limits/requests": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

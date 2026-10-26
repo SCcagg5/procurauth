@@ -1,0 +1,192 @@
+{
+  "id": "D68",
+  "title": "The PDP gives no ceiling that the asked action does not list, and it ignores a ceiling value on a grant of access.",
+  "role": "pdp",
+  "paragraphs": [
+    "7.3",
+    "7.5",
+    "6.2"
+  ],
+  "requirement": "MUST",
+  "notes": "The directory is in the case, because it gives values that the PDP ignores. A directory file has no such value.",
+  "given": {
+    "directory": {
+      "clock": {
+        "now": 1792569648
+      },
+      "services": [
+        {
+          "id": "datastore",
+          "document": {
+            "server": "datastore",
+            "resource_types": [
+              {
+                "name": "host",
+                "parent": "service",
+                "description": "One database server."
+              }
+            ],
+            "actions": [
+              {
+                "name": "data.read",
+                "resource_types": [
+                  "service",
+                  "host"
+                ],
+                "description": "Read data.",
+                "limits": [
+                  "max_rows"
+                ]
+              },
+              {
+                "name": "data.write",
+                "resource_types": [
+                  "service",
+                  "host"
+                ],
+                "description": "Change data.",
+                "limits": [
+                  "max_duration"
+                ]
+              }
+            ],
+            "limits": [
+              {
+                "name": "max_rows",
+                "label": "Most rows",
+                "description": "The most rows that one read gives.",
+                "unit": "row",
+                "kind": "ceiling",
+                "min": 1,
+                "max": 1000
+              },
+              {
+                "name": "max_duration",
+                "label": "Longest run",
+                "description": "The longest run of one use, in seconds.",
+                "unit": "second",
+                "kind": "ceiling",
+                "min": 1,
+                "max": 600
+              }
+            ]
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "id": "unlisted",
+          "grants": [
+            {
+              "action": "access",
+              "resource": "service:datastore",
+              "limits": {
+                "max_rows": 5
+              }
+            },
+            {
+              "action": "data.write",
+              "resource": "service:datastore",
+              "limits": {
+                "max_rows": 7,
+                "max_duration": 9
+              }
+            },
+            {
+              "action": "data.read",
+              "resource": "service:datastore",
+              "limits": {
+                "max_rows": 40
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "name": "data.write lists max_duration only",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "unlisted"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_duration": {
+            "equals": 9
+          },
+          "/context/limits/max_rows": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The value 5 on the grant of access does not apply",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "unlisted"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 40
+          }
+        }
+      }
+    }
+  ]
+}

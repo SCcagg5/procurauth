@@ -1,0 +1,45 @@
+{
+  "id": "U80",
+  "title": "A request to the route with a bad percent-encoding in a value gets HTTP 400.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "notes": "Question 8 in notes/spec-questions-cases.md asks if a bad escape makes a parameter bad.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The parent has the escape %zz",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?parent=%zz&type={{options_type}}",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

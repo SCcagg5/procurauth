@@ -1,0 +1,96 @@
+{
+  "id": "U92",
+  "title": "A true answer that the service treats as false gets the refusal of a false answer with no reason. Two examples are no usage units, and a ceiling that the service does not know.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.1a",
+    "6.12",
+    "7.5"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "no_units": {
+        "subject": "user-units"
+      },
+      "ceiling": {
+        "subject": "user-ceiling"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-units"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-ceiling"
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "limits": {
+                "max_conformance_unknown": 5
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A true answer without units",
+      "skip_if": [
+        "no_budget_action"
+      ],
+      "request": {
+        "operation": "mcp_call_budget",
+        "token": "no_units"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          },
+          "/result": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A true answer with a ceiling that the service does not know",
+      "request": {
+        "operation": "mcp_call_plain",
+        "token": "ceiling"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          },
+          "/result": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

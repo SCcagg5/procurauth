@@ -1,0 +1,50 @@
+{
+  "id": "U15",
+  "title": "A read of the action document sends no question to the PDP.",
+  "role": "pep",
+  "paragraphs": [
+    "5.1",
+    "10.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Read with a good token",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/actions",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

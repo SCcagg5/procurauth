@@ -1,0 +1,214 @@
+{
+  "id": "D69",
+  "title": "The PDP ignores a budget value on a grant other than access.",
+  "role": "pdp",
+  "paragraphs": [
+    "8.3"
+  ],
+  "requirement": "MUST",
+  "notes": "The directory is in the case, because it gives a value that the PDP ignores. A directory file has no such value.",
+  "given": {
+    "directory": {
+      "clock": {
+        "now": 1792569648
+      },
+      "services": [
+        {
+          "id": "datastore",
+          "document": {
+            "server": "datastore",
+            "resource_types": [
+              {
+                "name": "host",
+                "parent": "service",
+                "description": "One database server."
+              }
+            ],
+            "actions": [
+              {
+                "name": "data.read",
+                "resource_types": [
+                  "service",
+                  "host"
+                ],
+                "description": "Read data.",
+                "limits": [
+                  "requests"
+                ]
+              }
+            ],
+            "limits": [
+              {
+                "name": "requests",
+                "label": "Requests",
+                "description": "Requests that run.",
+                "unit": "request",
+                "kind": "budget"
+              }
+            ]
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "id": "dot",
+          "grants": [
+            {
+              "action": "access",
+              "resource": "service:datastore"
+            },
+            {
+              "action": "data.read",
+              "resource": "service:datastore",
+              "limits": {
+                "requests": [
+                  {
+                    "amount": 1,
+                    "window": "minute"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "name": "Use number 1",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "dot"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Use number 2",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "dot"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Use number 3",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "dot"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

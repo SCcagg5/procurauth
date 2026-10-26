@@ -1,0 +1,57 @@
+{
+  "id": "U76",
+  "title": "A request to the route without the parameter type gets HTTP 400.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "No type",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "Only the parameter limit",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?limit=5",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

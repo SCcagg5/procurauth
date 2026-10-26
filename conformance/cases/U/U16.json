@@ -1,0 +1,32 @@
+{
+  "id": "U16",
+  "title": "The action document is good: its members, its types, its actions and its limit declarations follow 5.2, 6.1 and 6.2.",
+  "role": "pep",
+  "paragraphs": [
+    "5.2",
+    "6.1",
+    "6.2"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "Read the document",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/actions"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/server": {
+            "equals": "{{service}}"
+          }
+        },
+        "valid_as": "action_document"
+      }
+    }
+  ]
+}
