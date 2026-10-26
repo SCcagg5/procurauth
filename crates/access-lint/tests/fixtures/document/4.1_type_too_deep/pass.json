@@ -1,0 +1,26 @@
+{
+  "server": "s",
+  "resource_types": [
+    {
+      "name": "t1",
+      "parent": "service",
+      "description": "One level."
+    },
+    {
+      "name": "t2",
+      "parent": "t1",
+      "description": "One level."
+    },
+    {
+      "name": "t3",
+      "parent": "t2",
+      "description": "One level."
+    },
+    {
+      "name": "t4",
+      "parent": "t3",
+      "description": "One level."
+    }
+  ],
+  "actions": []
+}

@@ -1,0 +1,13 @@
+{
+  "query": "type=host",
+  "answer": {
+    "items": [
+      {
+        "id": "prod",
+        "label": "prod",
+        "has_children": true
+      }
+    ],
+    "next": null
+  }
+}

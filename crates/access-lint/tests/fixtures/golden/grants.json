@@ -1,0 +1,44 @@
+{
+  "grants": [
+    {
+      "action": "access",
+      "resource": "service:datastore",
+      "limits": {
+        "requests": [
+          {
+            "amount": 10,
+            "window": "second"
+          },
+          {
+            "amount": 5,
+            "window": "second"
+          }
+        ]
+      }
+    },
+    {
+      "action": "data.read",
+      "resource": "service:datastore/host:prod/database:test1",
+      "limits": {
+        "max_rows": 2000000,
+        "ghost": 1
+      }
+    },
+    {
+      "action": "data.write",
+      "resource": "service:datastore/host:prod"
+    },
+    {
+      "action": "data.read",
+      "resource": "service:datastore/host:prod",
+      "limits": {
+        "requests": [
+          {
+            "amount": 1,
+            "window": "hour"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "grants": [
+    {
+      "action": "access",
+      "resource": "service:datastore",
+      "limits": {
+        "requests": [
+          {
+            "amount": 1
+          }
+        ]
+      }
+    },
+    {
+      "action": "data.read",
+      "resource": "service:datastore/host:prod/database:test1",
+      "limits": {
+        "max_rows": 1000
+      }
+    },
+    {
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:test2"
+    }
+  ]
+}

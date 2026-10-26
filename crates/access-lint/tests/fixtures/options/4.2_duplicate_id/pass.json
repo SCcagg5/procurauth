@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "id": "a",
+      "label": "a",
+      "has_children": false
+    },
+    {
+      "id": "b",
+      "label": "b",
+      "has_children": false
+    }
+  ],
+  "next": null
+}

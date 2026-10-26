@@ -1,0 +1,16 @@
+{
+  "server": "s",
+  "resource_types": [
+    {
+      "name": "a",
+      "parent": "service",
+      "description": "A."
+    },
+    {
+      "name": "b",
+      "parent": "a",
+      "description": "B."
+    }
+  ],
+  "actions": []
+}

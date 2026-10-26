@@ -118,7 +118,18 @@ fn markdown_files(root: &Path) -> Vec<PathBuf> {
     files_with(&root.join("notes"), "md", &mut out);
     out.push(root.join("conformance/README.md"));
     out.push(root.join("conformance/schema-check/README.md"));
-    out.push(root.join("crates/procurauth-core/README.md"));
+    // The README and the rules file of each crate.
+    if let Ok(entries) = fs::read_dir(root.join("crates")) {
+        for entry in entries {
+            let dir = entry.unwrap().path();
+            for name in ["README.md", "RULES.md"] {
+                if dir.join(name).is_file() {
+                    out.push(dir.join(name));
+                }
+            }
+        }
+    }
+    out.sort();
     out
 }
 

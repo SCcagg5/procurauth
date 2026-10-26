@@ -1,0 +1,102 @@
+{
+  "tool": "access-lint",
+  "version": "VERSION",
+  "ok": false,
+  "inputs": [
+    {
+      "kind": "document",
+      "source": "tests/fixtures/context/document.json",
+      "errors": 0,
+      "warnings": 0,
+      "findings": []
+    },
+    {
+      "kind": "grants",
+      "source": "grants.json",
+      "errors": 3,
+      "warnings": 2,
+      "findings": [
+        {
+          "severity": "error",
+          "path": "$.grants[0].limits.requests[1].window",
+          "rule": "6.1",
+          "code": "duplicate_window",
+          "summary": "duplicate window",
+          "message": "Window `second` occurs more than one time."
+        },
+        {
+          "severity": "warning",
+          "path": "$.grants[1].limits.ghost",
+          "rule": "6.10",
+          "code": "undeclared_limit",
+          "summary": "limit is not declared, the value gives nothing",
+          "message": "Limit `ghost` is not declared in the document. The value gives nothing."
+        },
+        {
+          "severity": "error",
+          "path": "$.grants[1].limits.max_rows",
+          "rule": "6.1",
+          "code": "ceiling_out_of_range",
+          "summary": "value of a ceiling is out of range",
+          "message": "Value of ceiling `max_rows`: expected a whole number from 1 to 1000000, found 2000000."
+        },
+        {
+          "severity": "error",
+          "path": "$.grants[2].resource",
+          "rule": "5.2",
+          "code": "action_not_valid_on_type",
+          "summary": "action is not valid on the type",
+          "message": "Action `data.write` is not valid on the type `host`."
+        },
+        {
+          "severity": "warning",
+          "path": "$.grants[3].limits.requests",
+          "rule": "8.3",
+          "code": "budget_ignored",
+          "summary": "the PDP ignores this budget",
+          "message": "The budget `requests` is on a grant of `data.read`. The PDP ignores it. A budget is on the grant of `access`."
+        }
+      ]
+    },
+    {
+      "kind": "options",
+      "source": "options.json",
+      "errors": 2,
+      "warnings": 2,
+      "findings": [
+        {
+          "severity": "error",
+          "path": "$.query",
+          "rule": "5.7",
+          "code": "wrong_parent_type",
+          "summary": "type does not follow the parent",
+          "message": "Type `database` has the parent `host` in the document, but the query asks for the children of a node of type `service`."
+        },
+        {
+          "severity": "warning",
+          "path": "$.answer.items[1].id",
+          "rule": "4.2",
+          "code": "duplicate_id",
+          "summary": "duplicate id",
+          "message": "Id \"a\" occurs more than one time. An id is unique below its parent."
+        },
+        {
+          "severity": "error",
+          "path": "$.answer.items",
+          "rule": "5.7",
+          "code": "answer_above_limit",
+          "summary": "more items than the limit",
+          "message": "The answer has 2 items, and the parameter `limit` is 1."
+        },
+        {
+          "severity": "warning",
+          "path": "$.answer.items[0].has_children",
+          "rule": "5.8",
+          "code": "has_children_without_types",
+          "summary": "has_children, but the type has no child type",
+          "message": "Member `has_children` is true, and the document declares no type below `database`."
+        }
+      ]
+    }
+  ]
+}

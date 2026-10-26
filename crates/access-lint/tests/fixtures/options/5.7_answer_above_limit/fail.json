@@ -1,0 +1,18 @@
+{
+  "query": "parent=host%3Aprod&type=database&limit=1",
+  "answer": {
+    "items": [
+      {
+        "id": "test1",
+        "label": "test1",
+        "has_children": false
+      },
+      {
+        "id": "test2",
+        "label": "test2",
+        "has_children": false
+      }
+    ],
+    "next": null
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "server": "datastore",
+  "resource_types": [
+    {
+      "name": "host",
+      "parent": "service",
+      "description": "One database server."
+    },
+    {
+      "name": "database",
+      "parent": "host",
+      "description": "One database."
+    }
+  ],
+  "actions": [
+    {
+      "name": "data.read",
+      "resource_types": [
+        "host",
+        "database"
+      ],
+      "description": "Read data.",
+      "limits": [
+        "requests",
+        "max_rows"
+      ]
+    },
+    {
+      "name": "data.write",
+      "resource_types": [
+        "database"
+      ],
+      "description": "Change data."
+    }
+  ],
+  "resources": [
+    {
+      "path": "host:prod",
+      "label": "Production"
+    }
+  ],
+  "limits": [
+    {
+      "name": "requests",
+      "label": "Requests",
+      "description": "Requests that run.",
+      "unit": "request",
+      "kind": "budget"
+    },
+    {
+      "name": "max_rows",
+      "label": "Most rows",
+      "description": "The most rows that one read gives.",
+      "unit": "row",
+      "kind": "ceiling",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}
