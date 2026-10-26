@@ -1,0 +1,30 @@
+{
+  "failures": [
+    {
+      "kind": "error_503",
+      "when": {
+        "usage": true
+      },
+      "times": 2
+    },
+    {
+      "kind": "no_units",
+      "when": {
+        "subject": "bob"
+      }
+    },
+    {
+      "kind": "close",
+      "when": {
+        "action": "data.write"
+      },
+      "times": 1
+    },
+    {
+      "kind": "invalid_json",
+      "when": {
+        "endpoint": "evaluations"
+      }
+    }
+  ]
+}
