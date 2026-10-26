@@ -34,7 +34,7 @@ The result goes to the standard output. The diagnostics go to the standard error
 
 ## The format file
 
-The format file has the members `prefix`, `length`, `alphabet` and `checksum`. The schema is `schemas/key-format.schema.json`. The file `examples/format.json` is the format of the portal.
+The format file has the members `prefix`, `length`, `alphabet` and `checksum`. The schema is `schemas/key-format.schema.json`. The file `examples/format.json` is the default format: `mcp_`, 43 random characters and a checksum of 6.
 
 ```json
 {

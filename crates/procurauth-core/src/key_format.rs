@@ -2,7 +2,7 @@
 //!
 //! The protocol defines no format for the text of a key: the system that
 //! makes keys chooses it. A [`KeyFormat`] describes one format: a prefix, a
-//! total length, an alphabet and an optional checksum. The portal format is
+//! total length, an alphabet and an optional checksum. The default format is
 //! `mcp_`, 43 random characters and 6 characters of CRC-32 in base62:
 //! 53 characters in total. The checker never writes the text of a key in an
 //! error, in a log or in a message.
@@ -70,7 +70,7 @@ impl ChecksumEncoding {
 /// The text that the checksum covers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Covers {
-    /// The random part only. This is the default, and it is the portal format.
+    /// The random part only. This is the default, and it is the default format.
     Random,
     /// The prefix and the random part.
     PrefixAndRandom,
@@ -557,7 +557,7 @@ fn encode(mut value: u32, encoding: ChecksumEncoding, characters: usize) -> Stri
 mod tests {
     use super::*;
 
-    fn portal() -> KeyFormat {
+    fn default_format() -> KeyFormat {
         KeyFormat::from_value(&json!({
             "prefix": "mcp_", "length": 53, "alphabet": "A-Za-z0-9",
             "checksum": {"algorithm": "crc32", "encoding": "base62", "characters": 6}
@@ -567,16 +567,16 @@ mod tests {
 
     const RANDOM: &str = "aB3dE5gH7jK9mN1pQ2rS4tU6vW8xY0zA1bC3dE5fG7h";
 
-    fn portal_key() -> String {
-        let format = portal();
+    fn default_key() -> String {
+        let format = default_format();
         format!("mcp_{RANDOM}{}", format.checksum_for(RANDOM).unwrap())
     }
 
     #[test]
     fn p_3_8_the_random_part_of_the_test_key_has_43_characters() {
         assert_eq!(RANDOM.len(), 43);
-        assert_eq!(portal_key().len(), 53);
-        assert_eq!(portal().random_length(), 43);
+        assert_eq!(default_key().len(), 53);
+        assert_eq!(default_format().random_length(), 43);
     }
 
     #[test]
@@ -597,8 +597,8 @@ mod tests {
 
     #[test]
     fn p_3_8_a_good_key_has_a_digest_and_a_hint() {
-        let key = portal_key();
-        let info = portal().check(&key).unwrap();
+        let key = default_key();
+        let info = default_format().check(&key).unwrap();
         assert_eq!(info.digest_hex.len(), 64);
         assert_eq!(info.digest_hex, hex::encode(Sha256::digest(key.as_bytes())));
         assert_eq!(info.hint, "aB3d");
@@ -607,8 +607,8 @@ mod tests {
 
     #[test]
     fn p_3_8_the_checker_gives_the_cause_prefix() {
-        let key = portal_key().replacen("mcp_", "dlg_", 1);
-        let error = portal().check(&key).unwrap_err();
+        let key = default_key().replacen("mcp_", "dlg_", 1);
+        let error = default_format().check(&key).unwrap_err();
         assert_eq!(error.cause(), "prefix");
         assert_eq!(error.to_string(), "prefix (expected the prefix mcp_)");
     }
@@ -617,21 +617,24 @@ mod tests {
     fn p_3_8_the_checker_gives_the_cause_length() {
         // A standalone key of the binding has 47 characters: mcp_ and 43 base64url characters.
         let standalone = format!("mcp_{RANDOM}");
-        let error = portal().check(&standalone).unwrap_err();
+        let error = default_format().check(&standalone).unwrap_err();
         assert_eq!(error.cause(), "length");
         assert_eq!(
             error.to_string(),
             "length (expected 53 characters, found 47)"
         );
-        assert_eq!(portal().check("mcp_").unwrap_err().cause(), "length");
-        assert_eq!(portal().check("").unwrap_err().cause(), "prefix");
+        assert_eq!(
+            default_format().check("mcp_").unwrap_err().cause(),
+            "length"
+        );
+        assert_eq!(default_format().check("").unwrap_err().cause(), "prefix");
     }
 
     #[test]
     fn p_3_8_the_checker_gives_the_cause_alphabet() {
-        let mut key = portal_key();
+        let mut key = default_key();
         key.replace_range(10..11, "-");
-        let error = portal().check(&key).unwrap_err();
+        let error = default_format().check(&key).unwrap_err();
         assert_eq!(error.cause(), "alphabet");
         assert!(matches!(
             error,
@@ -640,30 +643,39 @@ mod tests {
         assert!(!error.to_string().contains('-') || error.to_string().contains("A-Za-z0-9"));
         // The text has 53 characters, and one is not ASCII.
         let non_ascii = format!("mcp_{}{}", "\u{e9}".repeat(43), "000000");
-        assert_eq!(portal().check(&non_ascii).unwrap_err().cause(), "alphabet");
+        assert_eq!(
+            default_format().check(&non_ascii).unwrap_err().cause(),
+            "alphabet"
+        );
     }
 
     #[test]
     fn p_3_8_the_checker_gives_the_cause_checksum() {
-        let mut key = portal_key();
+        let mut key = default_key();
         let last = key.pop().unwrap();
         key.push(if last == 'a' { 'b' } else { 'a' });
-        assert_eq!(portal().check(&key).unwrap_err(), KeyFormatError::Checksum);
+        assert_eq!(
+            default_format().check(&key).unwrap_err(),
+            KeyFormatError::Checksum
+        );
         // A change in the random part also fails the checksum.
-        let key = portal_key().replacen("aB3d", "aB3e", 1);
-        assert_eq!(portal().check(&key).unwrap_err(), KeyFormatError::Checksum);
+        let key = default_key().replacen("aB3d", "aB3e", 1);
+        assert_eq!(
+            default_format().check(&key).unwrap_err(),
+            KeyFormatError::Checksum
+        );
     }
 
     #[test]
     fn p_3_8_the_error_never_holds_the_text() {
-        let key = portal_key();
+        let key = default_key();
         for bad in [
             key.replacen("mcp_", "dlg_", 1),
             key[..47].to_owned(),
             format!("{}-", &key[..52]),
             format!("{}aaaaaa", &key[..47]),
         ] {
-            let error = portal().check(&bad).unwrap_err().to_string();
+            let error = default_format().check(&bad).unwrap_err().to_string();
             assert!(!error.contains(RANDOM), "{error}");
             assert!(!error.contains(&bad), "{error}");
         }
@@ -783,7 +795,7 @@ mod tests {
 
     #[test]
     fn p_3_8_the_format_round_trip() {
-        let format = portal();
+        let format = default_format();
         assert_eq!(KeyFormat::from_value(&format.to_value()).unwrap(), format);
     }
 

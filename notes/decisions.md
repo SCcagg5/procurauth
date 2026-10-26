@@ -67,11 +67,11 @@ Each item gives one choice and the reason in one sentence.
 ## Key format
 
 45. The checker reads the format as data, because the protocol defines no format for the text of a key (3.8).
-46. The checksum is the CRC-32 of zlib in base62 with the digits `0-9A-Za-z`, because the portal specification gives this rule.
+46. The checksum is the CRC-32 of zlib in base62 with the digits `0-9A-Za-z`, because the example format gives this rule.
 47. The member `covers` is an addition to the format file of the site, because another system can cover the prefix too.
 48. The checker stops at the first cause, in the order prefix, length, alphabet, checksum, because the site shows one cause for each bad text.
 49. No error and no debug text holds the text of the key, because a key is a secret and a log must never hold it.
-50. The hint is the first 4 characters of the random part, because the portal keeps at most 4 of them.
+50. The hint is the first 4 characters of the random part, because the example format keeps at most 4 of them.
 51. The format reader refuses contradictory members, for example a checksum that is too short for a 32-bit value, because a contradiction must stop the program.
 
 ## Test data

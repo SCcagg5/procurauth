@@ -25,7 +25,7 @@ This file lists the places where the code or the data of this repository differs
 
 ## Tools
 
-13. `keycheck`: the format file of the site has `prefix`, `length`, `alphabet` and `checksum`. The `key-format` schema adds one optional member, `checksum.covers`. Its default is `random`. The checksum is the CRC-32 of zlib of the 43 random characters, as the portal specification says.
+13. `keycheck`: the format file of the site has `prefix`, `length`, `alphabet` and `checksum`. The `key-format` schema adds one optional member, `checksum.covers`. Its default is `random`. The checksum is the CRC-32 of zlib of the 43 random characters, as the example format defines.
 14. `keycheck`: the text of the failure is `length (expected 53 characters, found 47)`, as the site shows. The checker returns this text, and the tool adds the word `bad:`. The checker stops at the first cause, in the order prefix, length, alphabet, checksum.
 15. `keycheck`: the hint is the first characters of the random part, 4 at most.
 16. `access-token check`: the core runs 13 checks in a fixed order: `structure`, `header`, `alg`, `typ`, `kid`, `signature`, `claims`, `iss`, `sub`, `aud`, `iat`, `exp` and `life`. The site shows 7 lines. The site puts the life on the line of `exp`. The tool can print its own selection.

@@ -47,7 +47,7 @@ pub fn check(stdin: &[u8]) -> Run {
     go(&[FORMAT_PATH], stdin)
 }
 
-/// The portal format.
+/// The default format.
 pub fn format() -> KeyFormat {
     KeyFormat::parse_str(&fs::read_to_string(FORMAT_PATH).unwrap()).unwrap()
 }
@@ -66,7 +66,7 @@ pub fn random_part(seed: u64) -> String {
         .collect()
 }
 
-/// A good key of the portal format from a seed. The result has the random part too.
+/// A good key of the default format from a seed. The result has the random part too.
 pub fn key_from_seed(seed: u64) -> (String, String) {
     let random = random_part(seed);
     let checksum = format().checksum_for(&random).unwrap();

@@ -442,7 +442,7 @@ fn key_format_rows() -> Vec<Row> {
                       "checksum": {"algorithm": "crc32", "encoding": "base62", "characters": 6}});
     let e = |f: &dyn Fn(&mut Value)| edit(&base, |d| f(d));
     vec![
-        same("the portal format", base.clone(), true),
+        same("the default format", base.clone(), true),
         same("no checksum", e(&|d| remove(d, "checksum")), true),
         same(
             "covers prefix_and_random",
