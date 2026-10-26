@@ -4,7 +4,7 @@ Each item gives one choice and the reason. The numbers are for this file only.
 
 ## Library
 
-1. The library has no TLS client and no feature `tls`. A TLS crate such as `rustls` needs `ring` or `aws-lc-rs`, which need a C compiler. It also needs a root store and many more crates. The core avoids a C compiler on purpose (decision 9 of `decisions.md`). The trait `PdpTransport` lets an application plug in its own TLS client.
+1. The library has no TLS client and no feature `tls`. A TLS crate such as `rustls` needs `ring` or `aws-lc-rs`, which need a C compiler. It also needs a root store and many more crates. The core avoids a C compiler on purpose (decision 9 of `decisions.md`). An application gives its own TLS client through the trait `PdpTransport`.
 2. The configuration refuses an `http` URL unless the flag `allow_insecure_pdp_link` is set. Protocol 10.0 (step 4) says that the PEP MUST secure the link, so the safe value is the default.
 3. `HttpTransport` is a synchronous client on `std::net`, with a small pool. It needs no runtime, no `unsafe` code and no dependency. The PDP link has few connections, so a thread for each caller is enough.
 4. The transport tells the PEP how an exchange failed: `NotSent`, `Timeout`, `Lost`, `Malformed`, `TooLarge` or `Unsupported`. Protocol 10.6 lets the PEP send a question with `context.usage` again only when the request did not leave the PEP. Thus the PEP must know the kind.

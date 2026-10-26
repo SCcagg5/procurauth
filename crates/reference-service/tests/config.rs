@@ -565,3 +565,15 @@ fn the_program_reads_the_environment_only_in_the_function_real_sources() {
         }
     }
 }
+
+#[test]
+fn the_data_file_of_the_test_pdp_follows_its_schema_and_is_read_by_the_core() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/pdp-data.json");
+    let value: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let schemas = procurauth_schema_check::Schemas::load().unwrap();
+    let problems = schemas.validate("fake-pdp-data", &value).unwrap();
+    assert!(problems.is_empty(), "{problems:?}");
+    let (directory, report) = procurauth_core::directory::analyze_value(&value);
+    assert!(directory.is_some(), "{:?}", report.findings());
+    assert!(report.findings().is_empty(), "{:?}", report.findings());
+}

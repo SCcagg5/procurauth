@@ -388,16 +388,6 @@ fn printable(text: &str) -> String {
         .collect()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn a_text_for_the_log_has_no_line_end() {
-        assert_eq!(printable("a\r\nb\u{e9} c"), "a??b? c");
-    }
-}
-
 /// The ids of a table in the path of a request.
 pub(crate) struct Target<'a> {
     pub(crate) host: &'a str,
@@ -513,5 +503,15 @@ impl CopyRequest {
             &[("host", &self.to_host), ("database", &self.to_database)],
         )
         .ok()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_text_for_the_log_has_no_line_end() {
+        assert_eq!(printable("a\r\nb\u{e9} c"), "a??b? c");
     }
 }

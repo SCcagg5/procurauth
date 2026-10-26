@@ -11,7 +11,7 @@ use procurauth_pep::document::{ActionDocument, ActionDocumentBuilder};
 pub const READ: &str = "data.read";
 /// The action to change data. It lists a budget and one ceiling.
 pub const WRITE: &str = "data.write";
-/// The action to look at the structure of the data. It lists no limit.
+/// The action to read the structure of the data. It lists no limit.
 pub const INSPECT: &str = "data.inspect";
 /// The action for the MCP methods that have no tool (binding 3.6a).
 pub const SESSION: &str = "mcp.session";
@@ -34,7 +34,7 @@ pub fn reference_document(service_id: &str) -> Result<ActionDocument, String> {
             &["requests", "max_rows", "max_duration"],
         )
         .action(WRITE, &all, "Change data.", &["requests", "max_duration"])
-        .action(INSPECT, &all, "Look at the structure of the data.", &[]);
+        .action(INSPECT, &all, "Read the structure of the data.", &[]);
     if cfg!(feature = "mcp") {
         builder = builder.action(
             SESSION,

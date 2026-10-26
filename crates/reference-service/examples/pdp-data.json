@@ -59,7 +59,7 @@
               "database",
               "table"
             ],
-            "description": "Look at the structure of the data."
+            "description": "Read the structure of the data."
           },
           {
             "name": "mcp.session",
