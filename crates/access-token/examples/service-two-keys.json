@@ -1,0 +1,24 @@
+{
+  "token_header": "X-Identity-Token",
+  "iss": "https://edge.example",
+  "service_id": "datastore",
+  "max_age_seconds": 300,
+  "skew_seconds": 30,
+  "jwks": {
+    "keys": [
+      {
+        "kty": "EC",
+        "crv": "P-256",
+        "kid": "edge-es256",
+        "x": "AHgxA-H8IxXDnL_EWtMsJerNI8A5zktrSWFfDdQKvvs",
+        "y": "EU2vi_FYqjZBRssJETd5njXhVTd8vVeBT3w31m_lVV4"
+      }
+    ]
+  },
+  "pem_keys": [
+    {
+      "kid": "edge-ed25519",
+      "pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAP7xgCMzIVQtPtGQyW22ST5y0a6o2maegbk8O2wk1BjY=\n-----END PUBLIC KEY-----\n"
+    }
+  ]
+}

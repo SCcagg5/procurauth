@@ -89,6 +89,28 @@ impl PublicKey {
         }
     }
 
+    /// Read a public key from a PEM text: a SubjectPublicKeyInfo of Ed25519
+    /// or of P-256 (the PEM label `PUBLIC KEY`). The key can have a `kid`.
+    ///
+    /// # Errors
+    /// Returns an error when the text is not such a key. The error never holds the text.
+    pub fn from_spki_pem(pem: &str, kid: Option<&str>) -> Result<Self, PublicKeyError> {
+        use ed25519_dalek::pkcs8::DecodePublicKey;
+        let inner = if let Ok(key) = ed25519_dalek::VerifyingKey::from_public_key_pem(pem) {
+            Inner::Ed25519(key)
+        } else if let Ok(key) =
+            <p256::ecdsa::VerifyingKey as DecodePublicKey>::from_public_key_pem(pem)
+        {
+            Inner::Es256(key)
+        } else {
+            return Err(PublicKeyError::NotSupported);
+        };
+        Ok(Self {
+            kid: kid.map(str::to_owned),
+            inner,
+        })
+    }
+
     /// The key as a JWK [RFC 7517].
     pub fn to_jwk(&self) -> Value {
         let mut jwk = match &self.inner {
@@ -110,6 +132,14 @@ impl PublicKey {
         }
         jwk
     }
+}
+
+/// Why a public key cannot be read from a PEM text.
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+pub enum PublicKeyError {
+    /// The text is not a SPKI PEM public key of Ed25519 or P-256.
+    #[error("the text is not a SPKI PEM public key for Ed25519 or P-256")]
+    NotSupported,
 }
 
 /// Why a key cannot be selected for a token (9.4).
@@ -148,6 +178,11 @@ impl KeySet {
     /// The keys.
     pub fn keys(&self) -> &[PublicKey] {
         &self.keys
+    }
+
+    /// Give the keys to the caller, for example to merge two sets.
+    pub fn into_keys(self) -> Vec<PublicKey> {
+        self.keys
     }
 
     /// Choose the key for a token (9.4). When the set holds more than one key,
@@ -629,6 +664,18 @@ mod tests {
     }
 
     #[test]
+    fn p_9_4_a_set_gives_its_keys_back() {
+        let set = KeySet::from_keys(vec![
+            ed_key().public_key(Some("a")),
+            es_key().public_key(None),
+        ]);
+        let keys = set.into_keys();
+        assert_eq!(keys.len(), 2);
+        assert_eq!(keys[0].kid(), Some("a"));
+        assert_eq!(KeySet::from_keys(keys).len(), 2);
+    }
+
+    #[test]
     fn p_9_4_key_selection() {
         let a = ed_key().public_key(Some("a"));
         let b = es_key().public_key(Some("b"));
@@ -668,6 +715,48 @@ mod tests {
         let read = SigningKey::from_pkcs8_pem(&pem).unwrap();
         assert_eq!(read.algorithm(), Algorithm::Es256);
         assert!(SigningKey::from_pkcs8_pem("not a key").is_err());
+    }
+
+    #[test]
+    fn p_9_4_a_public_key_reads_from_a_spki_pem() {
+        use p256::pkcs8::EncodePublicKey as _;
+        let ed = ed_key();
+        let pem = ed25519_public_pem(&ed.public_key(None)).unwrap();
+        let read = PublicKey::from_spki_pem(&pem, Some("k1")).unwrap();
+        assert_eq!(read.kid(), Some("k1"));
+        assert_eq!(read.algorithm(), Algorithm::Ed25519);
+        assert!(read.verify(b"x", &ed.sign(b"x")));
+
+        let es = es_key();
+        let SigningKey::Es256(secret) = &es else {
+            panic!("the key must be ES256");
+        };
+        let pem = secret
+            .verifying_key()
+            .to_public_key_pem(p256::pkcs8::LineEnding::LF)
+            .unwrap();
+        let read = PublicKey::from_spki_pem(&pem, None).unwrap();
+        assert_eq!(read.algorithm(), Algorithm::Es256);
+        assert!(read.verify(b"x", &es.sign(b"x")));
+    }
+
+    #[test]
+    fn p_9_4_a_bad_pem_is_not_a_public_key() {
+        use ed25519_dalek::pkcs8::EncodePrivateKey;
+        for text in [
+            "",
+            "not a key",
+            "-----BEGIN PUBLIC KEY-----\nAAAA\n-----END PUBLIC KEY-----\n",
+        ] {
+            assert_eq!(
+                PublicKey::from_spki_pem(text, None).unwrap_err(),
+                PublicKeyError::NotSupported
+            );
+        }
+        let private = ed25519_dalek::SigningKey::from_bytes(&[3; 32])
+            .to_pkcs8_pem(ed25519_dalek::pkcs8::spki::der::pem::LineEnding::LF)
+            .unwrap();
+        assert!(PublicKey::from_spki_pem(&private, None).is_err());
     }
 
     #[test]

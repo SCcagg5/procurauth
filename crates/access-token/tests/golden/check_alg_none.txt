@@ -1,0 +1,13 @@
+structure  ok   3 parts
+header     ok   no `crit`
+alg        fail Header `alg`: expected `Ed25519` or `ES256`, found "none". (rule 9.2)
+typ        ok   JWT
+kid        ok   one key in the set
+signature  skip
+claims     ok   iss, sub, aud, iat, exp
+iss        ok   https://edge.example
+sub        ok   present
+aud        ok   datastore
+iat        ok   1792569600
+exp        ok   1792569900
+life       ok   life 300 s, max 300 s

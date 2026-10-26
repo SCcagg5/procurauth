@@ -1,0 +1,16 @@
+{
+  "token_header": "X-Identity-Token",
+  "iss": "https://edge.example",
+  "service_id": "datastore",
+  "max_age_seconds": 300,
+  "skew_seconds": 30,
+  "jwks": {
+    "keys": [
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "P7xgCMzIVQtPtGQyW22ST5y0a6o2maegbk8O2wk1BjY"
+      }
+    ]
+  }
+}

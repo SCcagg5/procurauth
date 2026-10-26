@@ -1,0 +1,6 @@
+error: Configuration `CONFIG`: $.iss: rule 9.4: Member `iss`: expected a string, found a number: 5.
+error: Configuration `CONFIG`: $: rule 9.4: Member `skew_seconds` is absent.
+error: Configuration `CONFIG`: $.extra: rule 9.4: Member `extra` is not known here.
+error: Configuration `CONFIG`: $.token_header: rule 9.4: Member `token_header`: expected a header other than `Authorization`, `Proxy-Authorization` and `Cookie`, found "Cookie".
+error: Configuration `CONFIG`: $.max_age_seconds: rule 9.4: Member `max_age_seconds`: expected a whole number of 1 or more, found 0.
+error: Configuration `CONFIG`: $: rule 9.4: The configuration needs at least one public key: expected the member `jwks` or `pem_keys`.

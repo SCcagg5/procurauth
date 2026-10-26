@@ -1,0 +1,91 @@
+{
+  "checks": [
+    {
+      "detail": "3 parts",
+      "name": "structure",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "no `crit`",
+      "name": "header",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "Ed25519",
+      "name": "alg",
+      "outcome": "pass",
+      "rule": "9.2"
+    },
+    {
+      "detail": "JWT",
+      "name": "typ",
+      "outcome": "pass",
+      "rule": "9.2"
+    },
+    {
+      "detail": "one key in the set",
+      "name": "kid",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "The signature is not good.",
+      "name": "signature",
+      "outcome": "fail",
+      "rule": "9.4"
+    },
+    {
+      "detail": "iss, sub, aud, iat, exp",
+      "name": "claims",
+      "outcome": "pass",
+      "rule": "9.3"
+    },
+    {
+      "detail": "https://edge.example",
+      "name": "iss",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "present",
+      "name": "sub",
+      "outcome": "pass",
+      "rule": "9.3"
+    },
+    {
+      "detail": "datastore",
+      "name": "aud",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "1792569600",
+      "name": "iat",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "1792569900",
+      "name": "exp",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
+      "detail": "life 300 s, max 300 s",
+      "name": "life",
+      "outcome": "pass",
+      "rule": "9.4"
+    }
+  ],
+  "claims": {
+    "aud": "datastore",
+    "exp": 1792569900,
+    "iat": 1792569600,
+    "iss": "https://edge.example",
+    "sub": "alice"
+  },
+  "now": 1792569700,
+  "result": "fail"
+}

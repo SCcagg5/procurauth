@@ -1,0 +1,7 @@
+token_header    X-Identity-Token  (file)
+iss             https://edge.example  (file)
+service_id      datastore  (file)
+max_age_seconds 300  (file)
+skew_seconds    30  (file)
+key             kid edge-es256, alg ES256  (file:jwks.keys[0])
+key             kid edge-ed25519, alg Ed25519  (file:pem_keys[0])

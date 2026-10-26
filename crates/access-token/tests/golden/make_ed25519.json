@@ -1,0 +1,17 @@
+{
+  "claims": {
+    "aud": "datastore",
+    "exp": 1792569900,
+    "iat": 1792569600,
+    "iss": "https://edge.example",
+    "owner": "alice",
+    "sub": "key:9b1c04e2aa71f0c3"
+  },
+  "findings": [],
+  "header": {
+    "alg": "Ed25519",
+    "kid": "edge-ed25519",
+    "typ": "JWT"
+  },
+  "token": "eyJhbGciOiJFZDI1NTE5Iiwia2lkIjoiZWRnZS1lZDI1NTE5IiwidHlwIjoiSldUIn0.eyJhdWQiOiJkYXRhc3RvcmUiLCJleHAiOjE3OTI1Njk5MDAsImlhdCI6MTc5MjU2OTYwMCwiaXNzIjoiaHR0cHM6Ly9lZGdlLmV4YW1wbGUiLCJvd25lciI6ImFsaWNlIiwic3ViIjoia2V5OjliMWMwNGUyYWE3MWYwYzMifQ.cQ3QA4TeWraf5z7fvBRLNeY0reytjjB4r9I4xsTzC9bt5oZ7h5EbsssPfZPv6bMZZRKWex91-MBgpOeekt1bBg"
+}

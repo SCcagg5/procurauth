@@ -1,0 +1,13 @@
+structure  ok   3 parts
+header     ok   no `crit`
+alg        ok   Ed25519
+typ        fail Header `typ`: expected `JWT`, found "at+jwt". (rule 9.2)
+kid        ok   one key in the set
+signature  ok   good
+claims     ok   iss, sub, aud, iat, exp
+iss        ok   https://edge.example
+sub        ok   present
+aud        ok   datastore
+iat        ok   1792569600
+exp        ok   1792570000
+life       fail The life of the token is 400 s, and the maximum age is 300 s. (rule 9.4)

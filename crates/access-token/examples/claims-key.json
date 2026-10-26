@@ -1,0 +1,8 @@
+{
+  "iss": "https://edge.example",
+  "sub": "key:9b1c04e2aa71f0c3",
+  "aud": "datastore",
+  "iat": 1792569600,
+  "exp": 1792569900,
+  "owner": "alice"
+}

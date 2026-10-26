@@ -1,0 +1,7 @@
+{
+  "iss": "https://edge.example",
+  "sub": "alice",
+  "aud": "datastore",
+  "iat": 1792569600,
+  "exp": 1792569900
+}

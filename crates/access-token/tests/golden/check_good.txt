@@ -1,0 +1,13 @@
+structure  ok   3 parts
+header     ok   no `crit`
+alg        ok   Ed25519
+typ        ok   JWT
+kid        ok   one key in the set
+signature  ok   good
+claims     ok   iss, sub, aud, iat, exp
+iss        ok   https://edge.example
+sub        ok   present
+aud        ok   datastore
+iat        ok   1792569600
+exp        ok   1792569900
+life       ok   life 300 s, max 300 s

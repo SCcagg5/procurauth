@@ -1,0 +1,14 @@
+{
+  "claims": null,
+  "findings": [
+    {
+      "code": "missing_owner",
+      "message": "A token for a key has the claim `owner`.",
+      "path": "$",
+      "rule": "9.3",
+      "severity": "error"
+    }
+  ],
+  "header": null,
+  "token": null
+}
