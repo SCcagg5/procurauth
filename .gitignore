@@ -10,3 +10,4 @@
 
 # The test keys of access-token are public on purpose: they sign nothing real.
 !/crates/access-token/examples/*.pem
+!/crates/access-conformance/examples/*.pem

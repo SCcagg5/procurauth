@@ -17,6 +17,21 @@
     },
     "pdp_script": [
       {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
         "when": {},
         "respond": {
           "body": {

@@ -1,0 +1,34 @@
+[package]
+name = "access-conformance"
+description = "Runs the conformance cases of ProcurAuth against a PEP, a PDP or an edge."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[lib]
+name = "access_conformance"
+path = "src/lib.rs"
+
+[[bin]]
+name = "access-conformance"
+path = "src/main.rs"
+
+[dependencies]
+base64.workspace = true
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+fake-pdp = { path = "../fake-pdp" }
+procurauth-core = { path = "../procurauth-core" }
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+jsonschema.workspace = true
+procurauth-schema-check = { path = "../../conformance/schema-check" }

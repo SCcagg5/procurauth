@@ -1,0 +1,35 @@
+{
+  "edge": {
+    "service": "datastore",
+    "token_header": "X-Identity-Token",
+    "trust": {
+      "iss": "https://edge.example",
+      "max_age_seconds": 300,
+      "skew_seconds": 30,
+      "jwks_file": "edge-jwks.json"
+    },
+    "keys": {
+      "valid": {
+        "text_file": "edge-valid-key.txt",
+        "subject": "key:ann-k1",
+        "owner": "ann"
+      },
+      "no_access": {
+        "text_file": "edge-no-access-key.txt"
+      },
+      "unknown": {
+        "text_file": "edge-unknown-key.txt"
+      }
+    },
+    "upstream": {
+      "listen": "127.0.0.1:9000"
+    },
+    "pdp": {
+      "listen": "127.0.0.1:8181",
+      "directory": "access.json",
+      "credential_file": "pdp-credential.txt"
+    },
+    "mcp_path": "/mcp",
+    "token_cache": false
+  }
+}

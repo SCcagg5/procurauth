@@ -1,0 +1,4 @@
+D01  pass  4.3,7.3      A grant covers the node and each node below it, also a node that the service adds later.
+D05  pass  7.3,8.1,8.4  A ceiling takes the lowest value among the grants of the asked action, and a key never goes above its owner.
+D41  pass  6.3,11.1     When the counter of a window of a second is full, the answer is false with budget_exceeded and retry_after 1, with HTTP 200.
+3 cases: 3 passed, 0 failed, 0 skipped
