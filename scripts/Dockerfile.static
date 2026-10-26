@@ -1,0 +1,3 @@
+# Image for the static Linux programs: the development image plus the musl targets.
+FROM procurauth-dev:1
+RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl

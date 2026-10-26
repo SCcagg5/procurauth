@@ -8,4 +8,5 @@ First version.
 - The JSON schemas.
 - The conformance data: 191 cases for a PEP, a PDP and an edge.
 - Seven programs: `keycheck`, `access-token`, `access-lint`, `fake-pdp`, `access-conformance`, `reference-service` and `reference-edge`.
+- The Linux programs are static files (musl). They run on any Linux distribution of the same processor.
 - The PEP library `procurauth-pep` in Rust.

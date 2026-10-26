@@ -17,7 +17,7 @@ Other directories:
 | --- | --- |
 | `schemas/` | The JSON Schemas, one file for each document. |
 | `conformance/` | The conformance cases and the test directories. See its README. |
-| `scripts/` | `cargo.sh`, `conformance.sh` and `ci.sh`. They run in Docker. |
+| `scripts/` | `cargo.sh`, `conformance.sh`, `static.sh` and `ci.sh`. They run in Docker. |
 | `notes/` | The decisions, the questions about the protocol, and the differences from the site. |
 
 ## The core crate
@@ -78,7 +78,7 @@ scripts/ci.sh
 
 The script builds the image `procurauth-dev:1` one time. The image is `rust:1-bookworm` with `rustfmt` and `clippy`. The script runs as the host user. The cargo registry and the target directory are in Docker volumes: `procurauth-cargo-registry` and one target volume for each checkout. The first run gives them to the host user. No root-owned file appears in the repository.
 
-`scripts/ci.sh` runs the format check, clippy, the tests and the conformance runs. It stops at the first failure. `scripts/msrv.sh` checks that the workspace builds with the `rust-version` of the root `Cargo.toml`.
+`scripts/ci.sh` runs the format check, clippy, the tests and the conformance runs. It stops at the first failure. `scripts/msrv.sh` checks that the workspace builds with the `rust-version` of the root `Cargo.toml`. `scripts/static.sh --check` builds the seven programs for the musl target and checks that each file is static.
 
 ### Conformance runs
 
