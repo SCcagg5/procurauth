@@ -1,0 +1,19 @@
+{
+  "iss": "https://edge.example",
+  "keys": [
+    {
+      "alg": "ES256",
+      "kid": "edge-es256",
+      "source": "file:jwks.keys[0]"
+    },
+    {
+      "alg": "Ed25519",
+      "kid": "edge-ed25519",
+      "source": "file:pem_keys[0]"
+    }
+  ],
+  "max_age_seconds": 300,
+  "service_id": "datastore",
+  "skew_seconds": 30,
+  "token_header": "X-Identity-Token"
+}

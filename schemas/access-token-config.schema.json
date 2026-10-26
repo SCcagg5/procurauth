@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/access-token-config.schema.json",
+  "title": "Configuration of a service for access-token",
+  "description": "The values of protocol 9.4 that the tool access-token check needs. They are the token header, the issuer and the id of the service. They are also the maximum age, the clock skew and the public keys of the edge. The schema is closed. A schema cannot state two rules: a set of more than one key needs a kid for each key, and the header is not Authorization. The tool checks them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["token_header", "iss", "service_id", "max_age_seconds", "skew_seconds"],
+  "anyOf": [{ "required": ["jwks"] }, { "required": ["pem_keys"] }],
+  "properties": {
+    "token_header": {
+      "description": "The name of the HTTP header that holds the token. It is never Authorization, Proxy-Authorization or Cookie (protocol 9.4).",
+      "type": "string",
+      "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+    },
+    "iss": {
+      "description": "The value of the claim iss that the service accepts.",
+      "type": "string",
+      "minLength": 1
+    },
+    "service_id": {
+      "description": "The id of the service. A token must hold it in the claim aud. It has 1 to 256 bytes and no control character (protocol 4.1).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "max_age_seconds": {
+      "description": "The longest life of a token, which is exp minus iat, in seconds.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "skew_seconds": {
+      "description": "The clock skew in seconds. It applies to iat and to exp.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "jwks": {
+      "description": "A JWK Set with the public keys of the edge, as the edge publishes it (RFC 7517, section 5). A key is OKP with Ed25519, or EC with P-256. The tool reads it with the strict reader of the core.",
+      "type": "object",
+      "required": ["keys"],
+      "properties": {
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "pem_keys": {
+      "description": "Public keys in PEM form. Each item is a SubjectPublicKeyInfo of Ed25519 or P-256, with the label PUBLIC KEY.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pem"],
+        "properties": {
+          "kid": {
+            "description": "The id of the key, as the header kid of a token names it.",
+            "type": "string",
+            "minLength": 1
+          },
+          "pem": {
+            "description": "The PEM text of the public key.",
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "token_header": "X-Identity-Token",
+      "iss": "https://edge.example",
+      "service_id": "datastore",
+      "max_age_seconds": 300,
+      "skew_seconds": 30,
+      "jwks": {
+        "keys": [
+          {
+            "kty": "OKP",
+            "crv": "Ed25519",
+            "x": "P7xgCMzIVQtPtGQyW22ST5y0a6o2maegbk8O2wk1BjY"
+          }
+        ]
+      }
+    },
+    {
+      "token_header": "X-Identity-Token",
+      "iss": "https://edge.example",
+      "service_id": "datastore",
+      "max_age_seconds": 300,
+      "skew_seconds": 30,
+      "pem_keys": [
+        {
+          "kid": "edge-ed25519",
+          "pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAP7xgCMzIVQtPtGQyW22ST5y0a6o2maegbk8O2wk1BjY=\n-----END PUBLIC KEY-----\n"
+        }
+      ]
+    }
+  ]
+}

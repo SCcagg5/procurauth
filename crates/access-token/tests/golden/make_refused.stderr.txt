@@ -1,0 +1,1 @@
+error: $: rule 9.3: A token for a key has the claim `owner`.

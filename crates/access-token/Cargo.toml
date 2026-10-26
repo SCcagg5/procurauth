@@ -1,0 +1,29 @@
+[package]
+name = "access-token"
+description = "Makes and checks the identity tokens of ProcurAuth, good and bad, for tests."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "access_token"
+path = "src/lib.rs"
+
+[[bin]]
+name = "access-token"
+path = "src/main.rs"
+
+[dependencies]
+base64.workspace = true
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "usage", "error-context", "suggestions"] }
+procurauth-core = { path = "../procurauth-core" }
+serde_json.workspace = true
+
+[dev-dependencies]
+procurauth-schema-check = { path = "../../conformance/schema-check" }
