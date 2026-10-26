@@ -1,0 +1,110 @@
+{
+  "id": "D04",
+  "title": "For subtree, a key needs one node that a grant of the key and a right of its owner both cover.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "The key has data.read on test2, and its owner has it on test1 only",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:4d2e8f6a10b37c95"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          }
+        }
+      }
+    },
+    {
+      "name": "The owner alone has a grant below the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "bob"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The key of Alice and Alice both have data.read on test2",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:9b1c04e2aa71f0c3"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          },
+          "context": {
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "E07",
+  "title": "The identity token of a key has the claims iss, sub, aud, iat, exp and owner, and no claim act.",
+  "role": "edge",
+  "paragraphs": [
+    "9.3"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "token_claims": {
+            "/sub": {
+              "equals": "{{valid_key_subject}}"
+            },
+            "/owner": {
+              "equals": "{{valid_key_owner}}"
+            },
+            "/aud": {
+              "one_of": [
+                "{{service}}",
+                [
+                  "{{service}}"
+                ]
+              ]
+            },
+            "/iss": {
+              "present": true
+            },
+            "/iat": {
+              "present": true
+            },
+            "/exp": {
+              "present": true
+            },
+            "/act": {
+              "absent": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}

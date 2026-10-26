@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/identity-token-claims.schema.json",
+  "title": "Identity token claims",
+  "description": "The payload of the identity token (protocol 9.3). The token is a JWT. A service ignores each claim that it does not know (protocol 9.4). A schema cannot state some rules, for example that a token for a key has the claim owner. The tool access-token checks them. The member $defs.header describes the JOSE header (protocol 9.2).",
+  "type": "object",
+  "required": ["iss", "sub", "aud", "iat", "exp"],
+  "properties": {
+    "iss": {
+      "description": "The edge that made the token. The configuration of the service names its value.",
+      "type": "string",
+      "minLength": 1
+    },
+    "sub": {
+      "description": "The id of the subject: a person, or a key with the form key:local-part (protocol section 3). A PEP treats it as opaque text (protocol 3.3).",
+      "type": "string",
+      "minLength": 1
+    },
+    "aud": {
+      "description": "The id of the service, or an array that holds it.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "iat": {
+      "description": "The time of issue, in whole seconds since the Unix epoch.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "exp": {
+      "description": "The end of the life of the token, in whole seconds since the Unix epoch.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "owner": {
+      "description": "For a key, the id of its owner, which has no colon. It is for logs and for approvals. A service never uses it in a decision (protocol 9.5).",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "header": {
+      "description": "The JOSE header of the identity token (protocol 9.2). The algorithm is Ed25519 or ES256. The names none and EdDSA are not valid.",
+      "type": "object",
+      "required": ["alg", "typ"],
+      "properties": {
+        "alg": { "enum": ["Ed25519", "ES256"] },
+        "typ": { "const": "JWT" },
+        "kid": {
+          "description": "The id of the key of the edge. It is mandatory when the key set of the edge holds more than one key (protocol 9.4).",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "not": { "required": ["crit"] }
+    }
+  },
+  "examples": [
+    {
+      "iss": "https://edge.example",
+      "sub": "key:9b1c04e2aa71f0c3",
+      "aud": "datastore",
+      "iat": 1792569600,
+      "exp": 1792569900,
+      "owner": "alice"
+    },
+    {
+      "iss": "https://edge.example",
+      "sub": "alice",
+      "aud": ["datastore", "reports"],
+      "iat": 1792569600,
+      "exp": 1792569900
+    }
+  ]
+}

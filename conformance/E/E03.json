@@ -1,0 +1,37 @@
+{
+  "id": "E03",
+  "title": "A request with no key text gets HTTP 401 with WWW-Authenticate: Bearer and no error parameter, and an empty body.",
+  "role": "edge",
+  "paragraphs": [
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with no Authorization header",
+      "request": {
+        "method": "GET",
+        "path": "/probe"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer( realm=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

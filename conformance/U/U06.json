@@ -1,0 +1,66 @@
+{
+  "id": "U06",
+  "title": "When the PDP gives an HTTP error or an answer that is not valid, the PEP gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "erred": {
+        "subject": "alice"
+      },
+      "garbled": {
+        "subject": "carol"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "alice"
+        },
+        "respond": {
+          "status": 500,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "carol"
+        },
+        "respond": {
+          "body": {
+            "decision": "yes"
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers HTTP 500",
+      "request": {
+        "operation": "use_plain",
+        "token": "erred"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP answers with a decision that is not a boolean",
+      "request": {
+        "operation": "use_plain",
+        "token": "garbled"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

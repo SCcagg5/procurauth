@@ -1,0 +1,27 @@
+[package]
+name = "procurauth-core"
+description = "Shared core of the ProcurAuth tools: strict JSON, documents, tokens, keys, coverage."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+base64.workspace = true
+ed25519-dalek.workspace = true
+hex.workspace = true
+p256.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+jsonschema.workspace = true
+regex.workspace = true
+procurauth-schema-check = { path = "../../conformance/schema-check" }

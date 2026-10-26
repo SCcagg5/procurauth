@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json",
+  "title": "Evaluation context",
+  "description": "The members that the protocol adds to the member context of an AuthZEN 1.0 evaluation. Merge them into the context of a request and into the context of a response. A receiver ignores each member that it does not know. The root schema accepts the context of a request and of a response. The members $defs.request_context and $defs.answer_context are stricter. A schema cannot check that a ceiling is declared.",
+  "type": "object",
+  "properties": {
+    "usage": {
+      "description": "In a request: the units of one use (protocol 6.4). In an answer: the units that the PDP took (protocol 6.12).",
+      "type": "object",
+      "required": ["units"],
+      "properties": {
+        "units": { "type": "integer", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "limits": {
+      "description": "In a true answer: the ceilings that apply (protocol 7.3). It holds ceilings only. A budget value never appears in an answer.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "match": {
+      "description": "In a request: node, the default, or subtree (protocol 4.4).",
+      "enum": ["node", "subtree"]
+    },
+    "reason": {
+      "description": "In a false answer: the reason (protocol 11.1). The values that the protocol gives are unknown_subject, invalid_resource, invalid_request and budget_exceeded. A PEP maps another text as a false answer with no reason (protocol 10.3).",
+      "type": "string"
+    },
+    "retry_after": {
+      "description": "In a false answer with the reason budget_exceeded: the seconds to wait, a whole number from 1 (protocol 11.1).",
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$defs": {
+    "request_context": {
+      "description": "The context of a question. The units are 1 (protocol 6.4). A question with usage has no match equal to subtree (protocol 6.11).",
+      "type": "object",
+      "properties": {
+        "usage": {
+          "type": "object",
+          "required": ["units"],
+          "properties": { "units": { "const": 1 } }
+        },
+        "match": { "enum": ["node", "subtree"] }
+      },
+      "if": { "required": ["usage"] },
+      "then": {
+        "not": {
+          "required": ["match"],
+          "properties": { "match": { "const": "subtree" } }
+        }
+      }
+    },
+    "answer_context": {
+      "description": "The context of an answer. The reason budget_exceeded comes with retry_after (protocol 11.1).",
+      "type": "object",
+      "properties": {
+        "usage": {
+          "type": "object",
+          "required": ["units"],
+          "properties": { "units": { "enum": [0, 1] } }
+        },
+        "limits": { "$ref": "#/properties/limits" },
+        "reason": { "type": "string" },
+        "retry_after": { "type": "integer", "minimum": 1 }
+      },
+      "if": {
+        "required": ["reason"],
+        "properties": { "reason": { "const": "budget_exceeded" } }
+      },
+      "then": { "required": ["retry_after"] }
+    }
+  },
+  "examples": [
+    { "usage": { "units": 1 } },
+    { "match": "subtree" },
+    { "limits": { "max_rows": 100, "max_duration": 30 }, "usage": { "units": 1 } },
+    { "reason": "budget_exceeded", "retry_after": 12 },
+    { "reason": "unknown_subject" }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "id": "U03",
+  "title": "A token with a bad signature gets HTTP 401, and the PEP sends no question.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "bad": {
+        "subject": "alice",
+        "defect": "bad_signature"
+      }
+    }
+  },
+  "steps": [
+    {
+      "name": "Use with a bad signature",
+      "request": {
+        "operation": "use_plain",
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json",
+  "title": "Limit values",
+  "description": "The limit values that one grant gives (protocol 6.1). Each member name is the name of a limit. The value of a ceiling is a whole number. The value of a budget is an array of 1 to 4 items, one item for each window. A schema cannot check the rules that need the declaration, for example that the limit is declared. The tool access-lint checks them.",
+  "type": "object",
+  "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+  "additionalProperties": {
+    "oneOf": [
+      { "$ref": "#/$defs/ceiling_value" },
+      { "$ref": "#/$defs/budget_value" }
+    ]
+  },
+  "$defs": {
+    "ceiling_value": {
+      "description": "The value of a ceiling: a whole number from min to max of the declaration.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget_value": {
+      "description": "The value of a budget: one item for each window.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/budget_item" }
+    },
+    "budget_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "window"],
+      "properties": {
+        "amount": {
+          "description": "The units for one window. A whole number from 1.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "window": {
+          "description": "The fixed window in which the counter counts (protocol 6.3).",
+          "enum": ["second", "minute", "hour", "day"]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "requests": [
+        { "amount": 10, "window": "second" },
+        { "amount": 300, "window": "minute" }
+      ]
+    },
+    { "max_rows": 5000, "max_duration": 30 },
+    {}
+  ]
+}

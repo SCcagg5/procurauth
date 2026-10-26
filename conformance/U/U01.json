@@ -1,0 +1,90 @@
+{
+  "id": "U01",
+  "title": "The PEP sends the subject with the type user and the claim sub as the id.",
+  "role": "pep",
+  "paragraphs": [
+    "3.3",
+    "9.6"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      },
+      "key": {
+        "subject": "key:9b1c04e2aa71f0c3",
+        "owner": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A person",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "alice"
+              },
+              "/subject/properties": {
+                "absent": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A key: the question holds the subject id and no owner",
+      "request": {
+        "operation": "use_plain",
+        "token": "key"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "key:9b1c04e2aa71f0c3"
+              },
+              "/subject/properties": {
+                "absent": true
+              },
+              "/context/owner": {
+                "absent": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

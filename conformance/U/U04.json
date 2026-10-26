@@ -1,0 +1,65 @@
+{
+  "id": "U04",
+  "title": "A false answer with budget_exceeded gives HTTP 429 with the header Retry-After.",
+  "role": "pep",
+  "paragraphs": [
+    "6.4",
+    "10.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 12
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of an action that lists a budget",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "equals": "12"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage/units": {
+                "equals": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

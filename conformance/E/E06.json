@@ -1,0 +1,37 @@
+{
+  "id": "E06",
+  "title": "The edge removes the text of the key from the request before it sends the request to the service.",
+  "role": "edge",
+  "paragraphs": [
+    "9.1"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "headers": {
+            "Authorization": {
+              "absent": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}

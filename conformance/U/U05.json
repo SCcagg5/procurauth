@@ -1,0 +1,75 @@
+{
+  "id": "U05",
+  "title": "The options route asks a question with context.match equal to subtree for each child.",
+  "role": "pep",
+  "paragraphs": [
+    "5.6"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "List the first level",
+      "request": {
+        "operation": "list_options",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/items": {
+            "present": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/match": {
+                "equals": "subtree"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          },
+          {
+            "json": {
+              "/context/match": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "E04",
+  "title": "An edge never redirects a request that has the text of a key.",
+  "role": "edge",
+  "paragraphs": [
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request from a browser, with a key text that the edge does not know",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{unknown_key_text}}",
+          "Accept": "text/html"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "Location": {
+            "absent": true
+          }
+        },
+        "body_text": {
+          "equals": ""
+        }
+      }
+    }
+  ]
+}

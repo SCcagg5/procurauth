@@ -1,0 +1,95 @@
+{
+  "id": "U02",
+  "title": "The PEP sends the chain of the resource in resource.properties.ancestors.",
+  "role": "pep",
+  "paragraphs": [
+    "4.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A node below the service",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/resource/type": {
+                "equals": "{{resource_type}}"
+              },
+              "/resource/id": {
+                "equals": "{{resource_id}}"
+              },
+              "/resource/properties/ancestors": {
+                "equals": "{{ancestors}}"
+              },
+              "/resource/properties/ancestors/0/type": {
+                "equals": "service"
+              },
+              "/resource/properties/ancestors/0/id": {
+                "equals": "{{service}}"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The service itself has no chain",
+      "request": {
+        "operation": "use_service",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/resource/type": {
+                "equals": "service"
+              },
+              "/resource/id": {
+                "equals": "{{service}}"
+              }
+            }
+          },
+          {
+            "json": {
+              "/resource/properties/ancestors/0": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

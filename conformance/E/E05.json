@@ -1,0 +1,43 @@
+{
+  "id": "E05",
+  "title": "The edge replaces a header with the name of the identity token header.",
+  "role": "edge",
+  "paragraphs": [
+    "9.1"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A client sends a forged token in the identity token header",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}",
+          "{{token_header}}": "forged.forged.forged"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "headers": {
+            "{{token_header}}": {
+              "regex": "^[A-Za-z0-9_-]{16,}\\.[A-Za-z0-9_-]{16,}\\.[A-Za-z0-9_-]{16,}$"
+            }
+          },
+          "token_claims": {
+            "/sub": {
+              "equals": "{{valid_key_subject}}"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

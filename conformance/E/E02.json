@@ -1,0 +1,40 @@
+{
+  "id": "E02",
+  "title": "An edge that refuses a key gives HTTP 401 with WWW-Authenticate: Bearer and an invalid_token error, and an empty body.",
+  "role": "edge",
+  "paragraphs": [
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A key text that the edge does not know",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{unknown_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+.*error=\"invalid_token\""
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}
