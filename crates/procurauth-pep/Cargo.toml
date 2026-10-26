@@ -1,0 +1,30 @@
+[package]
+name = "procurauth-pep"
+description = "Reference PEP library for ProcurAuth: identity token, questions to the PDP, kept answers, ceilings and refusals."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "procurauth_pep"
+path = "src/lib.rs"
+
+[features]
+default = ["mcp"]
+# The helpers for the MCP binding.
+mcp = []
+
+[dependencies]
+procurauth-core = { path = "../procurauth-core" }
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+access-token = { path = "../access-token" }
+fake-pdp = { path = "../fake-pdp" }
