@@ -1,0 +1,100 @@
+{
+  "id": "U89",
+  "title": "A tools/call of an unknown tool and a tools/call of a refused tool get the same refusal: HTTP 200 and the code -32602.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:4.2",
+    "mcp:5.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "action": "{{action}}"
+        },
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An unknown tool",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "no_such_tool",
+            "arguments": {},
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          },
+          "/result": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A refused tool",
+      "request": {
+        "operation": "mcp_call_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          },
+          "/result": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

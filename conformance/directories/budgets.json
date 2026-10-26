@@ -1,0 +1,373 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "write_requests",
+              "max_duration"
+            ]
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "write_requests",
+            "label": "Write requests",
+            "description": "Requests that change data.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "quad",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 1,
+                "window": "second"
+              },
+              {
+                "amount": 1,
+                "window": "minute"
+              },
+              {
+                "amount": 1,
+                "window": "hour"
+              },
+              {
+                "amount": 1,
+                "window": "day"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "duo",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 2,
+                "window": "second"
+              },
+              {
+                "amount": 5,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "atom",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 10,
+                "window": "minute"
+              }
+            ],
+            "write_requests": [
+              {
+                "amount": 1,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "once",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 1,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test1"
+        }
+      ]
+    },
+    {
+      "id": "nolimit",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "olga",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 3,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:olga-wide",
+      "owner": "olga",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 5,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:olga-bare",
+      "owner": "olga",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "owen",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 5,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:owen-small",
+      "owner": "owen",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 2,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        }
+      ]
+    }
+  ],
+  "counters": [
+    {
+      "subject": "atom",
+      "limit": "requests",
+      "window": "minute",
+      "used": 9
+    },
+    {
+      "subject": "atom",
+      "limit": "write_requests",
+      "window": "minute",
+      "used": 1
+    }
+  ]
+}

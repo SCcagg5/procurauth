@@ -1,0 +1,57 @@
+{
+  "id": "D60",
+  "title": "A request with context.usage and context.match equal to subtree gets HTTP 400.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.11",
+    "4.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Usage and subtree",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "match": "subtree"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "D66",
+  "title": "The PDP uses a ceiling value only on a grant of the asked action.",
+  "role": "pdp",
+  "paragraphs": [
+    "7.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "ceilings.json"
+  },
+  "steps": [
+    {
+      "name": "data.read on test1: the value of data.write does not apply",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_duration": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "data.write on test1: its own value applies",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_duration": {
+            "equals": 7
+          },
+          "/context/limits/max_rows": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

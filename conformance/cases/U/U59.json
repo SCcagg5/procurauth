@@ -1,0 +1,89 @@
+{
+  "id": "U59",
+  "title": "The PEP sends a question for the action and the resource of each use, with the subject of the token.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1",
+    "10.0"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of the service itself",
+      "request": {
+        "operation": "use_service",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              },
+              "/resource/type": {
+                "equals": "service"
+              },
+              "/resource/id": {
+                "equals": "{{service}}"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Use of an action that lists no budget",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              },
+              "/resource/type": {
+                "equals": "{{resource_type}}"
+              },
+              "/resource/id": {
+                "equals": "{{resource_id}}"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

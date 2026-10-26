@@ -1,0 +1,45 @@
+{
+  "id": "U79",
+  "title": "A request to the route whose type has another parent than the type of the parent node gets HTTP 400.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "notes": "The type that is asked has the parent service. A node of the same type cannot be its parent.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The parent is a node of the type that is asked",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?parent={{options_type}}%3Ax&type={{options_type}}",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "D71",
+  "title": "For a key, a value that only the key gives, or only its owner gives, stays as it is.",
+  "role": "pdp",
+  "paragraphs": [
+    "8.2",
+    "8.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "ceilings.json"
+  },
+  "steps": [
+    {
+      "name": "The key gives rows 80, the owner gives rows 500 and duration 40",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:kay-rows"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 80
+          },
+          "/context/limits/max_duration": {
+            "equals": 40
+          }
+        }
+      }
+    },
+    {
+      "name": "The key gives no value, the owner gives 500 and 40",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:kay-open"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 500
+          },
+          "/context/limits/max_duration": {
+            "equals": 40
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "id": "U42",
+  "title": "The service refuses a token whose typ is not JWT: at+jwt, another value, or no typ.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "at_jwt": {
+        "subject": "alice",
+        "defect": "at_jwt"
+      },
+      "other": {
+        "subject": "alice",
+        "header": {
+          "typ": "JOSE"
+        }
+      },
+      "none": {
+        "subject": "alice",
+        "header": {
+          "typ": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The type at+jwt",
+      "request": {
+        "operation": "use_plain",
+        "token": "at_jwt"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The type JOSE",
+      "request": {
+        "operation": "use_plain",
+        "token": "other"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "No type",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

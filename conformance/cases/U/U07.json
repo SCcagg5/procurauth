@@ -1,0 +1,160 @@
+{
+  "id": "U07",
+  "title": "The PEP sends the sub of the token as it is, and it reads no meaning from the characters of the id.",
+  "role": "pep",
+  "paragraphs": [
+    "3.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "mixed": {
+        "subject": "Mixed:Case-Id"
+      },
+      "spaced": {
+        "subject": "two words"
+      },
+      "lookalike": {
+        "subject": "key:UPPER-CASE"
+      },
+      "accent": {
+        "subject": "café"
+      },
+      "escape": {
+        "subject": "a%2Fb+c"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The sub is 'Mixed:Case-Id'",
+      "request": {
+        "operation": "use_plain",
+        "token": "mixed"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "Mixed:Case-Id"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The sub is 'two words'",
+      "request": {
+        "operation": "use_plain",
+        "token": "spaced"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "two words"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The sub is 'key:UPPER-CASE'",
+      "request": {
+        "operation": "use_plain",
+        "token": "lookalike"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "key:UPPER-CASE"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The sub is 'café'",
+      "request": {
+        "operation": "use_plain",
+        "token": "accent"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "café"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The sub is 'a%2Fb+c'",
+      "request": {
+        "operation": "use_plain",
+        "token": "escape"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/type": {
+                "equals": "user"
+              },
+              "/subject/id": {
+                "equals": "a%2Fb+c"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

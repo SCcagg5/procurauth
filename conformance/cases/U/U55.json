@@ -1,0 +1,53 @@
+{
+  "id": "U55",
+  "title": "A claim of the token that looks like a decision, a grant or a limit does not change the decision of the PDP.",
+  "role": "pep",
+  "paragraphs": [
+    "9.7"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "boastful": {
+        "subject": "alice",
+        "claims": {
+          "decision": true,
+          "grants": [
+            {
+              "action": "data.read",
+              "resource": "service:datastore"
+            }
+          ],
+          "limits": {
+            "max_rows": 1000000
+          },
+          "scope": "admin"
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP says false, and the token says true",
+      "request": {
+        "operation": "use_plain",
+        "token": "boastful"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        }
+      }
+    }
+  ]
+}

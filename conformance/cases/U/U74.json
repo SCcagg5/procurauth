@@ -1,0 +1,102 @@
+{
+  "id": "U74",
+  "title": "When the PDP gives no valid answer for a child, the route gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "5.6",
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "erred": {
+        "subject": "user-erred"
+      },
+      "garbled": {
+        "subject": "user-garbled"
+      },
+      "silent": {
+        "subject": "user-silent"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-erred"
+        },
+        "respond": {
+          "status": 500,
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-garbled"
+        },
+        "respond": {
+          "body": {
+            "decision": "yes"
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-silent"
+        },
+        "respond": {
+          "no_answer": true
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers HTTP 500",
+      "skip_if": [
+        "no_options_route"
+      ],
+      "request": {
+        "operation": "list_options",
+        "token": "erred"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP gives a decision that is not a boolean",
+      "skip_if": [
+        "no_options_route"
+      ],
+      "request": {
+        "operation": "list_options",
+        "token": "garbled"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The PDP does not answer",
+      "skip_if": [
+        "no_options_route"
+      ],
+      "request": {
+        "operation": "list_options",
+        "token": "silent"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "id": "U85",
+  "title": "The service checks the token on each MCP method: a bad token on tools/list, ping and tools/call gets HTTP 401 and an empty body.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:3.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "bad": {
+        "subject": "alice",
+        "defect": "bad_signature"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A tools/list",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/list",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A ping",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A tools/call",
+      "request": {
+        "operation": "mcp_call_plain",
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

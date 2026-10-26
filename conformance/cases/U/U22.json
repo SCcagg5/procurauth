@@ -1,0 +1,119 @@
+{
+  "id": "U22",
+  "title": "The PEP never keeps a true answer with units above 0: each use of a budget action sends its own question.",
+  "role": "pep",
+  "paragraphs": [
+    "6.4",
+    "10.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use number 1",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage/units": {
+                "equals": 1
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Use number 2",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage/units": {
+                "equals": 1
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Use number 3",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage/units": {
+                "equals": 1
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

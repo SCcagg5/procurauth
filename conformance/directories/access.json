@@ -1,0 +1,156 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "max_duration"
+            ]
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "ann",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "ben",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:ann-k1",
+      "owner": "ann",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:ann-k2",
+      "owner": "ann",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:ben-k",
+      "owner": "ben",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    }
+  ]
+}

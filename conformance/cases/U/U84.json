@@ -1,0 +1,66 @@
+{
+  "id": "U84",
+  "title": "The PEP asks the PDP for a use of the service itself, with the resource of type service.",
+  "role": "pep",
+  "paragraphs": [
+    "15",
+    "10.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of the service itself",
+      "request": {
+        "operation": "use_service",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/resource/type": {
+                "equals": "service"
+              },
+              "/resource/id": {
+                "equals": "{{service}}"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          },
+          {
+            "json": {
+              "/resource/properties/ancestors/0": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

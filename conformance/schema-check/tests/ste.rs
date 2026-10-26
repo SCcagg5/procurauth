@@ -117,6 +117,7 @@ fn markdown_files(root: &Path) -> Vec<PathBuf> {
     files_with(&root.join("devdocs"), "md", &mut out);
     files_with(&root.join("notes"), "md", &mut out);
     out.push(root.join("conformance/README.md"));
+    out.push(root.join("conformance/COVERAGE.md"));
     out.push(root.join("conformance/schema-check/README.md"));
     // The README and the rules file of each crate.
     if let Ok(entries) = fs::read_dir(root.join("crates")) {

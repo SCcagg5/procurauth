@@ -1,0 +1,81 @@
+{
+  "id": "D41",
+  "title": "When the counter of a window of a second is full, the answer is false with budget_exceeded and retry_after 1, with HTTP 200.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "budgets.json",
+    "counters": [
+      {
+        "subject": "quad",
+        "limit": "requests",
+        "window": "second",
+        "used": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use with a full counter of the second",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "quad"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 1
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

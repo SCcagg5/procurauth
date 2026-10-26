@@ -1,0 +1,86 @@
+{
+  "id": "U21",
+  "title": "The PEP does not send the same question without context.usage before the question with it.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of an action that lists a budget",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/action/name": {
+                "equals": "{{action}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          },
+          {
+            "json": {
+              "/action/name": {
+                "equals": "{{action}}"
+              },
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

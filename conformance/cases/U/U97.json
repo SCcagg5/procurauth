@@ -1,0 +1,80 @@
+{
+  "id": "U97",
+  "title": "When the second permission of a tool is false, the call gets -32602 and the service sends no question with usage.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:3.7",
+    "mcp:5.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_budget_action",
+    "no_multi_action"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A tools/call of the tool with two permissions",
+      "request": {
+        "operation": "mcp_call_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

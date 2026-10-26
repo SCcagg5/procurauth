@@ -1,0 +1,67 @@
+{
+  "id": "U91",
+  "title": "When the PDP gives an HTTP error for a ping, the ping gets HTTP 503 and the code -32603.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.1",
+    "mcp:5.5"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "status": 500,
+          "body": {}
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A ping",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32603
+          },
+          "/id": {
+            "equals": 7
+          }
+        }
+      }
+    }
+  ]
+}

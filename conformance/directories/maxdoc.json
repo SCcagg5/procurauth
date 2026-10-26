@@ -1,0 +1,2996 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "bulk",
+      "document": {
+        "server": "bulk",
+        "resource_types": [
+          {
+            "name": "area1",
+            "parent": "service",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "area2",
+            "parent": "service",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "area3",
+            "parent": "service",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "area4",
+            "parent": "service",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "bay1",
+            "parent": "area1",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "bay2",
+            "parent": "area2",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "bay3",
+            "parent": "area3",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "bay4",
+            "parent": "area4",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "cell1",
+            "parent": "bay1",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "cell2",
+            "parent": "bay2",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "cell3",
+            "parent": "bay3",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "cell4",
+            "parent": "bay4",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "drawer1",
+            "parent": "cell1",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "drawer2",
+            "parent": "cell2",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "drawer3",
+            "parent": "cell3",
+            "description": "One node of this level of the tree."
+          },
+          {
+            "name": "drawer4",
+            "parent": "cell4",
+            "description": "One node of this level of the tree."
+          }
+        ],
+        "actions": [
+          {
+            "name": "bulk.action_01",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_02",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_03",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_04",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_05",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_06",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_07",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_08",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_09",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_10",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_11",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_12",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_13",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_14",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_15",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_16",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_17",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_18",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_19",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_20",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_21",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_22",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_23",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_24",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_25",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_26",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_27",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_28",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_29",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_30",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_31",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_32",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_33",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_34",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_35",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_36",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_37",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_38",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_39",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_40",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_41",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_42",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_43",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_44",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_45",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_46",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_47",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_48",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_49",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_50",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_51",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_52",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_53",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_54",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_55",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_56",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_57",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_58",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_59",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_60",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_61",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_62",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_63",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          },
+          {
+            "name": "bulk.action_64",
+            "resource_types": [
+              "service",
+              "area1",
+              "area2",
+              "area3",
+              "area4",
+              "bay1",
+              "bay2",
+              "bay3",
+              "bay4",
+              "cell1",
+              "cell2",
+              "cell3",
+              "cell4",
+              "drawer1",
+              "drawer2",
+              "drawer3",
+              "drawer4"
+            ],
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "limits": [
+              "reads",
+              "max_items_1"
+            ]
+          }
+        ],
+        "resources": [
+          {
+            "path": "area1:n001",
+            "label": "Node 1 of area1"
+          },
+          {
+            "path": "area1:n002",
+            "label": "Node 2 of area1"
+          },
+          {
+            "path": "area1:n003",
+            "label": "Node 3 of area1"
+          },
+          {
+            "path": "area1:n004",
+            "label": "Node 4 of area1"
+          },
+          {
+            "path": "area1:n005",
+            "label": "Node 5 of area1"
+          },
+          {
+            "path": "area1:n006",
+            "label": "Node 6 of area1"
+          },
+          {
+            "path": "area1:n007",
+            "label": "Node 7 of area1"
+          },
+          {
+            "path": "area1:n008",
+            "label": "Node 8 of area1"
+          },
+          {
+            "path": "area1:n009",
+            "label": "Node 9 of area1"
+          },
+          {
+            "path": "area1:n010",
+            "label": "Node 10 of area1"
+          },
+          {
+            "path": "area1:n011",
+            "label": "Node 11 of area1"
+          },
+          {
+            "path": "area1:n012",
+            "label": "Node 12 of area1"
+          },
+          {
+            "path": "area1:n013",
+            "label": "Node 13 of area1"
+          },
+          {
+            "path": "area1:n014",
+            "label": "Node 14 of area1"
+          },
+          {
+            "path": "area1:n015",
+            "label": "Node 15 of area1"
+          },
+          {
+            "path": "area1:n016",
+            "label": "Node 16 of area1"
+          },
+          {
+            "path": "area1:n017",
+            "label": "Node 17 of area1"
+          },
+          {
+            "path": "area1:n018",
+            "label": "Node 18 of area1"
+          },
+          {
+            "path": "area1:n019",
+            "label": "Node 19 of area1"
+          },
+          {
+            "path": "area1:n020",
+            "label": "Node 20 of area1"
+          },
+          {
+            "path": "area1:n021",
+            "label": "Node 21 of area1"
+          },
+          {
+            "path": "area1:n022",
+            "label": "Node 22 of area1"
+          },
+          {
+            "path": "area1:n023",
+            "label": "Node 23 of area1"
+          },
+          {
+            "path": "area1:n024",
+            "label": "Node 24 of area1"
+          },
+          {
+            "path": "area1:n025",
+            "label": "Node 25 of area1"
+          },
+          {
+            "path": "area1:n026",
+            "label": "Node 26 of area1"
+          },
+          {
+            "path": "area1:n027",
+            "label": "Node 27 of area1"
+          },
+          {
+            "path": "area1:n028",
+            "label": "Node 28 of area1"
+          },
+          {
+            "path": "area1:n029",
+            "label": "Node 29 of area1"
+          },
+          {
+            "path": "area1:n030",
+            "label": "Node 30 of area1"
+          },
+          {
+            "path": "area1:n031",
+            "label": "Node 31 of area1"
+          },
+          {
+            "path": "area1:n032",
+            "label": "Node 32 of area1"
+          },
+          {
+            "path": "area1:n033",
+            "label": "Node 33 of area1"
+          },
+          {
+            "path": "area1:n034",
+            "label": "Node 34 of area1"
+          },
+          {
+            "path": "area1:n035",
+            "label": "Node 35 of area1"
+          },
+          {
+            "path": "area1:n036",
+            "label": "Node 36 of area1"
+          },
+          {
+            "path": "area1:n037",
+            "label": "Node 37 of area1"
+          },
+          {
+            "path": "area1:n038",
+            "label": "Node 38 of area1"
+          },
+          {
+            "path": "area1:n039",
+            "label": "Node 39 of area1"
+          },
+          {
+            "path": "area1:n040",
+            "label": "Node 40 of area1"
+          },
+          {
+            "path": "area1:n041",
+            "label": "Node 41 of area1"
+          },
+          {
+            "path": "area1:n042",
+            "label": "Node 42 of area1"
+          },
+          {
+            "path": "area1:n043",
+            "label": "Node 43 of area1"
+          },
+          {
+            "path": "area1:n044",
+            "label": "Node 44 of area1"
+          },
+          {
+            "path": "area1:n045",
+            "label": "Node 45 of area1"
+          },
+          {
+            "path": "area1:n046",
+            "label": "Node 46 of area1"
+          },
+          {
+            "path": "area1:n047",
+            "label": "Node 47 of area1"
+          },
+          {
+            "path": "area1:n048",
+            "label": "Node 48 of area1"
+          },
+          {
+            "path": "area1:n049",
+            "label": "Node 49 of area1"
+          },
+          {
+            "path": "area1:n050",
+            "label": "Node 50 of area1"
+          },
+          {
+            "path": "area1:n051",
+            "label": "Node 51 of area1"
+          },
+          {
+            "path": "area1:n052",
+            "label": "Node 52 of area1"
+          },
+          {
+            "path": "area1:n053",
+            "label": "Node 53 of area1"
+          },
+          {
+            "path": "area1:n054",
+            "label": "Node 54 of area1"
+          },
+          {
+            "path": "area1:n055",
+            "label": "Node 55 of area1"
+          },
+          {
+            "path": "area1:n056",
+            "label": "Node 56 of area1"
+          },
+          {
+            "path": "area1:n057",
+            "label": "Node 57 of area1"
+          },
+          {
+            "path": "area1:n058",
+            "label": "Node 58 of area1"
+          },
+          {
+            "path": "area1:n059",
+            "label": "Node 59 of area1"
+          },
+          {
+            "path": "area1:n060",
+            "label": "Node 60 of area1"
+          },
+          {
+            "path": "area1:n061",
+            "label": "Node 61 of area1"
+          },
+          {
+            "path": "area1:n062",
+            "label": "Node 62 of area1"
+          },
+          {
+            "path": "area1:n063",
+            "label": "Node 63 of area1"
+          },
+          {
+            "path": "area1:n064",
+            "label": "Node 64 of area1"
+          },
+          {
+            "path": "area2:n001",
+            "label": "Node 1 of area2"
+          },
+          {
+            "path": "area2:n002",
+            "label": "Node 2 of area2"
+          },
+          {
+            "path": "area2:n003",
+            "label": "Node 3 of area2"
+          },
+          {
+            "path": "area2:n004",
+            "label": "Node 4 of area2"
+          },
+          {
+            "path": "area2:n005",
+            "label": "Node 5 of area2"
+          },
+          {
+            "path": "area2:n006",
+            "label": "Node 6 of area2"
+          },
+          {
+            "path": "area2:n007",
+            "label": "Node 7 of area2"
+          },
+          {
+            "path": "area2:n008",
+            "label": "Node 8 of area2"
+          },
+          {
+            "path": "area2:n009",
+            "label": "Node 9 of area2"
+          },
+          {
+            "path": "area2:n010",
+            "label": "Node 10 of area2"
+          },
+          {
+            "path": "area2:n011",
+            "label": "Node 11 of area2"
+          },
+          {
+            "path": "area2:n012",
+            "label": "Node 12 of area2"
+          },
+          {
+            "path": "area2:n013",
+            "label": "Node 13 of area2"
+          },
+          {
+            "path": "area2:n014",
+            "label": "Node 14 of area2"
+          },
+          {
+            "path": "area2:n015",
+            "label": "Node 15 of area2"
+          },
+          {
+            "path": "area2:n016",
+            "label": "Node 16 of area2"
+          },
+          {
+            "path": "area2:n017",
+            "label": "Node 17 of area2"
+          },
+          {
+            "path": "area2:n018",
+            "label": "Node 18 of area2"
+          },
+          {
+            "path": "area2:n019",
+            "label": "Node 19 of area2"
+          },
+          {
+            "path": "area2:n020",
+            "label": "Node 20 of area2"
+          },
+          {
+            "path": "area2:n021",
+            "label": "Node 21 of area2"
+          },
+          {
+            "path": "area2:n022",
+            "label": "Node 22 of area2"
+          },
+          {
+            "path": "area2:n023",
+            "label": "Node 23 of area2"
+          },
+          {
+            "path": "area2:n024",
+            "label": "Node 24 of area2"
+          },
+          {
+            "path": "area2:n025",
+            "label": "Node 25 of area2"
+          },
+          {
+            "path": "area2:n026",
+            "label": "Node 26 of area2"
+          },
+          {
+            "path": "area2:n027",
+            "label": "Node 27 of area2"
+          },
+          {
+            "path": "area2:n028",
+            "label": "Node 28 of area2"
+          },
+          {
+            "path": "area2:n029",
+            "label": "Node 29 of area2"
+          },
+          {
+            "path": "area2:n030",
+            "label": "Node 30 of area2"
+          },
+          {
+            "path": "area2:n031",
+            "label": "Node 31 of area2"
+          },
+          {
+            "path": "area2:n032",
+            "label": "Node 32 of area2"
+          },
+          {
+            "path": "area2:n033",
+            "label": "Node 33 of area2"
+          },
+          {
+            "path": "area2:n034",
+            "label": "Node 34 of area2"
+          },
+          {
+            "path": "area2:n035",
+            "label": "Node 35 of area2"
+          },
+          {
+            "path": "area2:n036",
+            "label": "Node 36 of area2"
+          },
+          {
+            "path": "area2:n037",
+            "label": "Node 37 of area2"
+          },
+          {
+            "path": "area2:n038",
+            "label": "Node 38 of area2"
+          },
+          {
+            "path": "area2:n039",
+            "label": "Node 39 of area2"
+          },
+          {
+            "path": "area2:n040",
+            "label": "Node 40 of area2"
+          },
+          {
+            "path": "area2:n041",
+            "label": "Node 41 of area2"
+          },
+          {
+            "path": "area2:n042",
+            "label": "Node 42 of area2"
+          },
+          {
+            "path": "area2:n043",
+            "label": "Node 43 of area2"
+          },
+          {
+            "path": "area2:n044",
+            "label": "Node 44 of area2"
+          },
+          {
+            "path": "area2:n045",
+            "label": "Node 45 of area2"
+          },
+          {
+            "path": "area2:n046",
+            "label": "Node 46 of area2"
+          },
+          {
+            "path": "area2:n047",
+            "label": "Node 47 of area2"
+          },
+          {
+            "path": "area2:n048",
+            "label": "Node 48 of area2"
+          },
+          {
+            "path": "area2:n049",
+            "label": "Node 49 of area2"
+          },
+          {
+            "path": "area2:n050",
+            "label": "Node 50 of area2"
+          },
+          {
+            "path": "area2:n051",
+            "label": "Node 51 of area2"
+          },
+          {
+            "path": "area2:n052",
+            "label": "Node 52 of area2"
+          },
+          {
+            "path": "area2:n053",
+            "label": "Node 53 of area2"
+          },
+          {
+            "path": "area2:n054",
+            "label": "Node 54 of area2"
+          },
+          {
+            "path": "area2:n055",
+            "label": "Node 55 of area2"
+          },
+          {
+            "path": "area2:n056",
+            "label": "Node 56 of area2"
+          },
+          {
+            "path": "area2:n057",
+            "label": "Node 57 of area2"
+          },
+          {
+            "path": "area2:n058",
+            "label": "Node 58 of area2"
+          },
+          {
+            "path": "area2:n059",
+            "label": "Node 59 of area2"
+          },
+          {
+            "path": "area2:n060",
+            "label": "Node 60 of area2"
+          },
+          {
+            "path": "area2:n061",
+            "label": "Node 61 of area2"
+          },
+          {
+            "path": "area2:n062",
+            "label": "Node 62 of area2"
+          },
+          {
+            "path": "area2:n063",
+            "label": "Node 63 of area2"
+          },
+          {
+            "path": "area2:n064",
+            "label": "Node 64 of area2"
+          },
+          {
+            "path": "area3:n001",
+            "label": "Node 1 of area3"
+          },
+          {
+            "path": "area3:n002",
+            "label": "Node 2 of area3"
+          },
+          {
+            "path": "area3:n003",
+            "label": "Node 3 of area3"
+          },
+          {
+            "path": "area3:n004",
+            "label": "Node 4 of area3"
+          },
+          {
+            "path": "area3:n005",
+            "label": "Node 5 of area3"
+          },
+          {
+            "path": "area3:n006",
+            "label": "Node 6 of area3"
+          },
+          {
+            "path": "area3:n007",
+            "label": "Node 7 of area3"
+          },
+          {
+            "path": "area3:n008",
+            "label": "Node 8 of area3"
+          },
+          {
+            "path": "area3:n009",
+            "label": "Node 9 of area3"
+          },
+          {
+            "path": "area3:n010",
+            "label": "Node 10 of area3"
+          },
+          {
+            "path": "area3:n011",
+            "label": "Node 11 of area3"
+          },
+          {
+            "path": "area3:n012",
+            "label": "Node 12 of area3"
+          },
+          {
+            "path": "area3:n013",
+            "label": "Node 13 of area3"
+          },
+          {
+            "path": "area3:n014",
+            "label": "Node 14 of area3"
+          },
+          {
+            "path": "area3:n015",
+            "label": "Node 15 of area3"
+          },
+          {
+            "path": "area3:n016",
+            "label": "Node 16 of area3"
+          },
+          {
+            "path": "area3:n017",
+            "label": "Node 17 of area3"
+          },
+          {
+            "path": "area3:n018",
+            "label": "Node 18 of area3"
+          },
+          {
+            "path": "area3:n019",
+            "label": "Node 19 of area3"
+          },
+          {
+            "path": "area3:n020",
+            "label": "Node 20 of area3"
+          },
+          {
+            "path": "area3:n021",
+            "label": "Node 21 of area3"
+          },
+          {
+            "path": "area3:n022",
+            "label": "Node 22 of area3"
+          },
+          {
+            "path": "area3:n023",
+            "label": "Node 23 of area3"
+          },
+          {
+            "path": "area3:n024",
+            "label": "Node 24 of area3"
+          },
+          {
+            "path": "area3:n025",
+            "label": "Node 25 of area3"
+          },
+          {
+            "path": "area3:n026",
+            "label": "Node 26 of area3"
+          },
+          {
+            "path": "area3:n027",
+            "label": "Node 27 of area3"
+          },
+          {
+            "path": "area3:n028",
+            "label": "Node 28 of area3"
+          },
+          {
+            "path": "area3:n029",
+            "label": "Node 29 of area3"
+          },
+          {
+            "path": "area3:n030",
+            "label": "Node 30 of area3"
+          },
+          {
+            "path": "area3:n031",
+            "label": "Node 31 of area3"
+          },
+          {
+            "path": "area3:n032",
+            "label": "Node 32 of area3"
+          },
+          {
+            "path": "area3:n033",
+            "label": "Node 33 of area3"
+          },
+          {
+            "path": "area3:n034",
+            "label": "Node 34 of area3"
+          },
+          {
+            "path": "area3:n035",
+            "label": "Node 35 of area3"
+          },
+          {
+            "path": "area3:n036",
+            "label": "Node 36 of area3"
+          },
+          {
+            "path": "area3:n037",
+            "label": "Node 37 of area3"
+          },
+          {
+            "path": "area3:n038",
+            "label": "Node 38 of area3"
+          },
+          {
+            "path": "area3:n039",
+            "label": "Node 39 of area3"
+          },
+          {
+            "path": "area3:n040",
+            "label": "Node 40 of area3"
+          },
+          {
+            "path": "area3:n041",
+            "label": "Node 41 of area3"
+          },
+          {
+            "path": "area3:n042",
+            "label": "Node 42 of area3"
+          },
+          {
+            "path": "area3:n043",
+            "label": "Node 43 of area3"
+          },
+          {
+            "path": "area3:n044",
+            "label": "Node 44 of area3"
+          },
+          {
+            "path": "area3:n045",
+            "label": "Node 45 of area3"
+          },
+          {
+            "path": "area3:n046",
+            "label": "Node 46 of area3"
+          },
+          {
+            "path": "area3:n047",
+            "label": "Node 47 of area3"
+          },
+          {
+            "path": "area3:n048",
+            "label": "Node 48 of area3"
+          },
+          {
+            "path": "area3:n049",
+            "label": "Node 49 of area3"
+          },
+          {
+            "path": "area3:n050",
+            "label": "Node 50 of area3"
+          },
+          {
+            "path": "area3:n051",
+            "label": "Node 51 of area3"
+          },
+          {
+            "path": "area3:n052",
+            "label": "Node 52 of area3"
+          },
+          {
+            "path": "area3:n053",
+            "label": "Node 53 of area3"
+          },
+          {
+            "path": "area3:n054",
+            "label": "Node 54 of area3"
+          },
+          {
+            "path": "area3:n055",
+            "label": "Node 55 of area3"
+          },
+          {
+            "path": "area3:n056",
+            "label": "Node 56 of area3"
+          },
+          {
+            "path": "area3:n057",
+            "label": "Node 57 of area3"
+          },
+          {
+            "path": "area3:n058",
+            "label": "Node 58 of area3"
+          },
+          {
+            "path": "area3:n059",
+            "label": "Node 59 of area3"
+          },
+          {
+            "path": "area3:n060",
+            "label": "Node 60 of area3"
+          },
+          {
+            "path": "area3:n061",
+            "label": "Node 61 of area3"
+          },
+          {
+            "path": "area3:n062",
+            "label": "Node 62 of area3"
+          },
+          {
+            "path": "area3:n063",
+            "label": "Node 63 of area3"
+          },
+          {
+            "path": "area3:n064",
+            "label": "Node 64 of area3"
+          },
+          {
+            "path": "area4:n001",
+            "label": "Node 1 of area4"
+          },
+          {
+            "path": "area4:n002",
+            "label": "Node 2 of area4"
+          },
+          {
+            "path": "area4:n003",
+            "label": "Node 3 of area4"
+          },
+          {
+            "path": "area4:n004",
+            "label": "Node 4 of area4"
+          },
+          {
+            "path": "area4:n005",
+            "label": "Node 5 of area4"
+          },
+          {
+            "path": "area4:n006",
+            "label": "Node 6 of area4"
+          },
+          {
+            "path": "area4:n007",
+            "label": "Node 7 of area4"
+          },
+          {
+            "path": "area4:n008",
+            "label": "Node 8 of area4"
+          },
+          {
+            "path": "area4:n009",
+            "label": "Node 9 of area4"
+          },
+          {
+            "path": "area4:n010",
+            "label": "Node 10 of area4"
+          },
+          {
+            "path": "area4:n011",
+            "label": "Node 11 of area4"
+          },
+          {
+            "path": "area4:n012",
+            "label": "Node 12 of area4"
+          },
+          {
+            "path": "area4:n013",
+            "label": "Node 13 of area4"
+          },
+          {
+            "path": "area4:n014",
+            "label": "Node 14 of area4"
+          },
+          {
+            "path": "area4:n015",
+            "label": "Node 15 of area4"
+          },
+          {
+            "path": "area4:n016",
+            "label": "Node 16 of area4"
+          },
+          {
+            "path": "area4:n017",
+            "label": "Node 17 of area4"
+          },
+          {
+            "path": "area4:n018",
+            "label": "Node 18 of area4"
+          },
+          {
+            "path": "area4:n019",
+            "label": "Node 19 of area4"
+          },
+          {
+            "path": "area4:n020",
+            "label": "Node 20 of area4"
+          },
+          {
+            "path": "area4:n021",
+            "label": "Node 21 of area4"
+          },
+          {
+            "path": "area4:n022",
+            "label": "Node 22 of area4"
+          },
+          {
+            "path": "area4:n023",
+            "label": "Node 23 of area4"
+          },
+          {
+            "path": "area4:n024",
+            "label": "Node 24 of area4"
+          },
+          {
+            "path": "area4:n025",
+            "label": "Node 25 of area4"
+          },
+          {
+            "path": "area4:n026",
+            "label": "Node 26 of area4"
+          },
+          {
+            "path": "area4:n027",
+            "label": "Node 27 of area4"
+          },
+          {
+            "path": "area4:n028",
+            "label": "Node 28 of area4"
+          },
+          {
+            "path": "area4:n029",
+            "label": "Node 29 of area4"
+          },
+          {
+            "path": "area4:n030",
+            "label": "Node 30 of area4"
+          },
+          {
+            "path": "area4:n031",
+            "label": "Node 31 of area4"
+          },
+          {
+            "path": "area4:n032",
+            "label": "Node 32 of area4"
+          },
+          {
+            "path": "area4:n033",
+            "label": "Node 33 of area4"
+          },
+          {
+            "path": "area4:n034",
+            "label": "Node 34 of area4"
+          },
+          {
+            "path": "area4:n035",
+            "label": "Node 35 of area4"
+          },
+          {
+            "path": "area4:n036",
+            "label": "Node 36 of area4"
+          },
+          {
+            "path": "area4:n037",
+            "label": "Node 37 of area4"
+          },
+          {
+            "path": "area4:n038",
+            "label": "Node 38 of area4"
+          },
+          {
+            "path": "area4:n039",
+            "label": "Node 39 of area4"
+          },
+          {
+            "path": "area4:n040",
+            "label": "Node 40 of area4"
+          },
+          {
+            "path": "area4:n041",
+            "label": "Node 41 of area4"
+          },
+          {
+            "path": "area4:n042",
+            "label": "Node 42 of area4"
+          },
+          {
+            "path": "area4:n043",
+            "label": "Node 43 of area4"
+          },
+          {
+            "path": "area4:n044",
+            "label": "Node 44 of area4"
+          },
+          {
+            "path": "area4:n045",
+            "label": "Node 45 of area4"
+          },
+          {
+            "path": "area4:n046",
+            "label": "Node 46 of area4"
+          },
+          {
+            "path": "area4:n047",
+            "label": "Node 47 of area4"
+          },
+          {
+            "path": "area4:n048",
+            "label": "Node 48 of area4"
+          },
+          {
+            "path": "area4:n049",
+            "label": "Node 49 of area4"
+          },
+          {
+            "path": "area4:n050",
+            "label": "Node 50 of area4"
+          },
+          {
+            "path": "area4:n051",
+            "label": "Node 51 of area4"
+          },
+          {
+            "path": "area4:n052",
+            "label": "Node 52 of area4"
+          },
+          {
+            "path": "area4:n053",
+            "label": "Node 53 of area4"
+          },
+          {
+            "path": "area4:n054",
+            "label": "Node 54 of area4"
+          },
+          {
+            "path": "area4:n055",
+            "label": "Node 55 of area4"
+          },
+          {
+            "path": "area4:n056",
+            "label": "Node 56 of area4"
+          },
+          {
+            "path": "area4:n057",
+            "label": "Node 57 of area4"
+          },
+          {
+            "path": "area4:n058",
+            "label": "Node 58 of area4"
+          },
+          {
+            "path": "area4:n059",
+            "label": "Node 59 of area4"
+          },
+          {
+            "path": "area4:n060",
+            "label": "Node 60 of area4"
+          },
+          {
+            "path": "area4:n061",
+            "label": "Node 61 of area4"
+          },
+          {
+            "path": "area4:n062",
+            "label": "Node 62 of area4"
+          },
+          {
+            "path": "area4:n063",
+            "label": "Node 63 of area4"
+          },
+          {
+            "path": "area4:n064",
+            "label": "Node 64 of area4"
+          }
+        ],
+        "limits": [
+          {
+            "name": "reads",
+            "label": "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL",
+            "description": "Run this action on one node of the service. The action takes the units that its budgets list. The service applies each ceiling that this action lists. A client can use the action as often as its grants let it. The grants of a client give the budgets and the ceilings for each use of this action here.",
+            "unit": "uuuuuuuuuuuuuuuuuuuu",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_2",
+            "label": "Reads 2",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_3",
+            "label": "Reads 3",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_4",
+            "label": "Reads 4",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_5",
+            "label": "Reads 5",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_6",
+            "label": "Reads 6",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_7",
+            "label": "Reads 7",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "reads_8",
+            "label": "Reads 8",
+            "description": "Reads that run.",
+            "unit": "read",
+            "kind": "budget"
+          },
+          {
+            "name": "max_items_1",
+            "label": "Most items 1",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_2",
+            "label": "Most items 2",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_3",
+            "label": "Most items 3",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_4",
+            "label": "Most items 4",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_5",
+            "label": "Most items 5",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_6",
+            "label": "Most items 6",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_7",
+            "label": "Most items 7",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_items_8",
+            "label": "Most items 8",
+            "description": "The most items that one use gives.",
+            "unit": "item",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "max",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:bulk"
+        },
+        {
+          "action": "bulk.action_64",
+          "resource": "service:bulk"
+        }
+      ]
+    }
+  ]
+}

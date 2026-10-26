@@ -1,0 +1,55 @@
+{
+  "id": "U81",
+  "title": "The route ignores a parameter that it does not know.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An extra parameter",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?type={{options_type}}&x_unknown=1",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "valid_as": "options_answer"
+      }
+    }
+  ]
+}

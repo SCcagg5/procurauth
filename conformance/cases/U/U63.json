@@ -1,0 +1,99 @@
+{
+  "id": "U63",
+  "title": "The header Retry-After has the whole number of seconds of retry_after, also for the values 1 and 86400.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "given": {
+    "tokens": {
+      "one": {
+        "subject": "user-one"
+      },
+      "day": {
+        "subject": "user-day"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-one",
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 1
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-day",
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 86400
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The value 1",
+      "request": {
+        "operation": "use_budget",
+        "token": "one"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "equals": "1"
+          }
+        }
+      }
+    },
+    {
+      "name": "The value 86400",
+      "request": {
+        "operation": "use_budget",
+        "token": "day"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "equals": "86400"
+          }
+        }
+      }
+    }
+  ]
+}

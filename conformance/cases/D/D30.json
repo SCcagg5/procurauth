@@ -1,0 +1,140 @@
+{
+  "id": "D30",
+  "title": "An action name is exact: a grant of data.read gives neither data.read.all nor an action that the document does not declare.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.3",
+    "11.2"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "tree.json"
+  },
+  "steps": [
+    {
+      "name": "The action of the grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cora"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "An action that starts with the name of the grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cora"
+          },
+          "action": {
+            "name": "data.read.all"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "An action that the document does not declare",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cora"
+          },
+          "action": {
+            "name": "data.erase"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A part of the name of the action",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cora"
+          },
+          "action": {
+            "name": "data"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

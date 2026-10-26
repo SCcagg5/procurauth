@@ -1,0 +1,172 @@
+{
+  "id": "D59",
+  "title": "A request with items and context.usage at the top level, or in an item, or in both, gets HTTP 400.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.11"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Usage at the top level",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          },
+          "evaluations": [
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "Usage in an item",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "evaluations": [
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              },
+              "context": {
+                "usage": {
+                  "units": 1
+                }
+              }
+            },
+            {
+              "resource": {
+                "type": "database",
+                "id": "test2",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    },
+    {
+      "name": "Usage at the top level and in an item",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          },
+          "evaluations": [
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              },
+              "context": {
+                "usage": {
+                  "units": 1
+                }
+              }
+            }
+          ]
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        }
+      }
+    }
+  ]
+}

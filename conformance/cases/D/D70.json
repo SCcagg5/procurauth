@@ -1,0 +1,63 @@
+{
+  "id": "D70",
+  "title": "For a key, the lower value of the key and of its owner applies to each ceiling.",
+  "role": "pdp",
+  "paragraphs": [
+    "8.1",
+    "8.4",
+    "3.8"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "ceilings.json"
+  },
+  "steps": [
+    {
+      "name": "The key gives 50 and 90, the owner gives 500 and 40",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:kay-low"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 50
+          },
+          "/context/limits/max_duration": {
+            "equals": 40
+          }
+        }
+      }
+    }
+  ]
+}

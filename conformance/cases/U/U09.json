@@ -1,0 +1,85 @@
+{
+  "id": "U09",
+  "title": "The PEP sends no claim of the token other than sub, and it does not send the owner.",
+  "role": "pep",
+  "paragraphs": [
+    "3.4",
+    "9.6"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "key": {
+        "subject": "key:9b1c04e2aa71f0c3",
+        "owner": "alice",
+        "claims": {
+          "email": "alice@example.org",
+          "groups": [
+            "staff"
+          ],
+          "name": "Alice"
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A key token with extra claims",
+      "request": {
+        "operation": "use_plain",
+        "token": "key"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "key:9b1c04e2aa71f0c3"
+              },
+              "/subject/properties": {
+                "absent": true
+              },
+              "/subject/owner": {
+                "absent": true
+              },
+              "/subject/email": {
+                "absent": true
+              },
+              "/context/owner": {
+                "absent": true
+              },
+              "/context/email": {
+                "absent": true
+              },
+              "/context/groups": {
+                "absent": true
+              },
+              "/context/claims": {
+                "absent": true
+              },
+              "/resource/properties/owner": {
+                "absent": true
+              },
+              "/action/properties": {
+                "absent": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

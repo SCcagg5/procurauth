@@ -1,0 +1,43 @@
+{
+  "id": "E12",
+  "title": "The identity token has the header alg Ed25519 or ES256 and the header typ JWT.",
+  "role": "edge",
+  "paragraphs": [
+    "9.2"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "token_header": {
+            "/alg": {
+              "one_of": [
+                "Ed25519",
+                "ES256"
+              ]
+            },
+            "/typ": {
+              "equals": "JWT"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

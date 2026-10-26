@@ -1,0 +1,201 @@
+{
+  "id": "D74",
+  "title": "The action access on the service is true only for a subject with an access grant. A key needs the grant of its owner too.",
+  "role": "pdp",
+  "paragraphs": [
+    "8.3",
+    "3.5"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "access.json"
+  },
+  "steps": [
+    {
+      "name": "A person with a grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ann"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A person without a grant of access",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ben"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key, and its owner has the grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:ann-k1"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key with no grant of access, and its owner has one",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:ann-k2"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key with a grant of access, and its owner has none",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:ben-k"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A person that the directory does not hold",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "zed"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "unknown_subject"
+          }
+        }
+      }
+    }
+  ]
+}

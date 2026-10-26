@@ -1,0 +1,96 @@
+{
+  "id": "U26",
+  "title": "The test PDP answers false for the action of one tool. A tools/list does not name this tool, and a tools/call of it gets -32602 as for an unknown tool.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:4.1",
+    "mcp:4.2",
+    "mcp:5.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "action": "{{action}}"
+        },
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A tools/list",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/list",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/tools": {
+            "not_regex": "\"name\":\"{{tool}}\""
+          }
+        }
+      }
+    },
+    {
+      "name": "A tools/call of the refused tool",
+      "request": {
+        "operation": "mcp_call_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          },
+          "/result": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

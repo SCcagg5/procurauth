@@ -1,0 +1,72 @@
+{
+  "id": "U98",
+  "title": "A service behind an edge takes the subject from the identity token, and it does not check a standalone key.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:7.3"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A good token and a standalone key in Authorization",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Authorization": "Bearer mcp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "id": "U25",
+  "title": "A request with a valid identity token, the header MCP-Protocol-Version 2026-07-28 and the _meta version 2025-11-25 gets HTTP 400 and the code -32020.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:1.3"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The header and the _meta version differ",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 400
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32020
+          }
+        }
+      }
+    }
+  ]
+}

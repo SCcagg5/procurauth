@@ -1,0 +1,81 @@
+{
+  "id": "D42",
+  "title": "When the counter of the minute is full, retry_after is the seconds to the end of the minute.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "budgets.json",
+    "counters": [
+      {
+        "subject": "quad",
+        "limit": "requests",
+        "window": "minute",
+        "used": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use with a full counter of the minute, 12 seconds before its end",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "quad"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 12
+          },
+          "/context/limits": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

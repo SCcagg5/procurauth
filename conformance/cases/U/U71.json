@@ -1,0 +1,52 @@
+{
+  "id": "U71",
+  "title": "The route lists no child that the PDP refuses for subtree.",
+  "role": "pep",
+  "paragraphs": [
+    "5.6",
+    "5.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP says false for each child",
+      "request": {
+        "operation": "list_options",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/items": {
+            "equals": []
+          },
+          "/next": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

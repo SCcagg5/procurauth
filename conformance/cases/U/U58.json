@@ -1,0 +1,81 @@
+{
+  "id": "U58",
+  "title": "A kept answer with budget_exceeded gives a Retry-After that is not above the first retry_after.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1",
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action"
+  ],
+  "notes": "The PEP can keep the first answer. The second Retry-After is then the time that remains.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "budget_exceeded",
+              "retry_after": 12
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The first refusal",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "equals": "12"
+          }
+        }
+      }
+    },
+    {
+      "name": "The second refusal",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 429
+        },
+        "headers": {
+          "Retry-After": {
+            "regex": "^([1-9]|1[0-2])$"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "E10",
+  "title": "An edge refuses a key with a valid text when its subject has no true decision for the action access. It sends no request to the service.",
+  "role": "edge",
+  "paragraphs": [
+    "8.3",
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "notes": "Question 3 in notes/spec-questions-cases.md asks if HTTP 401 is right for this refusal. The case takes the literal meaning of 9.8.",
+  "given": {},
+  "steps": [
+    {
+      "name": "A key whose subject has no access to the service",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{no_access_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

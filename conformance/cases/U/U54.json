@@ -1,0 +1,73 @@
+{
+  "id": "U54",
+  "title": "The service takes the token only from the header of the edge, never from Authorization or a cookie.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "notes": "A query parameter is not tested, because the operation fixes the query.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A good token in Authorization",
+      "request": {
+        "operation": "use_plain",
+        "headers": {
+          "Authorization": "Bearer {{token_person}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A good token in a cookie",
+      "request": {
+        "operation": "use_plain",
+        "headers": {
+          "Cookie": "token={{token_person}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "U44",
+  "title": "The service refuses a token whose aud is not its id, or that has no aud.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "wrong": {
+        "subject": "alice",
+        "defect": "wrong_audience"
+      },
+      "array": {
+        "subject": "alice",
+        "claims": {
+          "aud": [
+            "other-service",
+            "third-service"
+          ]
+        }
+      },
+      "none": {
+        "subject": "alice",
+        "claims": {
+          "aud": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Another audience",
+      "request": {
+        "operation": "use_plain",
+        "token": "wrong"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "An array that does not hold the service",
+      "request": {
+        "operation": "use_plain",
+        "token": "array"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "No aud",
+      "request": {
+        "operation": "use_plain",
+        "token": "none"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

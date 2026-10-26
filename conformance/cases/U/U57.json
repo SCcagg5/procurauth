@@ -1,0 +1,101 @@
+{
+  "id": "U57",
+  "title": "A kept answer applies only to the same subject: a second subject gets its own question.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      },
+      "other": {
+        "subject": "bob"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "alice"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The first subject, with a true answer",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "alice"
+              }
+            },
+            "count": {
+              "regex": "^[0-9]+$"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The second subject, with a false answer",
+      "request": {
+        "operation": "use_plain",
+        "token": "other"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "bob"
+              }
+            },
+            "count": {
+              "regex": "^[1-9][0-9]*$"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The first subject again",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        }
+      }
+    }
+  ]
+}

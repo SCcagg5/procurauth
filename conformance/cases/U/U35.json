@@ -1,0 +1,75 @@
+{
+  "id": "U35",
+  "title": "When the other permission is false, the PEP refuses the operation and sends no question with context.usage.",
+  "role": "pep",
+  "paragraphs": [
+    "5.5a",
+    "10.1a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action",
+    "no_multi_action"
+  ],
+  "notes": "Question 7 in notes/spec-questions-cases.md asks if the PEP must ask the other permission first.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP refuses the permission without usage",
+      "request": {
+        "operation": "use_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

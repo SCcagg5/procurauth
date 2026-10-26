@@ -1,0 +1,116 @@
+{
+  "id": "D38",
+  "title": "The PDP accepts an action document with 64 actions, 16 types, 256 resources and 16 limit declarations, of about 50 KB.",
+  "role": "pdp",
+  "paragraphs": [
+    "5.3c"
+  ],
+  "requirement": "MUST",
+  "notes": "The document has the largest counts that a reader must accept. It has a label of 60 characters, a description of 300 characters and a unit of 20 characters.",
+  "given": {
+    "directory": "maxdoc.json"
+  },
+  "steps": [
+    {
+      "name": "A use of the last action, on a node of depth 4 of the last type",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "max"
+          },
+          "action": {
+            "name": "bulk.action_64"
+          },
+          "resource": {
+            "type": "drawer4",
+            "id": "x",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "bulk"
+                },
+                {
+                  "type": "area4",
+                  "id": "n064"
+                },
+                {
+                  "type": "bay4",
+                  "id": "b"
+                },
+                {
+                  "type": "cell4",
+                  "id": "c"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "An action without a grant",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "max"
+          },
+          "action": {
+            "name": "bulk.action_01"
+          },
+          "resource": {
+            "type": "drawer4",
+            "id": "x",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "bulk"
+                },
+                {
+                  "type": "area4",
+                  "id": "n064"
+                },
+                {
+                  "type": "bay4",
+                  "id": "b"
+                },
+                {
+                  "type": "cell4",
+                  "id": "c"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

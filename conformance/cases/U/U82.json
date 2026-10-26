@@ -1,0 +1,60 @@
+{
+  "id": "U82",
+  "title": "The route gives no more items than the parameter limit.",
+  "role": "pep",
+  "paragraphs": [
+    "5.7",
+    "5.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_options_route"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "match": "subtree"
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The limit is 1",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/resources?type={{options_type}}&limit=1",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/items/1": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

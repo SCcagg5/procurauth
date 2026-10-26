@@ -1,0 +1,41 @@
+{
+  "id": "U60",
+  "title": "A false answer with no reason gives HTTP 403.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.2"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers false",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        }
+      }
+    }
+  ]
+}

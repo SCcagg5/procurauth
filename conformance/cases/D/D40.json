@@ -1,0 +1,173 @@
+{
+  "id": "D40",
+  "title": "The PDP answers a PEP only for its own service: the service of another PEP gets false with invalid_resource.",
+  "role": "pdp",
+  "paragraphs": [
+    "11.1",
+    "12"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "services.json"
+  },
+  "steps": [
+    {
+      "name": "The resource is another service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "mail.read"
+          },
+          "resource": {
+            "type": "service",
+            "id": "mailbox"
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer datastore-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "The chain starts with another service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "mail.read"
+          },
+          "resource": {
+            "type": "folder",
+            "id": "inbox",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "mailbox"
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer datastore-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
+          }
+        }
+      }
+    },
+    {
+      "name": "A node of the own service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer datastore-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A node of the other service, with its own credential",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "mail.read"
+          },
+          "resource": {
+            "type": "folder",
+            "id": "inbox",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "mailbox"
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer mailbox-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

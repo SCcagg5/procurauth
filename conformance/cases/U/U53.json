@@ -1,0 +1,106 @@
+{
+  "id": "U53",
+  "title": "The service refuses a request with no token on each route, and it sends no question.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4",
+    "10.0"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Use of an action that lists no budget",
+      "request": {
+        "operation": "use_plain"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Use of the service itself",
+      "request": {
+        "operation": "use_service"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Use of an action that lists a budget",
+      "skip_if": [
+        "no_budget_action"
+      ],
+      "request": {
+        "operation": "use_budget"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "List of the options",
+      "skip_if": [
+        "no_options_route"
+      ],
+      "request": {
+        "operation": "list_options"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

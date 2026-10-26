@@ -1,0 +1,55 @@
+{
+  "id": "U08",
+  "title": "The PEP asks the PDP about a sub with an unknown prefix, and it does not refuse that sub by itself.",
+  "role": "pep",
+  "paragraphs": [
+    "3.3",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "robot": {
+        "subject": "robot:7"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "robot:7"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "unknown_subject"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP answers false with unknown_subject",
+      "request": {
+        "operation": "use_plain",
+        "token": "robot"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/subject/id": {
+                "equals": "robot:7"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

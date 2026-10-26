@@ -1,0 +1,57 @@
+{
+  "id": "E17",
+  "title": "An MCP request with no key text gets HTTP 401, Bearer with no error and no resource_metadata, and an empty body.",
+  "role": "edge",
+  "paragraphs": [
+    "mcp:6.1",
+    "mcp:6.3",
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {},
+  "steps": [
+    {
+      "name": "A JSON-RPC request with no Authorization header",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "ping",
+          "params": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer( realm=\"[^\"]*\")?$"
+          }
+        },
+        "body_text": {
+          "equals": ""
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

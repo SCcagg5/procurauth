@@ -1,0 +1,64 @@
+{
+  "id": "E11",
+  "title": "An edge never sends to the service a request that has the identity token header and no good key.",
+  "role": "edge",
+  "paragraphs": [
+    "9.1",
+    "9.8"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "A forged identity token and no key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "{{token_header}}": "forged.forged.forged"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer( realm=\"[^\"]*\")?$"
+          }
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "A forged identity token and a key that the edge does not know",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{unknown_key_text}}",
+          "{{token_header}}": "forged.forged.forged"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "regex": "^Bearer\\s+(realm=\"[^\"]*\",\\s*)?error=\"invalid_token\"(,\\s*error_description=\"[^\"]*\")?$"
+          }
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

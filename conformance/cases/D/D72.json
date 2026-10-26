@@ -1,0 +1,67 @@
+{
+  "id": "D72",
+  "title": "A true answer to a question without context.usage gives the ceilings of the action, no usage, and no unit.",
+  "role": "pdp",
+  "paragraphs": [
+    "5.5a",
+    "7.3",
+    "6.6"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "ceilings.json"
+  },
+  "steps": [
+    {
+      "name": "The table of test1",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "cal"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "table",
+            "id": "orders",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                },
+                {
+                  "type": "database",
+                  "id": "test1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 50
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          },
+          {
+            "name": "column",
+            "parent": "table",
+            "description": "One column."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table",
+              "column"
+            ],
+            "description": "Read data."
+          },
+          {
+            "name": "data.read.all",
+            "resource_types": [
+              "service"
+            ],
+            "description": "Read all data."
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          },
+          {
+            "path": "host:stage",
+            "label": "Staging"
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "cora",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "hana",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod"
+        }
+      ]
+    },
+    {
+      "id": "dana",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:main"
+        }
+      ]
+    },
+    {
+      "id": "colm",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:main/table:users/column:email"
+        }
+      ]
+    },
+    {
+      "id": "exact",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:a%2Fb"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:%C3%A9"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:x%20y"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:100%25"
+        }
+      ]
+    },
+    {
+      "id": "twin",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:main"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "id": "D37",
+  "title": "In an Access Evaluations answer, an item with a bad context.match or a bad chain gets false with invalid_request. The other items keep their decision.",
+  "role": "pdp",
+  "paragraphs": [
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "Three items",
+      "request": {
+        "endpoint": "evaluations",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "alice"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "evaluations": [
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              },
+              "context": {
+                "match": "both"
+              }
+            },
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": "oops"
+                }
+              }
+            },
+            {
+              "resource": {
+                "type": "database",
+                "id": "test1",
+                "properties": {
+                  "ancestors": [
+                    {
+                      "type": "service",
+                      "id": "datastore"
+                    },
+                    {
+                      "type": "host",
+                      "id": "prod"
+                    }
+                  ]
+                }
+              },
+              "context": {
+                "match": "subtree"
+              }
+            }
+          ]
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/evaluations/0/decision": {
+            "equals": true
+          },
+          "/evaluations/1/decision": {
+            "equals": false
+          },
+          "/evaluations/1/context/reason": {
+            "equals": "invalid_request"
+          },
+          "/evaluations/2/decision": {
+            "equals": false
+          },
+          "/evaluations/2/context/reason": {
+            "equals": "invalid_request"
+          },
+          "/evaluations/3/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

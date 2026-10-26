@@ -1,0 +1,76 @@
+{
+  "id": "D22",
+  "title": "The service itself is a valid resource with no chain, or with an empty chain.",
+  "role": "pdp",
+  "paragraphs": [
+    "4.1",
+    "8.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "access.json"
+  },
+  "steps": [
+    {
+      "name": "No properties",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ann"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    },
+    {
+      "name": "An empty array",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ann"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore",
+            "properties": {
+              "ancestors": []
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "U13",
+  "title": "The service answers a read of its action document at /.well-known/procurauth/actions with HTTP 200 and no token.",
+  "role": "pep",
+  "paragraphs": [
+    "5.1"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "Read with no token",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/actions"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/server": {
+            "equals": "{{service}}"
+          }
+        }
+      }
+    }
+  ]
+}

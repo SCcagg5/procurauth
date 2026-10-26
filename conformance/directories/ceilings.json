@@ -1,0 +1,230 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "write_requests",
+              "max_duration"
+            ]
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "write_requests",
+            "label": "Write requests",
+            "description": "Requests that change data.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "cal",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_rows": 1000
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test1",
+          "limits": {
+            "max_rows": 50
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2",
+          "limits": {
+            "max_rows": 5000,
+            "max_duration": 20
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2/table:orders",
+          "limits": {
+            "max_duration": 10
+          }
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_duration": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "part",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_rows": 700
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2",
+          "limits": {
+            "max_duration": 15
+          }
+        }
+      ]
+    },
+    {
+      "id": "plain",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test1",
+          "limits": {
+            "max_rows": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "kay",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_rows": 500,
+            "max_duration": 40
+          }
+        }
+      ]
+    },
+    {
+      "id": "key:kay-low",
+      "owner": "kay",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_rows": 50,
+            "max_duration": 90
+          }
+        }
+      ]
+    },
+    {
+      "id": "key:kay-rows",
+      "owner": "kay",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod",
+          "limits": {
+            "max_rows": 80
+          }
+        }
+      ]
+    },
+    {
+      "id": "key:kay-open",
+      "owner": "kay",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod"
+        }
+      ]
+    }
+  ]
+}

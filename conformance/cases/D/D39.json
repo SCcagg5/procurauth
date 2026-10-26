@@ -1,0 +1,90 @@
+{
+  "id": "D39",
+  "title": "A service with no good action document gets false with no reason for each node, except for the action access on the service.",
+  "role": "pdp",
+  "paragraphs": [
+    "11.1",
+    "8.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "services.json"
+  },
+  "steps": [
+    {
+      "name": "A node below the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "ledger"
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer ledger-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "The action access on the service",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "ari"
+          },
+          "action": {
+            "name": "access"
+          },
+          "resource": {
+            "type": "service",
+            "id": "ledger"
+          }
+        },
+        "headers": {
+          "Authorization": "Bearer ledger-credential-0123456789abcdef"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}

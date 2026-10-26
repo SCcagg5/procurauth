@@ -1,0 +1,72 @@
+{
+  "id": "E15",
+  "title": "An edge that keeps an identity token never gives it to a client that the edge did not authenticate.",
+  "role": "edge",
+  "paragraphs": [
+    "9.9"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_token_cache"
+  ],
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "A request with a key that the edge does not know",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{unknown_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "A request with no key",
+      "request": {
+        "method": "GET",
+        "path": "/probe"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "upstream": {
+          "count": {
+            "equals": 0
+          }
+        }
+      }
+    }
+  ]
+}

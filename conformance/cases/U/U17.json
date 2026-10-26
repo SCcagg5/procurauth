@@ -1,0 +1,41 @@
+{
+  "id": "U17",
+  "title": "A service stays within the numbers that a reader must accept: 64 KiB, 64 actions, 16 types, 256 resources and 16 limit declarations.",
+  "role": "pep",
+  "paragraphs": [
+    "5.3c",
+    "7.1"
+  ],
+  "requirement": "SHOULD",
+  "notes": "The core reader gives a warning for a ceiling name that is not max_ and a noun (7.1). Question 13 in notes/spec-questions-cases.md asks about the warnings that the case uses.",
+  "given": {},
+  "steps": [
+    {
+      "name": "Read the document",
+      "request": {
+        "method": "GET",
+        "path": "/.well-known/procurauth/actions"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/actions/64": {
+            "absent": true
+          },
+          "/resource_types/16": {
+            "absent": true
+          },
+          "/resources/256": {
+            "absent": true
+          },
+          "/limits/16": {
+            "absent": true
+          }
+        },
+        "valid_as": "action_document_no_warning"
+      }
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "U86",
+  "title": "The service sends the 401 before it reads the message. A body that is not JSON gets HTTP 401 and an empty body, not a parse error.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:3.3a",
+    "mcp:5.2",
+    "mcp:5.6a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "bad": {
+        "subject": "alice",
+        "defect": "bad_signature"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "No token, and a body that is not JSON",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body_text": "{not json"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        }
+      }
+    },
+    {
+      "name": "A bad token, and a body that is not JSON",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28"
+        },
+        "body_text": "{not json",
+        "token": "bad"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "body_text": {
+          "equals": ""
+        }
+      }
+    }
+  ]
+}

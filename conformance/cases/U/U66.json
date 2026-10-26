@@ -1,0 +1,136 @@
+{
+  "id": "U66",
+  "title": "When the body of the answer is not a valid answer, the PEP gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "b_empty": {
+        "subject": "user-empty"
+      },
+      "b_text": {
+        "subject": "user-text"
+      },
+      "b_null_decision": {
+        "subject": "user-null_decision"
+      },
+      "b_number": {
+        "subject": "user-number"
+      },
+      "b_list": {
+        "subject": "user-list"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "user-empty"
+        },
+        "respond": {
+          "body": {}
+        }
+      },
+      {
+        "when": {
+          "subject": "user-text"
+        },
+        "respond": {
+          "body": "true"
+        }
+      },
+      {
+        "when": {
+          "subject": "user-null_decision"
+        },
+        "respond": {
+          "body": {
+            "decision": null
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-number"
+        },
+        "respond": {
+          "body": {
+            "decision": 1
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "user-list"
+        },
+        "respond": {
+          "body": []
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The body is empty",
+      "request": {
+        "operation": "use_plain",
+        "token": "b_empty"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The body is text",
+      "request": {
+        "operation": "use_plain",
+        "token": "b_text"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The body is null_decision",
+      "request": {
+        "operation": "use_plain",
+        "token": "b_null_decision"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The body is number",
+      "request": {
+        "operation": "use_plain",
+        "token": "b_number"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "The body is list",
+      "request": {
+        "operation": "use_plain",
+        "token": "b_list"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    }
+  ]
+}

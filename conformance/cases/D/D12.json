@@ -1,0 +1,59 @@
+{
+  "id": "D12",
+  "title": "A key whose owner does not exist is an unknown subject.",
+  "role": "pdp",
+  "paragraphs": [
+    "3.4",
+    "11.1"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "keys.json"
+  },
+  "steps": [
+    {
+      "name": "The owner is not in the directory",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:orphan-1"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "database",
+            "id": "test1",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "unknown_subject"
+          }
+        }
+      }
+    }
+  ]
+}

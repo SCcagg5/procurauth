@@ -1,0 +1,47 @@
+{
+  "id": "U36",
+  "title": "A PEP that cannot apply a ceiling of context.limits treats the answer as false.",
+  "role": "pep",
+  "paragraphs": [
+    "7.5",
+    "10.2",
+    "10.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "limits": {
+                "max_conformance_unknown": 5
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The PDP gives a ceiling that the service does not know",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        }
+      }
+    }
+  ]
+}
