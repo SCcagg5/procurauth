@@ -1,0 +1,9 @@
+# Build output stays in a Docker volume, but a local build can write here.
+/target/
+
+# Local files.
+.env
+.env.*
+*.pem
+*.swp
+.DS_Store
