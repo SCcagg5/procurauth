@@ -1,0 +1,34 @@
+{
+  "listen": "127.0.0.1:8080",
+  "service_id": "datastore",
+  "token_header": "X-Identity-Token",
+  "issuer": "https://edge.example",
+  "max_token_age_seconds": 300,
+  "clock_skew_seconds": 30,
+  "jwks": {
+    "keys": [
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "kid": "edge-ed25519",
+        "x": "P7xgCMzIVQtPtGQyW22ST5y0a6o2maegbk8O2wk1BjY"
+      },
+      {
+        "kty": "EC",
+        "crv": "P-256",
+        "kid": "edge-es256",
+        "x": "AHgxA-H8IxXDnL_EWtMsJerNI8A5zktrSWFfDdQKvvs",
+        "y": "EU2vi_FYqjZBRssJETd5njXhVTd8vVeBT3w31m_lVV4"
+      }
+    ]
+  },
+  "cache_ttl_seconds": 0,
+  "mcp_path": "/mcp",
+  "pdp": {
+    "url": "http://127.0.0.1:8181",
+    "credential_env": "PROCURAUTH_PDP_CREDENTIAL",
+    "allow_insecure_pdp_link": true,
+    "request_timeout_ms": 1000,
+    "usage_wait_margin_ms": 500
+  }
+}

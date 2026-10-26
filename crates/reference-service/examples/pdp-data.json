@@ -1,0 +1,277 @@
+{
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.inspect",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Look at the structure of the data."
+          },
+          {
+            "name": "mcp.session",
+            "resource_types": [
+              "service"
+            ],
+            "description": "Use the MCP endpoint without a tool."
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "alice",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 10,
+                "window": "second"
+              },
+              {
+                "amount": 300,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test1",
+          "limits": {
+            "max_rows": 1000
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2",
+          "limits": {
+            "max_rows": 5000,
+            "max_duration": 30
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2/table:orders",
+          "limits": {
+            "max_rows": 100
+          }
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:test2",
+          "limits": {
+            "max_duration": 10
+          }
+        },
+        {
+          "action": "data.inspect",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "mcp.session",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:9b1c04e2aa71f0c3",
+      "owner": "alice",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 100,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2",
+          "limits": {
+            "max_rows": 10000
+          }
+        },
+        {
+          "action": "data.inspect",
+          "resource": "service:datastore/host:prod/database:test2"
+        },
+        {
+          "action": "mcp.session",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "bob",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 5,
+                "window": "second"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test1"
+        },
+        {
+          "action": "data.inspect",
+          "resource": "service:datastore/host:prod/database:test1"
+        },
+        {
+          "action": "mcp.session",
+          "resource": "service:datastore"
+        }
+      ]
+    },
+    {
+      "id": "key:4d2e8f6a10b37c95",
+      "owner": "bob",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:test2"
+        }
+      ]
+    },
+    {
+      "id": "carol",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 2,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.inspect",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "mcp.session",
+          "resource": "service:datastore"
+        }
+      ]
+    }
+  ]
+}
