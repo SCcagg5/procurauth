@@ -1,0 +1,29 @@
+[package]
+name = "keycheck"
+description = "Checks the text of a key against a key format, and prints its SHA-256 digest."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "keycheck"
+path = "src/lib.rs"
+
+[[bin]]
+name = "keycheck"
+path = "src/main.rs"
+
+[dependencies]
+procurauth-core = { path = "../procurauth-core" }
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+serde_json.workspace = true
+
+[dev-dependencies]
+jsonschema.workspace = true
+procurauth-schema-check = { path = "../../conformance/schema-check" }

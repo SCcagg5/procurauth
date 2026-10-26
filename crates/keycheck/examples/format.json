@@ -1,0 +1,10 @@
+{
+  "prefix": "mcp_",
+  "length": 53,
+  "alphabet": "A-Za-z0-9",
+  "checksum": {
+    "algorithm": "crc32",
+    "encoding": "base62",
+    "characters": 6
+  }
+}

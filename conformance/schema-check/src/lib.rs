@@ -16,7 +16,7 @@ use serde_json::{Value, json};
 pub const BASE_URI: &str = "https://sccagg5.github.io/procurauth/schemas/";
 
 /// The names of the schemas. The file of a schema is `schemas/<name>.schema.json`.
-pub const SCHEMA_NAMES: [&str; 8] = [
+pub const SCHEMA_NAMES: [&str; 9] = [
     "action-document",
     "identity-token-claims",
     "key-format",
@@ -25,6 +25,7 @@ pub const SCHEMA_NAMES: [&str; 8] = [
     "options-route-answer",
     "fake-pdp-data",
     "conformance-case",
+    "keycheck-output",
 ];
 
 /// The root of the repository.
