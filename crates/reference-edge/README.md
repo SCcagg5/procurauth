@@ -176,6 +176,8 @@ The edge answers each case of the series E. It keeps tokens, so the cases E15 an
 - The edge never changes the keys file while it runs. Restart it to load a new file.
 - The edge sends the whole request body to the service as one block. It reads at most `max_body_bytes`.
 - The edge does not support the header `Upgrade`. It removes it.
+- The edge writes the header `Host` for the service. It does not copy the `Host` of the client.
+- The edge always answers with HTTP/1.1. A client of HTTP/1.0 that asks for a body in chunks is not supported.
 
 ## Tests
 
