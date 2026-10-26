@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="JSON schemas and conformance cases of ProcurAuth: series U for a PEP, D for a PDP and E for an edge, and how to run them with access-conformance.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ProcurAuth">
+<meta property="og:title" content="Conformance | ProcurAuth">
+<meta property="og:description" content="JSON schemas and conformance cases of ProcurAuth: series U for a PEP, D for a PDP and E for an edge, and how to run them with access-conformance.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Conformance | ProcurAuth">
+<meta name="twitter:description" content="JSON schemas and conformance cases of ProcurAuth: series U for a PEP, D for a PDP and E for an edge, and how to run them with access-conformance.">
+<link rel="canonical" href="https://sccagg5.github.io/procurauth/conformance.html">
+<meta property="og:url" content="https://sccagg5.github.io/procurauth/conformance.html">
+<title>Conformance | ProcurAuth</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Ccircle cx='12.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='19.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="ProcurAuth, home page"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="12.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><circle cx="19.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z" fill="var(--accent-ink)"/></svg><span>Procur<b>Auth</b></span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Main"><ul><li><a href="index.html">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="specification.html">Specification</a></li><li><a href="mcp-binding.html">Agents (MCP)</a></li><li><a href="tools.html">Tools</a></li><li><a href="conformance.html" aria-current="page">Conformance</a></li><li><a href="source.html">Source</a></li><li class="nav-gh"><a href="https://github.com/SCcagg5/procurauth">GitHub</a></li></ul></nav>
+    <a class="gh-link" href="https://github.com/SCcagg5/procurauth" aria-label="ProcurAuth on GitHub" title="ProcurAuth on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+<main id="main">
+<div class="page-head"><div class="wrap"><p class="eyebrow"><span class="badge">Version 1.0</span> JSON schemas and conformance data</p><h1>Conformance</h1><p class="lede">JSON schemas for the documents of the protocol, and conformance cases as data. Each case cites a paragraph of the protocol. A team that builds agents uses them to test that a service refuses a key beyond the rights of its owner, and that a spent budget stops the agent.</p><ul class="chips" aria-label="On this page"><li><a href="#organisation">Organisation</a></li><li><a href="#schemas">Schemas</a></li><li><a href="#case">A case</a></li><li><a href="#run">Run the cases</a></li><li><a href="#scope">Scope</a></li></ul></div></div>
+<div class="page-body"><div class="wrap">
+
+<section id="organisation" aria-labelledby="org-h">
+  <h2 id="org-h">How the cases are organised</h2>
+  <p class="prose">The conformance cases are data, in the directory <code>conformance/</code> of the repository. Each case cites the paragraph of the protocol that it tests. A case has an id: a letter for the series and a number.</p>
+  <p class="prose">The series show who the case tests. A PEP, a PDP and an edge have their own series. For agents, the paragraphs that count most are <a href="specification.html#p-3-5">3.5</a> (a key never has more than its owner), <a href="specification.html#p-6-5">6.5</a> (the counting of a budget) and <a href="specification.html#p-10-3">10.3</a> (the refusals).</p>
+  <div class="tablewrap"><table>
+<thead><tr><th scope="col">Series</th><th scope="col">Tests</th><th scope="col">Cases cite</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>U</code></th><td data-label="Tests">A PEP: the service side of the protocol.</td><td data-label="Cases cite"><a href="specification.html#p-3-3">3.3</a>, <a href="specification.html#p-3-4">3.4</a>, <a href="specification.html#p-4-1">4.1</a>, <a href="specification.html#p-4-4">4.4</a>, <a href="specification.html#p-4-5">4.5</a> and the other paragraphs that <a href="specification.html#p-1-3">1.3</a> lists for a service.</td></tr>
+<tr><th scope="row"><code>D</code></th><td data-label="Tests">A PDP: decisions, coverage, limits, counters and reasons.</td><td data-label="Cases cite">Sections <a href="specification.html#s-3">3</a> and <a href="specification.html#s-4">4</a>, <a href="specification.html#p-5-1">5.1</a> to <a href="specification.html#p-5-5">5.5</a>, sections <a href="specification.html#s-6">6</a> to <a href="specification.html#s-8">8</a>, <a href="specification.html#p-10-7">10.7</a>, <a href="specification.html#p-10-7a">10.7a</a>, <a href="specification.html#s-11">11</a> and <a href="specification.html#s-12">12</a>.</td></tr>
+<tr><th scope="row"><code>E</code></th><td data-label="Tests">An edge: the key, the identity token and the refusals of a key.</td><td data-label="Cases cite"><a href="specification.html#p-1-4">1.4</a>, <a href="specification.html#p-8-3">8.3</a>, <a href="specification.html#p-9-1">9.1</a> to <a href="specification.html#p-9-3">9.3</a>, the second paragraph of <a href="specification.html#p-9-4">9.4</a>, <a href="specification.html#p-9-8">9.8</a> and <a href="specification.html#p-9-9">9.9</a>.</td></tr>
+</tbody></table></div>
+  <div class="tree" role="group" aria-label="Layout of the schemas and conformance directories"><div class="tr" style="--d:0"><span class="d">schemas/</span></div><div class="tr" style="--d:1"><span class="f">action-document.schema.json</span></div><div class="tr" style="--d:1"><span class="f">options-answer.schema.json</span></div><div class="tr" style="--d:1"><span class="f">identity-token.schema.json</span></div><div class="tr" style="--d:1"><span class="f">evaluation.schema.json</span></div><div class="tr" style="--d:1"><span class="f">case.schema.json</span></div><div class="tr" style="--d:0"><span class="d">conformance/</span></div><div class="tr" style="--d:1"><span class="d">U/</span><span class="cm">cases for a PEP</span></div><div class="tr" style="--d:1"><span class="d">D/</span><span class="cm">cases for a PDP</span></div><div class="tr" style="--d:1"><span class="d">E/</span><span class="cm">cases for an edge</span></div></div>
+  <p class="prose">The MCP binding holds the cases that only MCP needs: U18, U23, U25 to U28 and E01 (<a href="mcp-binding.html#s-9">section 9 of the binding</a>). The directory <code>conformance/</code> gives none of these ids to another case, so its series E starts at E02.</p>
+</section>
+
+<section id="schemas" aria-labelledby="schemas-h">
+  <h2 id="schemas-h">JSON schemas</h2>
+  <p class="prose">The directory <code>schemas/</code> holds JSON schemas for the documents and the messages of the protocol. Use any JSON Schema validator. <a href="tools.html#access-lint"><code>access-lint</code></a> checks more than a schema can: the rules between members, for example that a limit name is declared.</p>
+  <div class="tablewrap"><table>
+<thead><tr><th scope="col">Schema</th><th scope="col">Checks</th><th scope="col">Rules</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>action-document.schema.json</code></th><td data-label="Checks">The action document of a service, with its types, actions and limit declarations.</td><td data-label="Rules"><a href="specification.html#p-5-2">5.2</a>, <a href="specification.html#p-6-1">6.1</a></td></tr>
+<tr><th scope="row"><code>options-answer.schema.json</code></th><td data-label="Checks">The answer of the options route.</td><td data-label="Rules"><a href="specification.html#p-5-8">5.8</a></td></tr>
+<tr><th scope="row"><code>identity-token.schema.json</code></th><td data-label="Checks">The header and the claims of an identity token.</td><td data-label="Rules"><a href="specification.html#p-9-2">9.2</a>, <a href="specification.html#p-9-3">9.3</a></td></tr>
+<tr><th scope="row"><code>evaluation.schema.json</code></th><td data-label="Checks">The members that the protocol adds to a question and to an answer: <code>context.usage</code>, <code>context.limits</code>, <code>context.match</code> and <code>context.reason</code>.</td><td data-label="Rules"><a href="specification.html#p-6-4">6.4</a>, <a href="specification.html#p-7-3">7.3</a>, <a href="specification.html#p-11-1">11.1</a></td></tr>
+<tr><th scope="row"><code>case.schema.json</code></th><td data-label="Checks">One conformance case.</td><td data-label="Rules">This page.</td></tr>
+</tbody></table></div>
+  <div class="code-wrap"><span class="label">Check an action document</span><pre data-copy tabindex="0" aria-label="Code example: Check an action document"><code><span class="ln" style="--i:0"><span class="c">$ </span>access-lint actions.json</span></code></pre></div>
+</section>
+
+<section id="case" aria-labelledby="case-h">
+  <h2 id="case-h">One case</h2>
+  <p class="prose">A case names its role and the data that it needs, gives one request and tells the expected answer. This case tests how a PDP combines two ceilings. It uses Alice and the service of <a href="specification.html#s-13">section 13</a> of the protocol.</p>
+  <div class="code-wrap"><span class="label">Conformance case, shortened</span><pre data-copy tabindex="0" aria-label="Code example: Conformance case, shortened"><code><span class="ln" style="--i:0">{</span><span class="ln" style="--i:2">  <span class="k">"id"</span>: <span class="s">"D07"</span>,</span><span class="ln" style="--i:2">  <span class="k">"title"</span>: <span class="s">"A ceiling takes the lowest value among the grants of the asked action"</span>,</span><span class="ln" style="--i:2">  <span class="k">"cites"</span>: [<span class="s">"7.3"</span>, <span class="s">"8.1"</span>],</span><span class="ln" style="--i:2">  <span class="k">"role"</span>: <span class="s">"pdp"</span>,</span><span class="ln" style="--i:2">  <span class="k">"directory"</span>: <span class="s">"alice.json"</span>,</span><span class="ln" style="--i:2">  <span class="k">"request"</span>: {</span><span class="ln" style="--i:4">    <span class="k">"subject"</span>: { <span class="k">"type"</span>: <span class="s">"user"</span>, <span class="k">"id"</span>: <span class="s">"alice"</span> },</span><span class="ln" style="--i:4">    <span class="k">"action"</span>: { <span class="k">"name"</span>: <span class="s">"data.read"</span> },</span><span class="ln" style="--i:4">    <span class="k">"resource"</span>: {</span><span class="ln" style="--i:6">      <span class="k">"type"</span>: <span class="s">"table"</span>,</span><span class="ln" style="--i:6">      <span class="k">"id"</span>: <span class="s">"orders"</span>,</span><span class="ln" style="--i:6">      <span class="k">"properties"</span>: {</span><span class="ln" style="--i:8">        <span class="k">"ancestors"</span>: [</span><span class="ln" style="--i:10">          { <span class="k">"type"</span>: <span class="s">"service"</span>, <span class="k">"id"</span>: <span class="s">"datastore"</span> },</span><span class="ln" style="--i:10">          { <span class="k">"type"</span>: <span class="s">"host"</span>, <span class="k">"id"</span>: <span class="s">"prod"</span> },</span><span class="ln" style="--i:10">          { <span class="k">"type"</span>: <span class="s">"database"</span>, <span class="k">"id"</span>: <span class="s">"test2"</span> }</span><span class="ln" style="--i:8">        ]</span><span class="ln" style="--i:6">      }</span><span class="ln" style="--i:4">    },</span><span class="ln" style="--i:4">    <span class="k">"context"</span>: { <span class="k">"usage"</span>: { <span class="k">"units"</span>: <span class="n">1</span> } }</span><span class="ln" style="--i:2">  },</span><span class="ln" style="--i:2">  <span class="k">"expect"</span>: {</span><span class="ln" style="--i:4">    <span class="k">"decision"</span>: <span class="n">true</span>,</span><span class="ln" style="--i:4">    <span class="k">"context"</span>: {</span><span class="ln" style="--i:6">      <span class="k">"limits"</span>: { <span class="k">"max_rows"</span>: <span class="n">100</span>, <span class="k">"max_duration"</span>: <span class="n">30</span> },</span><span class="ln" style="--i:6">      <span class="k">"usage"</span>: { <span class="k">"units"</span>: <span class="n">1</span> }</span><span class="ln" style="--i:4">    }</span><span class="ln" style="--i:2">  }</span><span class="ln" style="--i:0">}</span></code></pre></div>
+  <p class="muted">The case cites <a href="specification.html#p-7-3">7.3</a> and <a href="specification.html#p-8-1">8.1</a>: a ceiling takes the lowest value among the grants of the asked action that cover the resource.</p>
+</section>
+
+<section id="run" aria-labelledby="run-h">
+  <h2 id="run-h">Run the cases</h2>
+  <p class="prose">Use <a href="tools.html#access-conformance"><code>access-conformance</code></a>. Give it the URL of the implementation and its role. The tool prints pass, fail or skip for each case. It exits with 0 when each case passes.</p>
+
+  <h3 id="run-pep">Against a PEP</h3>
+  <p class="prose">The tool acts as the edge and as the PDP. It signs the identity tokens and it answers the questions of your service, with the parts of <code>access-token</code> and <code>fake-pdp</code>.</p>
+  <ol class="steps">
+    <li>Start your service. Set its configuration to the issuer, the public keys and the PDP that the tool gives.</li>
+    <li>Run the series U against the URL of your service.</li>
+    <li>Read each failed case. Its line gives the paragraph that the case tests.</li>
+  </ol>
+  <div class="code-wrap"><span class="label">PEP</span><pre data-copy tabindex="0" aria-label="Code example: PEP"><code><span class="ln" style="--i:0">access-conformance --role pep --url http://127.0.0.1:8000</span></code></pre></div>
+
+  <h3 id="run-pdp">Against a PDP</h3>
+  <p class="prose">The tool sends the questions of the series D and compares each answer with the expected answer. Load the directory of the case data into your PDP before you start. <a href="tools.html#fake-pdp"><code>fake-pdp</code></a> reads the same data, so you can compare the two.</p>
+  <div class="code-wrap"><span class="label">PDP</span><pre data-copy tabindex="0" aria-label="Code example: PDP"><code><span class="ln" style="--i:0">access-conformance --role pdp --url http://127.0.0.1:8181</span></code></pre></div>
+
+  <h3 id="run-edge">Against an edge</h3>
+  <p class="prose">The tool acts as the client, with key texts, and as the service behind the edge. It checks the request that reaches the service. It also checks that the refusals of the edge have no body and that no key text goes on.</p>
+  <div class="code-wrap"><span class="label">Edge</span><pre data-copy tabindex="0" aria-label="Code example: Edge"><code><span class="ln" style="--i:0">access-conformance --role edge --url https://edge.example</span></code></pre></div>
+
+  <h3>Read the result</h3>
+  <ul class="prose">
+    <li><code>pass</code>: the implementation does what the paragraph says.</li>
+    <li><code>fail</code>: it does not. The exit code is 1.</li>
+    <li><code>skip</code>: the case does not apply, for example a service with no options route does not run the cases of <a href="specification.html#p-5-6">5.6</a>.</li>
+  </ul>
+  <div class="code-wrap"><span class="label">JSON result</span><pre data-copy tabindex="0" aria-label="Code example: JSON result"><code><span class="ln" style="--i:0">access-conformance --role pep \</span><span class="ln" style="--i:4">    --url http://127.0.0.1:8000 \</span><span class="ln" style="--i:4">    --format json</span></code></pre></div>
+</section>
+
+<section id="scope" aria-labelledby="scope-h">
+  <h2 id="scope-h">What the cases do not test</h2>
+  <p class="prose">No series tests the system that makes keys (<a href="specification.html#p-3-2">3.2</a>, <a href="specification.html#p-3-8">3.8</a>) or the caller of the options route (<a href="specification.html#p-5-6">5.6</a> to <a href="specification.html#p-5-9">5.9</a>).</p>
+</section>
+
+</div></div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h2>ProcurAuth</h2>
+        <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.0.</p>
+      </div>
+      <div>
+        <h2>Read</h2>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="specification.html">Specification</a></li>
+          <li><a href="mcp-binding.html">MCP binding for agents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Build</h2>
+        <ul>
+          <li><a href="tools.html">Tools and PEP library</a></li>
+          <li><a href="conformance.html">Schemas and conformance</a></li>
+          <li><a href="source.html">Source and releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/SCcagg5/procurauth">Repository</a></li>
+          <li><a href="source.html#changelog">Changelog</a></li>
+          <li><a href="source.html#contribute">Contribute</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <p>ProcurAuth, version 1.0.</p>
+      <p>Code: <a href="source.html#licences">Apache-2.0</a>. Texts: <a href="source.html#licences">CC BY 4.0</a>.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. It is an open specification, a profile of the AuthZEN Authorization API 1.0.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ProcurAuth">
+<meta property="og:title" content="ProcurAuth: rights for users and their AI agents">
+<meta property="og:description" content="ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. It is an open specification, a profile of the AuthZEN Authorization API 1.0.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ProcurAuth: rights for users and their AI agents">
+<meta name="twitter:description" content="ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. It is an open specification, a profile of the AuthZEN Authorization API 1.0.">
+<link rel="canonical" href="https://sccagg5.github.io/procurauth/">
+<meta property="og:url" content="https://sccagg5.github.io/procurauth/">
+<title>ProcurAuth: rights for users and their AI agents</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Ccircle cx='12.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='19.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="ProcurAuth, home page"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="12.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><circle cx="19.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z" fill="var(--accent-ink)"/></svg><span>Procur<b>Auth</b></span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Main"><ul><li><a href="index.html" aria-current="page">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="specification.html">Specification</a></li><li><a href="mcp-binding.html">Agents (MCP)</a></li><li><a href="tools.html">Tools</a></li><li><a href="conformance.html">Conformance</a></li><li><a href="source.html">Source</a></li><li class="nav-gh"><a href="https://github.com/SCcagg5/procurauth">GitHub</a></li></ul></nav>
+    <a class="gh-link" href="https://github.com/SCcagg5/procurauth" aria-label="ProcurAuth on GitHub" title="ProcurAuth on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+<main id="main">
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow"><span class="badge">Version 1.0</span> Open specification for AI agents</p>
+      <h1 id="hero-title">ProcurAuth</h1>
+      <p class="promise">Give each AI agent a key. A key never has more rights than the person who owns it.</p>
+      <p class="sub">Your backend holds the users, their rights and the keys of their agents. Your services only speak AuthZEN.</p>
+      <div class="btn-row">
+        <a class="btn primary" href="specification.html">Read the specification</a>
+        <a class="btn" href="mcp-binding.html">MCP binding for agents</a>
+      </div>
+      <p class="more"><a href="how-it-works.html">See how it works</a></p>
+    </div>
+    <div class="hero-card" role="group" aria-label="One call of an agent: one question and one answer">
+      <header><i></i><i></i><i></i><span>One call of an agent (shortened)</span></header>
+      <div class="step">The service asks the PDP about the key of the agent</div>
+      <pre tabindex="0" aria-label="Example question"><code><span class="ln" style="--i:0">{ <span class="k">"subject"</span>:  { <span class="k">"type"</span>: <span class="s">"user"</span>, <span class="k">"id"</span>: <span class="s">"key:9b1c…"</span> },</span><span class="ln" style="--i:2">  <span class="k">"action"</span>:   { <span class="k">"name"</span>: <span class="s">"data.read"</span> },</span><span class="ln" style="--i:2">  <span class="k">"resource"</span>: { <span class="k">"type"</span>: <span class="s">"database"</span>, <span class="k">"id"</span>: <span class="s">"test2"</span>,</span><span class="ln" style="--i:4">    <span class="k">"properties"</span>: { <span class="k">"ancestors"</span>: […] } },</span><span class="ln" style="--i:2">  <span class="k">"context"</span>:  { <span class="k">"usage"</span>: { <span class="k">"units"</span>: <span class="n">1</span> } } }</span></code></pre>
+      <div class="sep"></div>
+      <div class="step">The PDP answers</div>
+      <pre tabindex="0" aria-label="Example answer"><code><span class="ln" style="--i:0">{ <span class="k">"decision"</span>: <span class="n">true</span>,</span><span class="ln" style="--i:2">  <span class="k">"context"</span>: {</span><span class="ln" style="--i:4">    <span class="k">"limits"</span>: { <span class="k">"max_rows"</span>: <span class="n">5000</span>,</span><span class="ln" style="--i:6">      <span class="k">"max_duration"</span>: <span class="n">30</span> },</span><span class="ln" style="--i:4">    <span class="k">"usage"</span>:  { <span class="k">"units"</span>: <span class="n">1</span> } } }</span></code></pre>
+    </div>
+  </div>
+</section><section class="section" aria-labelledby="ideas-h">
+  <div class="wrap">
+    <div class="section-head"><h2 id="ideas-h">The rights of users and of their agents, from one backend</h2>
+    <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. It is a profile of the AuthZEN Authorization API 1.0.</p></div>
+    <div class="grid c3">
+      <a class="card" href="how-it-works.html#keys"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg></div><h3>An agent never goes beyond its owner</h3>
+        <p>An agent acts with a key. The decision point takes the lower of the grants of the key and the rights that the owner has now. When the owner loses a right, the agent loses it at the next decision.</p></a>
+      <a class="card" href="how-it-works.html#limits"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 20V11M12 20V6M17 20v-7"/></svg></div><h3>Limits for agents</h3>
+        <p>A ceiling bounds one call, for example 30 seconds. A budget bounds many calls: per second, minute, hour or day. The decision point counts the budgets.</p></a>
+      <a class="card" href="how-it-works.html#who"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div><h3>The backend manages everything</h3>
+        <p>Users, grants, keys and the revocation of a key are in your backend. Each service asks the decision point and applies the answer, so a service stays simple.</p></a>
+    </div>
+    <p class="aside"><span class="ico-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg></span><span><strong>A grant covers a branch.</strong> The resources of a service form a tree. A grant on a node covers the node and each node below it. <a href="how-it-works.html#coverage">See coverage</a>.</span></p>
+  </div>
+</section><section class="section alt" aria-labelledby="flow-h">
+  <div class="wrap">
+    <div class="section-head"><h2 id="flow-h">One call of an agent, five steps</h2>
+    <p>The agent never talks to the decision point. The edge checks its key. The service asks, and it applies the answer.</p></div>
+    <figure class="panel" aria-label="Figure: one call of an agent in five steps"><div class="fig-h"><svg viewBox="-2 -2 884 164" role="img" aria-label="One call in five steps: agent, edge, service, decision point, answer"><title>One call in five steps: agent, edge, service, decision point, answer</title><desc>The agent shows its key to the edge. The edge checks the key and signs a token for the service. The service asks the decision point. The decision point checks grants and counts budgets. The answer is yes or no, with limits.</desc><defs><marker id="mk-m-f19" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-m" d="M0 0L10 5L0 10z"/></marker><marker id="mk-a-f19" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-a" d="M0 0L10 5L0 10z"/></marker><marker id="mk-ok-f19" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-ok" d="M0 0L10 5L0 10z"/></marker><marker id="mk-no-f19" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-no" d="M0 0L10 5L0 10z"/></marker></defs><rect x="0" y="16" width="150" height="130" rx="10" class="box"/><circle cx="20" cy="16" r="12" class="num"/><text x="20" y="20.5" font-size="13" text-anchor="middle" class="numt">1</text><text x="75" y="64" font-size="17" text-anchor="middle" class="tb">Agent</text><text x="75" y="88" font-size="13.5" text-anchor="middle" class="tm">shows its key</text><line x1="154" y1="81" x2="178.5" y2="81" class="ln a" marker-end="url(#mk-a-f19)"/><rect x="182.5" y="16" width="150" height="130" rx="10" class="box"/><circle cx="202.5" cy="16" r="12" class="num"/><text x="202.5" y="20.5" font-size="13" text-anchor="middle" class="numt">2</text><text x="257.5" y="64" font-size="17" text-anchor="middle" class="tb">Edge</text><text x="257.5" y="88" font-size="13.5" text-anchor="middle" class="tm">checks the key,</text><text x="257.5" y="106" font-size="13.5" text-anchor="middle" class="tm">signs a token</text><line x1="336.5" y1="81" x2="361" y2="81" class="ln a" marker-end="url(#mk-a-f19)"/><rect x="365" y="16" width="150" height="130" rx="10" class="box hl"/><circle cx="385" cy="16" r="12" class="num"/><text x="385" y="20.5" font-size="13" text-anchor="middle" class="numt">3</text><text x="440" y="64" font-size="17" text-anchor="middle" class="tb">Service</text><text x="440" y="88" font-size="13.5" text-anchor="middle" class="tm">asks the</text><text x="440" y="106" font-size="13.5" text-anchor="middle" class="tm">question</text><line x1="519" y1="81" x2="543.5" y2="81" class="ln a" marker-end="url(#mk-a-f19)"/><rect x="547.5" y="16" width="150" height="130" rx="10" class="box"/><circle cx="567.5" cy="16" r="12" class="num"/><text x="567.5" y="20.5" font-size="13" text-anchor="middle" class="numt">4</text><text x="622.5" y="64" font-size="17" text-anchor="middle" class="tb">PDP</text><text x="622.5" y="88" font-size="13.5" text-anchor="middle" class="tm">checks grants,</text><text x="622.5" y="106" font-size="13.5" text-anchor="middle" class="tm">counts budgets</text><line x1="701.5" y1="81" x2="726" y2="81" class="ln a" marker-end="url(#mk-a-f19)"/><rect x="730" y="16" width="150" height="130" rx="10" class="box ok"/><circle cx="750" cy="16" r="12" class="num"/><text x="750" y="20.5" font-size="13" text-anchor="middle" class="numt">5</text><text x="805" y="64" font-size="17" text-anchor="middle" class="tb">Answer</text><text x="805" y="88" font-size="13.5" text-anchor="middle" class="tm">yes or no,</text><text x="805" y="106" font-size="13.5" text-anchor="middle" class="tm">with limits</text></svg></div><div class="fig-v"><svg viewBox="-2 -2 344 500" role="img" aria-label="One call in five steps: agent, edge, service, decision point, answer"><title>One call in five steps: agent, edge, service, decision point, answer</title><desc>The agent shows its key to the edge. The edge checks the key and signs a token for the service. The service asks the decision point. The decision point checks grants and counts budgets. The answer is yes or no, with limits.</desc><defs><marker id="mk-m-f20" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-m" d="M0 0L10 5L0 10z"/></marker><marker id="mk-a-f20" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-a" d="M0 0L10 5L0 10z"/></marker><marker id="mk-ok-f20" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-ok" d="M0 0L10 5L0 10z"/></marker><marker id="mk-no-f20" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mk-no" d="M0 0L10 5L0 10z"/></marker></defs><rect x="20" y="6" width="300" height="76" rx="10" class="box"/><circle cx="46" cy="44" r="12" class="num"/><text x="46" y="48.5" font-size="13" text-anchor="middle" class="numt">1</text><text x="70" y="37" font-size="16" text-anchor="start" class="tb">Agent</text><text x="70" y="58" font-size="13" text-anchor="start" class="tm">shows its key</text><line x1="170" y1="85" x2="170" y2="105" class="ln a" marker-end="url(#mk-a-f20)"/><rect x="20" y="108" width="300" height="76" rx="10" class="box"/><circle cx="46" cy="146" r="12" class="num"/><text x="46" y="150.5" font-size="13" text-anchor="middle" class="numt">2</text><text x="70" y="139" font-size="16" text-anchor="start" class="tb">Edge</text><text x="70" y="160" font-size="13" text-anchor="start" class="tm">checks the key, signs a token</text><line x1="170" y1="187" x2="170" y2="207" class="ln a" marker-end="url(#mk-a-f20)"/><rect x="20" y="210" width="300" height="76" rx="10" class="box hl"/><circle cx="46" cy="248" r="12" class="num"/><text x="46" y="252.5" font-size="13" text-anchor="middle" class="numt">3</text><text x="70" y="241" font-size="16" text-anchor="start" class="tb">Service</text><text x="70" y="262" font-size="13" text-anchor="start" class="tm">asks the question</text><line x1="170" y1="289" x2="170" y2="309" class="ln a" marker-end="url(#mk-a-f20)"/><rect x="20" y="312" width="300" height="76" rx="10" class="box"/><circle cx="46" cy="350" r="12" class="num"/><text x="46" y="354.5" font-size="13" text-anchor="middle" class="numt">4</text><text x="70" y="343" font-size="16" text-anchor="start" class="tb">PDP</text><text x="70" y="364" font-size="13" text-anchor="start" class="tm">checks grants, counts budgets</text><line x1="170" y1="391" x2="170" y2="411" class="ln a" marker-end="url(#mk-a-f20)"/><rect x="20" y="414" width="300" height="76" rx="10" class="box ok"/><circle cx="46" cy="452" r="12" class="num"/><text x="46" y="456.5" font-size="13" text-anchor="middle" class="numt">5</text><text x="70" y="445" font-size="16" text-anchor="start" class="tb">Answer</text><text x="70" y="466" font-size="13" text-anchor="start" class="tm">yes or no, with limits</text></svg></div>
+      <figcaption>Alice&#39;s agent shows its key to the edge. The edge gives the service a signed token. The service asks the decision point and applies the answer. <a href="how-it-works.html#flow">Read the steps one by one.</a></figcaption></figure>
+  </div>
+</section><section class="section" aria-labelledby="mcp-h">
+  <div class="wrap">
+    <div class="section-head"><h2 id="mcp-h">Built for agents that call tools</h2>
+    <p>The MCP binding applies the protocol to an MCP server. These are its rules for an agent.</p></div>
+    <ul class="tools-row mcp-row"><li><a class="card tool-card" href="mcp-binding.html#p-4-1"><span class="name">Binding 4.1</span><h3>The list shows what the key may use</h3><p>A <code>tools/list</code> names only the tools that the key may use.</p></a></li><li><a class="card tool-card" href="mcp-binding.html#p-3-5a"><span class="name">Binding 3.5a</span><h3>An effect waits for an approval</h3><p>A tool with an effect waits for an approval. The service checks the rights at the call and counts the budget at the run.</p></a></li><li><a class="card tool-card" href="mcp-binding.html#p-5-3"><span class="name">Binding 5.3</span><h3>A spent budget has a readable error</h3><p>The agent gets the tool error <code>budget_exceeded</code> with <code>retry_after</code>, the seconds to wait.</p></a></li><li><a class="card tool-card" href="mcp-binding.html#p-5-1"><span class="name">Binding 5.1</span><h3>A refusal leaks nothing</h3><p>A refused call looks like a call to an unknown tool. It gives no reason.</p></a></li><li><a class="card tool-card" href="mcp-binding.html#p-3-6a"><span class="name">Binding 3.6a</span><h3>Other methods ask for an action too</h3><p>A method with no tool, such as <code>initialize</code> or <code>ping</code>, asks the action <code>mcp.session</code>.</p></a></li></ul>
+    <div class="grid c2 mcp-example">
+      <div><p class="muted">The tool error that an agent gets when its budget is spent (<code>structuredContent</code>, binding 5.3):</p><div class="code-wrap"><span class="label">Tool error</span><pre data-copy tabindex="0" aria-label="Code example: Tool error"><code><span class="ln" style="--i:0">{</span><span class="ln" style="--i:2">  <span class="k">"error"</span>: {</span><span class="ln" style="--i:4">    <span class="k">"code"</span>: <span class="s">"budget_exceeded"</span>,</span><span class="ln" style="--i:4">    <span class="k">"message"</span>: <span class="s">"The budget of this action is spent."</span>,</span><span class="ln" style="--i:4">    <span class="k">"retryable"</span>: <span class="n">true</span>,</span><span class="ln" style="--i:4">    <span class="k">"retry_after"</span>: <span class="n">12</span></span><span class="ln" style="--i:2">  }</span><span class="ln" style="--i:0">}</span></code></pre></div></div>
+      <div><p class="prose">The agent can read the error and wait. It learns no grant and no amount. A refused tool and an unknown tool get the same answer.</p>
+      <div class="btn-row"><a class="btn primary" href="mcp-binding.html">Read the MCP binding for agents</a></div></div>
+    </div>
+  </div>
+</section><section class="section alt" aria-labelledby="tools-h">
+  <div class="wrap">
+    <div class="section-head"><h2 id="tools-h">Five tools to build and to test</h2>
+    <p>Each tool is a command-line program. A reference PEP library in Rust comes with them. <a href="tools.html">See all tools</a>.</p></div>
+    <ul class="tools-row"><li><a class="card tool-card" href="tools.html#access-lint"><span class="name">access-lint</span><p>Checks an action document before a service publishes it.</p></a></li><li><a class="card tool-card" href="tools.html#fake-pdp"><span class="name">fake-pdp</span><p>A test decision point for the tests of a PEP.</p></a></li><li><a class="card tool-card" href="tools.html#access-token"><span class="name">access-token</span><p>Makes and checks identity tokens for tests.</p></a></li><li><a class="card tool-card" href="tools.html#keycheck"><span class="name">keycheck</span><p>Checks the text of a key. No store, no network.</p></a></li><li><a class="card tool-card" href="tools.html#access-conformance"><span class="name">access-conformance</span><p>Runs the conformance cases against a PEP, a PDP or an edge.</p></a></li></ul>
+  </div>
+</section><section class="section" aria-labelledby="go-h">
+  <div class="wrap">
+    <div class="section-head"><h2 id="go-h">Start with the text or with the tools</h2>
+    <p>The specification and the MCP binding are the normative texts. The source and the binaries of version 1.0 are in one repository.</p></div>
+    <div class="btn-row">
+      <a class="btn primary" href="specification.html">Read the specification</a>
+      <a class="btn" href="mcp-binding.html">MCP binding for agents</a>
+      <a class="btn" href="source.html#releases">Get the binaries</a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h2>ProcurAuth</h2>
+        <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.0.</p>
+      </div>
+      <div>
+        <h2>Read</h2>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="specification.html">Specification</a></li>
+          <li><a href="mcp-binding.html">MCP binding for agents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Build</h2>
+        <ul>
+          <li><a href="tools.html">Tools and PEP library</a></li>
+          <li><a href="conformance.html">Schemas and conformance</a></li>
+          <li><a href="source.html">Source and releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/SCcagg5/procurauth">Repository</a></li>
+          <li><a href="source.html#changelog">Changelog</a></li>
+          <li><a href="source.html#contribute">Contribute</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <p>ProcurAuth, version 1.0.</p>
+      <p>Code: <a href="source.html#licences">Apache-2.0</a>. Texts: <a href="source.html#licences">CC BY 4.0</a>.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

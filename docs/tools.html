@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="The five command-line tools of ProcurAuth and the reference PEP library in Rust: access-lint, fake-pdp, access-token, keycheck and access-conformance.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ProcurAuth">
+<meta property="og:title" content="Tools | ProcurAuth">
+<meta property="og:description" content="The five command-line tools of ProcurAuth and the reference PEP library in Rust: access-lint, fake-pdp, access-token, keycheck and access-conformance.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Tools | ProcurAuth">
+<meta name="twitter:description" content="The five command-line tools of ProcurAuth and the reference PEP library in Rust: access-lint, fake-pdp, access-token, keycheck and access-conformance.">
+<link rel="canonical" href="https://sccagg5.github.io/procurauth/tools.html">
+<meta property="og:url" content="https://sccagg5.github.io/procurauth/tools.html">
+<title>Tools | ProcurAuth</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Ccircle cx='12.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='19.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="ProcurAuth, home page"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="12.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><circle cx="19.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z" fill="var(--accent-ink)"/></svg><span>Procur<b>Auth</b></span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Main"><ul><li><a href="index.html">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="specification.html">Specification</a></li><li><a href="mcp-binding.html">Agents (MCP)</a></li><li><a href="tools.html" aria-current="page">Tools</a></li><li><a href="conformance.html">Conformance</a></li><li><a href="source.html">Source</a></li><li class="nav-gh"><a href="https://github.com/SCcagg5/procurauth">GitHub</a></li></ul></nav>
+    <a class="gh-link" href="https://github.com/SCcagg5/procurauth" aria-label="ProcurAuth on GitHub" title="ProcurAuth on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+<main id="main">
+<div class="page-head"><div class="wrap"><p class="eyebrow"><span class="badge">Version 1.0</span> Command-line tools and a library</p><h1>Tools</h1><p class="lede">Five command-line tools and a reference PEP library in Rust. They help you build and test an implementation of the protocol, for agents and for their services.</p><ul class="chips" aria-label="On this page"><li><a href="#access-lint">access-lint</a></li><li><a href="#fake-pdp">fake-pdp</a></li><li><a href="#access-token">access-token</a></li><li><a href="#keycheck">keycheck</a></li><li><a href="#access-conformance">access-conformance</a></li><li><a href="#pep-library">PEP library</a></li><li><a href="#get">Get them</a></li></ul></div></div><div class="page-body"><div class="wrap"><section class="block" id="why" aria-labelledby="why-h">
+  <h2 id="why-h">Why a team that builds agents wants them</h2>
+  <p class="prose">An agent acts with a key. A team that builds agents, or services for agents, must know two things. A service refuses a key that goes beyond the rights of its owner. A spent budget stops the agent.</p>
+  <ul class="prose">
+    <li><a href="#fake-pdp"><code>fake-pdp</code></a> gives your service a decision point with a user, the key of her agent and their limits. Its counters run in memory.</li>
+    <li><a href="#access-token"><code>access-token</code></a> makes the identity tokens, good and bad, that the service must check.</li>
+    <li><a href="#access-conformance"><code>access-conformance</code></a> runs the cases. Each case cites the paragraph that it tests.</li>
+    <li><a href="#access-lint"><code>access-lint</code></a> checks the action document, where the service declares its actions and limits.</li>
+  </ul>
+</section>
+    <section class="block" id="conventions" aria-labelledby="conv-h">
+  <h2 id="conv-h">Common rules</h2>
+  <p class="prose">Each tool is a static program with no runtime to install. Each tool reads its input from a file, or from the standard input where the table says so.</p>
+  <div class="tablewrap"><table>
+  <thead><tr><th scope="col">Option or code</th><th scope="col">Meaning</th></tr></thead>
+  <tbody>
+  <tr><th scope="row"><code>--help</code></th><td data-label="Meaning">Shows the usage and exits with 0.</td></tr>
+  <tr><th scope="row"><code>--version</code></th><td data-label="Meaning">Shows the version and the licence of the binary, and exits with 0.</td></tr>
+  <tr><th scope="row"><code>--format text|json</code></th><td data-label="Meaning">Chooses the form of the output. The default is <code>text</code>.</td></tr>
+  <tr><th scope="row">Exit code 0</th><td data-label="Meaning">No finding. The check passes.</td></tr>
+  <tr><th scope="row">Exit code 1</th><td data-label="Meaning">The tool found at least one problem in the input or in the implementation.</td></tr>
+  <tr><th scope="row">Exit code 2</th><td data-label="Meaning">The command line is not valid, or the tool cannot read its input.</td></tr>
+  </tbody></table></div>
+</section><div class="block"><section class="tool-section" id="access-lint" aria-labelledby="access-lint-h">
+  <h2 id="access-lint-h">access-lint</h2>
+  <p class="tagline">Checks an action document before a service publishes it.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3><dl class="kv"><dt>Role</dt><dd>Finds each member that breaks the rules of the action document and of the limits (<a href="specification.html#p-5-2">5.2</a>, <a href="specification.html#p-5-3">5.3</a>, <a href="specification.html#p-6-1">6.1</a>, <a href="specification.html#p-7-1">7.1</a>). It also checks an answer of the options route.</dd><dt>Input</dt><dd>An action document, as a file or as a URL. Optionally, a file of grant values to check against the document, or an answer of the options route.</dd><dt>Output</dt><dd>One line for each error, with the JSON path of the member and the number of the rule.</dd></dl>
+      <p><span class="exit"><b>0</b> no finding</span><span class="exit"><b>1</b> findings</span><span class="exit"><b>2</b> usage error</span></p><p class="muted">Rules: <a href="specification.html#p-5-2">5.2</a>, <a href="specification.html#p-5-3">5.3</a>, <a href="specification.html#p-5-8">5.8</a>, <a href="specification.html#p-6-1">6.1</a>, <a href="specification.html#p-7-1">7.1</a>.</p></div>
+    <div><h3>Usage</h3><div class="code-wrap"><span class="label">Command</span><pre data-copy tabindex="0" aria-label="Code example: Command"><code><span class="ln" style="--i:0">access-lint [--format text|json]</span><span class="ln" style="--i:12">            [--grants FILE]</span><span class="ln" style="--i:12">            [--options FILE]</span><span class="ln" style="--i:12">            &lt;document&gt;</span></code></pre></div><div class="code-wrap"><span class="label">Example</span><pre data-copy tabindex="0" aria-label="Code example: Example"><code><span class="ln" style="--i:0"><span class="c">$ </span>access-lint actions.json</span><span class="ln" style="--i:0">actions.json: 2 errors</span><span class="ln" style="--i:2">  $.actions[1].limits[2]  rule 5.2  undeclared limit</span><span class="ln" style="--i:2">  $.limits[0].min         rule 6.1  budget with "min"</span><span class="ln" style="--i:0"><span class="c">$ </span>echo $?<wbr></span><span class="ln" style="--i:0">1</span></code></pre></div></div>
+  </div>
+</section><section class="tool-section" id="fake-pdp" aria-labelledby="fake-pdp-h">
+  <h2 id="fake-pdp-h">fake-pdp</h2>
+  <p class="tagline">A test decision point for the tests of a PEP.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3><dl class="kv"><dt>Role</dt><dd>Answers as the protocol says for decisions, limits and reasons (sections <a href="specification.html#s-3">3</a> to <a href="specification.html#s-8">8</a> and <a href="specification.html#s-11">11</a>), from fixed data. It runs one instance and keeps its counters in memory.</dd><dt>Input</dt><dd>A file of subjects, owners, grants and limit values, and the action document of each service. Optionally, a fixed clock and failures to make: HTTP 503, a delay or no answer.</dd><dt>Output</dt><dd>The AuthZEN 1.0 endpoints and the metadata on a local port. A log of each question, with its answer and the counters after it.</dd></dl>
+      <p><span class="exit"><b>0</b> stopped on request</span><span class="exit"><b>2</b> usage error or bad data file</span></p><p class="muted">Rules: <a href="specification.html#p-6-5">6.5</a>, <a href="specification.html#p-6-9">6.9</a>, <a href="specification.html#p-7-3">7.3</a>, <a href="specification.html#p-8-1">8.1</a>, <a href="specification.html#p-11-1">11.1</a>.</p></div>
+    <div><h3>Usage</h3><div class="code-wrap"><span class="label">Command</span><pre data-copy tabindex="0" aria-label="Code example: Command"><code><span class="ln" style="--i:0">fake-pdp [--listen ADDRESS:PORT]</span><span class="ln" style="--i:9">         &lt;data-file&gt;</span></code></pre></div><div class="code-wrap"><span class="label">Example</span><pre data-copy tabindex="0" aria-label="Code example: Example"><code><span class="ln" style="--i:0"><span class="c">$ </span>fake-pdp --listen 127.0.0.1:8181 directory.json</span><span class="ln" style="--i:0">fake-pdp 1.0 on http://127.0.0.1:8181</span><span class="ln" style="--i:0">metadata /.well-known/authzen-configuration</span><span class="ln" style="--i:0">q1  key:9b1c…  data.read  host:prod/database:test2</span><span class="ln" style="--i:4">    true  limits {"max_rows":5000,"max_duration":30}</span><span class="ln" style="--i:4">    counters  key/minute 99  alice/second 9</span><span class="ln" style="--i:14">              alice/minute 299</span></code></pre></div></div>
+  </div>
+</section><section class="tool-section" id="access-token" aria-labelledby="access-token-h">
+  <h2 id="access-token-h">access-token</h2>
+  <p class="tagline">Makes and checks identity tokens for tests.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3><dl class="kv"><dt>Role</dt><dd>Makes the tokens of the protocol, and also bad tokens for the tests of the checks of the service (<a href="specification.html#p-9-4">9.4</a>).</dd><dt>Input</dt><dd>To make a token: a signing key, the algorithm and the claims. For a bad token, set an old <code>exp</code>, a future <code>iat</code>, another <code>typ</code> or another <code>alg</code>. To check a token: the token and the configuration of the service.</dd><dt>Output</dt><dd>The token on the standard output. A check gives the result of each check.</dd></dl>
+      <p><span class="exit"><b>0</b> no finding</span><span class="exit"><b>1</b> findings</span><span class="exit"><b>2</b> usage error</span></p><p class="muted">Rules: <a href="specification.html#p-9-2">9.2</a>, <a href="specification.html#p-9-3">9.3</a>, <a href="specification.html#p-9-4">9.4</a>.</p></div>
+    <div><h3>Usage</h3><div class="code-wrap"><span class="label">Command</span><pre data-copy tabindex="0" aria-label="Code example: Command"><code><span class="ln" style="--i:0">access-token make --key FILE</span><span class="ln" style="--i:4">    [--alg Ed25519|ES256] [--typ TYPE] &lt;claims&gt;</span><span class="ln" style="--i:0">access-token check --config FILE</span><span class="ln" style="--i:4">    [--format text|json] &lt;token&gt;</span></code></pre></div><div class="code-wrap"><span class="label">Example</span><pre data-copy tabindex="0" aria-label="Code example: Example"><code><span class="ln" style="--i:0"><span class="c">$ </span>access-token make --key edge.pem \</span><span class="ln" style="--i:4">    --alg Ed25519 claims.json &gt; token.jwt</span><span class="ln" style="--i:0"><span class="c">$ </span>access-token check --config service.json \</span><span class="ln" style="--i:4">    token.jwt</span><span class="ln" style="--i:0">signature  <span class="s">ok</span></span><span class="ln" style="--i:0">alg        <span class="s">ok</span>   Ed25519</span><span class="ln" style="--i:0">typ        <span class="s">ok</span>   JWT</span><span class="ln" style="--i:0">iss        <span class="s">ok</span></span><span class="ln" style="--i:0">aud        <span class="s">ok</span>   datastore</span><span class="ln" style="--i:0">exp        <span class="s">ok</span>   life 300 s, max 300 s</span><span class="ln" style="--i:0">iat        <span class="s">ok</span></span><span class="ln" style="--i:0"><span class="c">$ </span>echo $?<wbr></span><span class="ln" style="--i:0">0</span></code></pre></div></div>
+  </div>
+</section><section class="tool-section" id="keycheck" aria-labelledby="keycheck-h">
+  <h2 id="keycheck-h">keycheck</h2>
+  <p class="tagline">Checks the text of a key. No store, no network.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3><dl class="kv"><dt>Role</dt><dd>Tells if a text has the format of a key. It never writes the text to a log. The protocol defines no format (<a href="specification.html#p-3-8">3.8</a>), so the format is an input.</dd><dt>Input</dt><dd>The text on the standard input, never as an argument. A format file: a prefix, a length, an alphabet and a checksum.</dd><dt>Output</dt><dd>Good or bad, with the cause: prefix, length, alphabet or checksum. For a good text, its SHA-256 digest in hexadecimal and a hint of at most 4 characters of the random part.</dd></dl>
+      <p><span class="exit"><b>0</b> no finding</span><span class="exit"><b>1</b> findings</span><span class="exit"><b>2</b> usage error</span></p><p class="muted">Rules: <a href="specification.html#s-2">2</a>, <a href="specification.html#p-3-2">3.2</a>, <a href="specification.html#p-3-8">3.8</a>.</p></div>
+    <div><h3>Usage</h3><div class="code-wrap"><span class="label">Command</span><pre data-copy tabindex="0" aria-label="Code example: Command"><code><span class="ln" style="--i:0">keycheck [--format text|json]</span><span class="ln" style="--i:9">         &lt;format-file&gt;</span></code></pre></div><div class="code-wrap"><span class="label">format.json</span><pre data-copy tabindex="0" aria-label="Code example: format.json"><code><span class="ln" style="--i:0">{</span><span class="ln" style="--i:2">  <span class="k">"prefix"</span>: <span class="s">"mcp_"</span>,</span><span class="ln" style="--i:2">  <span class="k">"length"</span>: <span class="n">53</span>,</span><span class="ln" style="--i:2">  <span class="k">"alphabet"</span>: <span class="s">"A-Za-z0-9"</span>,</span><span class="ln" style="--i:2">  <span class="k">"checksum"</span>: {</span><span class="ln" style="--i:4">    <span class="k">"algorithm"</span>: <span class="s">"crc32"</span>,</span><span class="ln" style="--i:4">    <span class="k">"encoding"</span>: <span class="s">"base62"</span>,</span><span class="ln" style="--i:4">    <span class="k">"characters"</span>: <span class="n">6</span></span><span class="ln" style="--i:2">  }</span><span class="ln" style="--i:0">}</span></code></pre></div><div class="code-wrap"><span class="label">Example</span><pre data-copy tabindex="0" aria-label="Code example: Example"><code><span class="ln" style="--i:0"><span class="c">$ </span>keycheck format.json &lt; key.txt</span><span class="ln" style="--i:0"><span class="e">bad</span>: length (expected 53 characters, found 47)</span><span class="ln" style="--i:0"><span class="c">$ </span>echo $?<wbr></span><span class="ln" style="--i:0">1</span></code></pre></div></div>
+  </div>
+</section><section class="tool-section" id="access-conformance" aria-labelledby="access-conformance-h">
+  <h2 id="access-conformance-h">access-conformance</h2>
+  <p class="tagline">Runs the conformance cases against a PEP, a PDP or an edge.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3><dl class="kv"><dt>Role</dt><dd>Runs the series U against a PEP, the series D against a PDP and the series E against an edge.</dd><dt>Input</dt><dd>The URL of the implementation, its role and the cases to run. For a PEP, the tool also acts as the edge and as the PDP, with the parts of <code>access-token</code> and <code>fake-pdp</code>.</dd><dt>Output</dt><dd>Pass, fail or skip for each case, with the number of the paragraph, as text and as JSON.</dd></dl>
+      <p><span class="exit"><b>0</b> each case passes</span><span class="exit"><b>1</b> a case fails</span><span class="exit"><b>2</b> usage error</span></p><p class="muted">Rules: <a href="specification.html#s-15">section 15, item 2</a>.</p></div>
+    <div><h3>Usage</h3><div class="code-wrap"><span class="label">Command</span><pre data-copy tabindex="0" aria-label="Code example: Command"><code><span class="ln" style="--i:0">access-conformance --role pep|pdp|edge</span><span class="ln" style="--i:4">    --url URL [--format text|json]</span><span class="ln" style="--i:4">    [--cases ID,ID,...]</span></code></pre></div><div class="code-wrap"><span class="label">Example</span><pre data-copy tabindex="0" aria-label="Code example: Example"><code><span class="ln" style="--i:0"><span class="c">$ </span>access-conformance --role pep --url http://127.0.0.1:8000</span><span class="ln" style="--i:0">U01  <span class="s">pass</span>  3.3   subject type user, id taken from sub</span><span class="ln" style="--i:0">U02  <span class="s">pass</span>  4.1   chain in resource.properties.ancestors</span><span class="ln" style="--i:0">U03  <span class="s">pass</span>  9.4   <span class="e">bad</span> signature gets HTTP 401</span><span class="ln" style="--i:0">U04  <span class="e">fail</span>  10.3  budget_exceeded must give HTTP 429, got 403</span><span class="ln" style="--i:0">U05  <span class="c">skip</span>  5.6   the service has no options route</span><span class="ln" style="--i:0">5 cases: 3 passed, 1 failed, 1 skipped</span><span class="ln" style="--i:0"><span class="c">$ </span>echo $?<wbr></span><span class="ln" style="--i:0">1</span></code></pre></div></div>
+  </div>
+</section><section class="tool-section" id="pep-library" aria-labelledby="pep-h">
+  <h2 id="pep-h" style="font-family:var(--font);color:var(--text)">Reference PEP library (Rust)</h2>
+  <p class="tagline">The steps of a PEP, ready for a service.</p>
+  <div class="tool-grid">
+    <div><h3>What it does</h3>
+      <p>The library gives a service the steps of <a href="specification.html#p-10-0">paragraph 10.0</a>: the check of the identity token, the questions to the PDP, the kept answers and the map of the refusals. It is a reference for the authors of other libraries.</p>
+      <p>This specification gives no detailed API for the library. The README of the crate and the <code>docs/</code> directory of the repository describe it.</p>
+      <p class="muted">Rules: <a href="specification.html#p-9-4">9.4</a>, <a href="specification.html#p-10-0">10.0</a>, <a href="specification.html#p-10-1">10.1</a>, <a href="specification.html#p-10-3">10.3</a>, <a href="specification.html#p-10-6">10.6</a>.</p></div>
+    <div><h3>Get it</h3>
+      <div class="code-wrap"><span class="label">Cargo.toml</span><pre data-copy tabindex="0" aria-label="Code example: Cargo.toml"><code><span class="ln" style="--i:0">[dependencies.procurauth-pep]</span><span class="ln" style="--i:0">git = "https://github.com/SCcagg5/procurauth"</span><span class="ln" style="--i:0">tag = "v1.0"</span></code></pre></div>
+      <p>Test a service that uses it with <a href="conformance.html#run-pep"><code>access-conformance</code></a>.</p></div>
+  </div>
+</section></div><section class="block" id="get" aria-labelledby="get-h">
+  <h2 id="get-h">How to get them</h2>
+  <div class="grid c2">
+    <div class="card"><h3>Binaries</h3><p>Each release has archives for Linux, macOS and Windows, and a file of SHA-256 sums. Download one, check its sum and put the five programs on your path.</p><p><a class="btn primary small" href="source.html#releases">Binaries of version 1.0</a></p></div>
+    <div class="card"><h3>Source</h3><p>The Rust workspace is in the repository, with the library. Build all the programs with <code>cargo build --release</code>.</p><p><a class="btn small" href="https://github.com/SCcagg5/procurauth">Open the repository</a></p></div>
+  </div>
+</section></div></div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h2>ProcurAuth</h2>
+        <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.0.</p>
+      </div>
+      <div>
+        <h2>Read</h2>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="specification.html">Specification</a></li>
+          <li><a href="mcp-binding.html">MCP binding for agents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Build</h2>
+        <ul>
+          <li><a href="tools.html">Tools and PEP library</a></li>
+          <li><a href="conformance.html">Schemas and conformance</a></li>
+          <li><a href="source.html">Source and releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/SCcagg5/procurauth">Repository</a></li>
+          <li><a href="source.html#changelog">Changelog</a></li>
+          <li><a href="source.html#contribute">Contribute</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <p>ProcurAuth, version 1.0.</p>
+      <p>Code: <a href="source.html#licences">Apache-2.0</a>. Texts: <a href="source.html#licences">CC BY 4.0</a>.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

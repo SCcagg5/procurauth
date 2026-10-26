@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Source and releases of ProcurAuth: repository layout, binaries with SHA-256 sums, licences, how to contribute and the changelog.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ProcurAuth">
+<meta property="og:title" content="Source | ProcurAuth">
+<meta property="og:description" content="Source and releases of ProcurAuth: repository layout, binaries with SHA-256 sums, licences, how to contribute and the changelog.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Source | ProcurAuth">
+<meta name="twitter:description" content="Source and releases of ProcurAuth: repository layout, binaries with SHA-256 sums, licences, how to contribute and the changelog.">
+<link rel="canonical" href="https://sccagg5.github.io/procurauth/source.html">
+<meta property="og:url" content="https://sccagg5.github.io/procurauth/source.html">
+<title>Source | ProcurAuth</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Ccircle cx='12.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='19.5' cy='16' r='7.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="ProcurAuth, home page"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="12.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><circle cx="19.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z" fill="var(--accent-ink)"/></svg><span>Procur<b>Auth</b></span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Main"><ul><li><a href="index.html">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="specification.html">Specification</a></li><li><a href="mcp-binding.html">Agents (MCP)</a></li><li><a href="tools.html">Tools</a></li><li><a href="conformance.html">Conformance</a></li><li><a href="source.html" aria-current="page">Source</a></li><li class="nav-gh"><a href="https://github.com/SCcagg5/procurauth">GitHub</a></li></ul></nav>
+    <a class="gh-link" href="https://github.com/SCcagg5/procurauth" aria-label="ProcurAuth on GitHub" title="ProcurAuth on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+<main id="main">
+<div class="page-head"><div class="wrap"><p class="eyebrow"><span class="badge">Version 1.0</span> Source and releases</p><h1>Source</h1><p class="lede">The repository holds the texts, the schemas, the conformance data, the tools, the library and the source of this site.</p><ul class="chips" aria-label="On this page"><li><a href="#repository">Repository</a></li><li><a href="#releases">Releases</a></li><li><a href="#licences">Licences</a></li><li><a href="#contribute">Contribute</a></li><li><a href="#changelog">Changelog</a></li></ul></div></div>
+<div class="page-body"><div class="wrap">
+
+<section id="repository" aria-labelledby="repo-h">
+  <h2 id="repo-h">Repository</h2>
+  <p class="prose">The repository is <a href="https://github.com/SCcagg5/procurauth"><code>github.com/SCcagg5/procurauth</code></a>. It is neutral: it names no product.</p>
+  <div class="tree" role="group" aria-label="Layout of the repository"><div class="tr" style="--d:0"><span class="d">procurauth/</span></div><div class="tr" style="--d:1"><span class="d">spec/</span><span class="cm">the protocol</span></div><div class="tr" style="--d:1"><span class="d">bindings/mcp/</span><span class="cm">the MCP binding</span></div><div class="tr" style="--d:1"><span class="d">schemas/</span><span class="cm">JSON schemas</span></div><div class="tr" style="--d:1"><span class="d">conformance/</span><span class="cm">the cases, as data</span></div><div class="tr" style="--d:1"><span class="d">crates/</span><span class="cm">the Rust workspace: five tools and the PEP library</span></div><div class="tr" style="--d:1"><span class="d">docs/</span><span class="cm">documents and the changelog</span></div><div class="tr" style="--d:1"><span class="d">site/</span><span class="cm">the source of this site</span></div><div class="tr" style="--d:1"><span class="f">IMPLEMENTATIONS.md</span><span class="cm">the known implementations</span></div><div class="tr" style="--d:1"><span class="f">LICENSE</span><span class="cm">Apache-2.0, for the code</span></div><div class="tr" style="--d:1"><span class="f">LICENSE-docs</span><span class="cm">CC BY 4.0, for the texts</span></div></div>
+  <p class="prose"><code>IMPLEMENTATIONS.md</code> lists the known implementations. The README of each crate and the <code>docs/</code> directory describe the tools and the library.</p>
+  <p><a class="btn small" href="https://github.com/SCcagg5/procurauth">Open the repository</a></p>
+</section>
+
+<section id="releases" aria-labelledby="rel-h">
+  <h2 id="rel-h">Releases</h2>
+  <p class="prose">Release <a href="https://github.com/SCcagg5/procurauth/releases/tag/v1.0">v1.0</a> gives the five tools as programs, built from the source of the tag. Each archive holds the five programs. A file <code>SHA256SUMS</code> lists the SHA-256 sum of each archive, and each archive has its own <code>.sha256</code> file.</p>
+  <div class="tablewrap"><table>
+  <thead><tr><th scope="col">Platform</th><th scope="col">Archive</th><th scope="col">SHA-256</th></tr></thead>
+  <tbody><tr><th scope="row">Linux, x86-64</th><td data-label="Archive"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-linux.tar.gz"><code>procurauth-tools-1.0-x86_64-linux.tar.gz</code></a></td><td data-label="SHA-256"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-linux.tar.gz.sha256"><code>.sha256</code></a></td></tr><tr><th scope="row">Linux, ARM64</th><td data-label="Archive"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-aarch64-linux.tar.gz"><code>procurauth-tools-1.0-aarch64-linux.tar.gz</code></a></td><td data-label="SHA-256"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-aarch64-linux.tar.gz.sha256"><code>.sha256</code></a></td></tr><tr><th scope="row">macOS, Apple silicon</th><td data-label="Archive"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-aarch64-macos.tar.gz"><code>procurauth-tools-1.0-aarch64-macos.tar.gz</code></a></td><td data-label="SHA-256"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-aarch64-macos.tar.gz.sha256"><code>.sha256</code></a></td></tr><tr><th scope="row">macOS, Intel</th><td data-label="Archive"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-macos.tar.gz"><code>procurauth-tools-1.0-x86_64-macos.tar.gz</code></a></td><td data-label="SHA-256"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-macos.tar.gz.sha256"><code>.sha256</code></a></td></tr><tr><th scope="row">Windows, x86-64</th><td data-label="Archive"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-windows.zip"><code>procurauth-tools-1.0-x86_64-windows.zip</code></a></td><td data-label="SHA-256"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-windows.zip.sha256"><code>.sha256</code></a></td></tr></tbody></table></div>
+  <p class="prose"><a href="https://github.com/SCcagg5/procurauth/releases/download/v1.0/SHA256SUMS">SHA256SUMS</a> lists all the sums. Each program shows its licence with <code>--version</code>.</p>
+  <h3>Check a download</h3>
+  <div class="code-wrap"><span class="label">Linux x86-64</span><pre data-copy tabindex="0" aria-label="Code example: Linux x86-64"><code><span class="ln" style="--i:0"><span class="c">$ </span>REPO=https://github.com/SCcagg5/procurauth</span><span class="ln" style="--i:0"><span class="c">$ </span>BASE=$REPO/releases/download/v1.0</span><span class="ln" style="--i:0"><span class="c">$ </span>curl -LO $BASE/SHA256SUMS</span><span class="ln" style="--i:0"><span class="c">$ </span>curl -LO $BASE/procurauth-tools-1.0-x86_64-linux.tar.gz</span><span class="ln" style="--i:0"><span class="c">$ </span>sha256sum --check --ignore-missing SHA256SUMS</span><span class="ln" style="--i:0">procurauth-tools-1.0-x86_64-linux.tar.gz: OK</span><span class="ln" style="--i:0"><span class="c">$ </span>tar -xzf procurauth-tools-1.0-x86_64-linux.tar.gz</span><span class="ln" style="--i:0"><span class="c">$ </span>./access-lint --version</span></code></pre></div>
+  <h3>Build from source</h3>
+  <div class="code-wrap"><span class="label">Build</span><pre data-copy tabindex="0" aria-label="Code example: Build"><code><span class="ln" style="--i:0"><span class="c">$ </span>git clone https://github.com/SCcagg5/procurauth</span><span class="ln" style="--i:0"><span class="c">$ </span>cd procurauth</span><span class="ln" style="--i:0"><span class="c">$ </span>git checkout v1.0</span><span class="ln" style="--i:0"><span class="c">$ </span>cargo build --release</span></code></pre></div>
+</section>
+
+<section id="licences" aria-labelledby="lic-h">
+  <h2 id="lic-h">Licences</h2>
+  <div class="grid c2">
+    <div class="card"><h3>Code: Apache-2.0</h3><p>The tools, the PEP library and the source of this site. The file is <code>LICENSE</code>.</p></div>
+    <div class="card"><h3>Texts: CC BY 4.0</h3><p>The specification, the MCP binding and the documents. The file is <code>LICENSE-docs</code>. To give credit, name the project: &quot;ProcurAuth&quot;.</p></div>
+  </div>
+</section>
+
+<section id="contribute" aria-labelledby="con-h">
+  <h2 id="con-h">Contribute</h2>
+  <ol class="steps">
+    <li>Open an issue in <a href="https://github.com/SCcagg5/procurauth/issues">the issue tracker</a> to report an error or to propose a change. Cite the number of the paragraph.</li>
+    <li>For a change of the text, keep the numbers of the paragraphs. A paragraph that leaves the text keeps its number with the word &quot;Unused&quot;.</li>
+    <li>For a change of a rule, add or change a conformance case that cites the paragraph.</li>
+    <li>Open a pull request. A contribution is under the licence of the files that it changes.</li>
+  </ol>
+  <p class="prose">Write the documents in ASD-STE100 Simplified Technical English, as the specification does.</p>
+</section>
+
+<section id="changelog" aria-labelledby="chg-h">
+  <h2 id="chg-h">Changelog</h2>
+  <div class="changelog">
+    <h3>1.0</h3>
+    <p class="prose">The first release.</p>
+    <ul class="prose">
+      <li>The protocol and the MCP binding.</li>
+      <li>The JSON schemas and the conformance data, series U, D and E.</li>
+      <li>The tools <code>access-lint</code>, <code>fake-pdp</code>, <code>access-token</code>, <code>keycheck</code> and <code>access-conformance</code>.</li>
+      <li>The reference PEP library in Rust.</li>
+      <li>Binaries for Linux, macOS and Windows, with SHA-256 sums.</li>
+    </ul>
+  </div>
+</section>
+
+</div></div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h2>ProcurAuth</h2>
+        <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.0.</p>
+      </div>
+      <div>
+        <h2>Read</h2>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="specification.html">Specification</a></li>
+          <li><a href="mcp-binding.html">MCP binding for agents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Build</h2>
+        <ul>
+          <li><a href="tools.html">Tools and PEP library</a></li>
+          <li><a href="conformance.html">Schemas and conformance</a></li>
+          <li><a href="source.html">Source and releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/SCcagg5/procurauth">Repository</a></li>
+          <li><a href="source.html#changelog">Changelog</a></li>
+          <li><a href="source.html#contribute">Contribute</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <p>ProcurAuth, version 1.0.</p>
+      <p>Code: <a href="source.html#licences">Apache-2.0</a>. Texts: <a href="source.html#licences">CC BY 4.0</a>.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
