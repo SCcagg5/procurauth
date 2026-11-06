@@ -10,8 +10,8 @@ The script `scripts/conformance.sh all` gives these results. The runs start ever
 | --- | --- | --- | --- | --- |
 | U, action `mcp.session` with a budget | `reference-service` | 99 | 0 | 0 |
 | U, action `mcp.session` with no budget | `reference-service` | 98 | 0 | 1 (U95, `no_budget_session`) |
-| D, `fake-pdp` in the process of the runner | `fake-pdp` | 74 | 0 | 0 |
-| D, `fake-pdp` as a separate process | `fake-pdp` with `--admin` | 74 | 0 | 0 |
+| D, `fake-pdp` in the process of the runner | `fake-pdp` | 75 | 0 | 0 |
+| D, `fake-pdp` as a separate process | `fake-pdp` with `--admin` | 75 | 0 | 0 |
 | E | `reference-edge` | 18 | 0 | 0 |
 
 ## Part A: the runner against the reference service
@@ -21,7 +21,7 @@ The script `scripts/conformance.sh all` gives these results. The runs start ever
 3. **U95 was skipped.** The reference service listed no budget on the action `mcp.session`, so the condition `no_budget_session` was true. The service can support the budget, so it must. The new key `mcp_session_budget` makes the action list the budget `requests`. The script runs the service two times: with the key (99 cases pass) and without it (98 pass, U95 skipped with its reason). The key needs `mcp_path`, and the program stops at start when they contradict.
 4. **The series D against a separate process.** The runner needs a way to load the data of a case in the PDP under test (`pdp.load`). `fake-pdp` had no such request, so the external mode could not run the cases that need a directory. The tool lacked this function.
 
-The admin request `PUT /__fake/load` (and `POST`) now replaces the directory, the counters, the failures, the clock and the credentials of the services. It refuses a `metadata` member that differs from the values of the start. The credentials of the services had a fixed table, and the table is now behind a lock. The profile `crates/fake-pdp/examples/conformance-profile.json` uses this request. All 74 cases pass against the process.
+The admin request `PUT /__fake/load` (and `POST`) now replaces the directory, the counters, the failures, the clock and the credentials of the services. It refuses a `metadata` member that differs from the values of the start. The credentials of the services had a fixed table, and the table is now behind a lock. The profile `crates/fake-pdp/examples/conformance-profile.json` uses this request. All 75 cases pass against the process.
 
 ## Part B: the reference edge
 

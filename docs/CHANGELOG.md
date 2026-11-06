@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The conformance case D75. A resource of depth 1 with no chain, or with an empty chain, gets `invalid_resource` (protocol 4.1, 11.1).
+- The conformance data has 192 cases: 99 for a PEP, 75 for a PDP and 18 for an edge.
+
 ## 1.0
 
 First version.

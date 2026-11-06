@@ -25,7 +25,7 @@ The second table lists the rules that no case tests, with the reason.
 | 3.7 | pdp | D08, D09 |
 | 3.8 | pdp | D11, D55, D70 |
 | 3.9 | pdp | none |
-| 4.1 | pdp | D17, D18, D19, D21, D22, D23, D24, D36 |
+| 4.1 | pdp | D17, D18, D19, D21, D22, D23, D24, D36, D75 |
 | 4.2 | pdp | D25 |
 | 4.3 | pdp | D01, D02, D14, D25, D26, D27, D28, D29, D30 |
 | 4.4 | pdp | D04, D31, D32, D33, D34, D35, D60 |
@@ -62,7 +62,7 @@ The second table lists the rules that no case tests, with the reason.
 | 8.4 | pdp | D05, D53, D55, D70, D71 |
 | 10.7 | pdp | none |
 | 10.7a | pdp | none |
-| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56 |
+| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75 |
 | 11.2 | pdp | D02, D30, D73 |
 | 12 | pdp | D16, D40, D53, D55 |
 | 3.3 | pep | U01, U07, U08 |

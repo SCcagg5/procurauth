@@ -217,10 +217,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_binary_holds_the_191_cases() {
+    fn the_binary_holds_the_192_cases() {
         let catalog = Catalog::embedded().unwrap();
         assert_eq!(catalog.cases_of(Role::Pep).len(), 99);
-        assert_eq!(catalog.cases_of(Role::Pdp).len(), 74);
+        assert_eq!(catalog.cases_of(Role::Pdp).len(), 75);
         assert_eq!(catalog.cases_of(Role::Edge).len(), 18);
         assert!(catalog.directory("datastore.json").is_some());
     }

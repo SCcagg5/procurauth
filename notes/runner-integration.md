@@ -48,7 +48,7 @@ Start the edge before the runner. The runner binds the listen addresses of the p
 
 ## Role pdp
 
-The role pdp needs no service. `pdp-fake.json` starts `fake-pdp` in the process, and all 74 cases pass. To test another PDP, use `pdp-external.json` and the key `--url`. The PDP must offer a load request, or the runner skips the cases that need a clock or counters.
+The role pdp needs no service. `pdp-fake.json` starts `fake-pdp` in the process, and all 75 cases pass. To test another PDP, use `pdp-external.json` and the key `--url`. The PDP must offer a load request, or the runner skips the cases that need a clock or counters.
 
 ## Open points for the integration
 

@@ -233,6 +233,6 @@ A test checks that this table is the table of the code. The function `access_con
 
 ## Tests
 
-The tests start the runner in the process. The role pdp runs the 74 cases of the series D against `fake-pdp`: all pass. A copy of a case with a changed expectation fails.
+The tests start the runner in the process. The role pdp runs the 75 cases of the series D against `fake-pdp`: all pass. A copy of a case with a changed expectation fails.
 
 The roles pep and edge run against scripted mock servers in `tests/common/`. A mock that behaves like a correct implementation passes. A mock with one defect fails the cases of that defect, and only those. The tests also check the goldens of the output, the schemas and the rules of the source.
