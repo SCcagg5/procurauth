@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Protocol 5.2a. A service publishes only the actions that it serves: an action of a feature that the configuration turns off is not in the action document.
 - The conformance case D75. A resource of depth 1 with no chain, or with an empty chain, gets `invalid_resource` (protocol 4.1, 11.1).
 - The conformance data has 192 cases: 99 for a PEP, 75 for a PDP and 18 for an edge.
 

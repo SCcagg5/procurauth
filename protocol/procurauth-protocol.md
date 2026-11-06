@@ -26,7 +26,7 @@ This protocol is the only normative text for the subject, chain, coverage, actio
 1.3 A PDP conforms to this protocol when it follows sections 3 and 4, 5.1 to 5.5, sections 6 to 8, 10.7, 10.7a, 11 and 12.
 A service (its PEP) conforms when it follows these paragraphs:
 - 3.3, 3.4, 4.1, 4.4 and 4.5;
-- 5.1, 5.2, the last sentence of 5.3c, 5.4, 5.5 and 5.5a, and 5.6 to 5.8 when it publishes the list of the options;
+- 5.1, 5.2, 5.2a, the last sentence of 5.3c, 5.4, 5.5 and 5.5a, and 5.6 to 5.8 when it publishes the list of the options;
 - 6.1, 6.2, 6.4, 6.11 and 6.12;
 - 7.1 and 7.3 to 7.6;
 - the last sentence of 8.3;
@@ -111,6 +111,7 @@ For a key, a `true` answer for `subtree` needs one node that a grant of the key 
 - `resources`: optional, the nodes that the service names, each with `path`, and optionally `label` and `actions`. `path` is `<type>:<id>` segments with `/` between them, and the path does not hold the service. Each segment has a type whose parent is the type of the segment before it, or `service` for the first segment (4.1). The service percent-encodes each id: each byte outside A-Z, a-z, 0-9, `-`, `.`, `_` and `~` becomes `%XX`, with upper-case hexadecimal digits [RFC 3986]. This is the only text form of an id. Without `actions`, the item takes each action that lists its type. In `actions`, an action name that the document does not declare, or a name that occurs more than one time, makes the document bad (5.3);
 - `limits`: optional, the limit declarations of the service (6.1). A limit name has 1 to 32 characters: a to z first, then a to z, 0 to 9 or underscore.
 
+5.2a A service publishes only the actions that it serves. An action of a feature that the configuration of the service turns off is not in `actions`, and the service sends no question for it. A service that serves an action for some of its hosts or settings publishes the action when it serves it for at least one of them. When the feature turns on, the service publishes the action again with the same name and the same `resource_types`. The reader finds it at its next read (5.3b).
 5.3 The reader checks the document. A bad member, or an unknown member of a limit declaration, makes the whole document bad.
 
 A read fails when it gets a status other than 200, also 404, or no answer. After a bad document or a failed read, the reader keeps the last good document, for a maximum time (5.3a). Only a good document replaces it.

@@ -97,3 +97,7 @@ Each item gives one choice and the reason in one sentence.
 ## Style
 
 66. A test checks the length of sentences and a short list of banned words, because the owner requires Simplified Technical English.
+
+## Publication
+
+67. A service publishes only the actions that it serves (5.2a), because a grant form must not offer a right that does nothing.

@@ -32,6 +32,7 @@ The second table lists the rules that no case tests, with the reason.
 | 4.5 | pdp | none |
 | 5.1 | pdp | none |
 | 5.2 | pdp | D19, D20, D24 |
+| 5.2a | pdp | none |
 | 5.3 | pdp | none |
 | 5.3a | pdp | none |
 | 5.3b | pdp | none |
@@ -72,6 +73,7 @@ The second table lists the rules that no case tests, with the reason.
 | 4.5 | pep | none |
 | 5.1 | pep | U13, U14, U15 |
 | 5.2 | pep | U16 |
+| 5.2a | pep | none |
 | 5.3c | pep | U17 |
 | 5.4 | pep | none |
 | 5.5 | pep | U34 |
@@ -158,6 +160,7 @@ The second table lists the rules that no case tests, with the reason.
 | 4.5 | pdp | The PEP builds the chain from its own data. | The paragraph states a rule for the PEP only. |
 | 5.1 | pdp | A service publishes its document at /.well-known/procurauth/actions, with no authentication. | The rule is for the service. A case cannot see the read of the document by the PDP. |
 | 5.2 | pdp | The document has the members and the checks of 5.2. | The directory of a case holds good documents only. A case cannot send a bad document to the PDP. |
+| 5.2a | pdp | A service publishes only the actions that it serves. | The rule is for the service. A case cannot see the configuration of the service or the actions that it serves. |
 | 5.3 | pdp | A bad document, or a failed read, keeps the last good document. | A case cannot make a service publish a bad document or fail a read. |
 | 5.3a | pdp | The reader gives its maximum time in its documentation. | The rule is about documentation, and a case cannot wait for a long time. |
 | 5.3b | pdp | A reader that reads at a fixed period spreads the reads at equal intervals. | A case cannot see the time of the reads of the PDP. The level of the rule is SHOULD. |
@@ -178,6 +181,7 @@ The second table lists the rules that no case tests, with the reason.
 | 4.1 | pep | The PEP does not encode an id. | The runner cannot choose the id of a node. The service decides its nodes. |
 | 4.5 | pep | The PEP builds the chain from its own data and never takes it from a client. | A case cannot know where a service could read a chain from a client. The case U02 shows that the chain is equal to the data of the service. |
 | 5.2 | pep | The service percent-encodes each id of a path. | The core reader checks this rule in the cases that give valid_as. The rule needs a node with a special character in its id. |
+| 5.2a | pep | A service publishes only the actions that it serves. | A case cannot see the configuration of the service or the actions that it serves. The test of a service tool can compare its document with its routes. |
 | 5.4 | pep | The labels and the descriptions are in English. | A program cannot check the language of a text. |
 | 5.6 | pep | The service SHOULD bound the number of questions to the PDP for one request. | A case needs a node with many children that the subject cannot see, and the runner does not know the data of the service. |
 | 5.6 | pep | The service MAY apply its own rules that remove more children. | The sentence gives a permission, not a requirement. |
