@@ -117,7 +117,7 @@ The cases use abstract operations. The profile of a PEP maps each one to a reque
 | --- | --- |
 | `use_plain` | `method`, `path`, `action`, `resource_type`, `resource_id`, `ancestors`. |
 | `use_budget`, `use_multi` | The same as `use_plain`. |
-| `use_ceiling` | The same as `use_plain`, with `ceiling` and `ceiling_value`. |
+| `use_ceiling` | The same as `use_plain`, with `ceiling` and `ceiling_value`. Choose a request whose result does not go past `ceiling_value`. A PEP applies the ceiling (protocol 7.5, 10.2), and the case U37 expects a status 2xx. |
 | `use_service` | `method`, `path`, `action`. The node is the service. |
 | `read_actions`, `list_options` | Nothing. The runner uses the default routes of the protocol. `list_options` needs `options_type`. |
 | `mcp_call_plain`, `mcp_call_budget`, `mcp_call_input`, `mcp_call_multi`, `mcp_call_approval` | `tool` and `action`. The runner makes the JSON-RPC `tools/call` with the `arguments` of the operation. |

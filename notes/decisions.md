@@ -105,3 +105,4 @@ Each item gives one choice and the reason in one sentence.
 ## Conformance runner
 
 68. The runner and the cases send `Mcp-Method` and `Mcp-Name` on each MCP request, because the MCP server contract (2.5) requires them.
+69. The profile of a PEP gives `use_ceiling` a request whose result does not go past `ceiling_value`, because U37 tests the acceptance of a ceiling, and a PEP that applies the ceiling refuses a result past it.

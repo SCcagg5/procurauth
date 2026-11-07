@@ -177,7 +177,7 @@ A case can write a variable as `{{name}}` in a string or in the name of a member
 | `ancestors` | The chain of the node of the operation, as an array. |
 | `tool` | The name of the tool of the MCP operation of the step. |
 | `ceiling` | The name of a ceiling that the action of `use_ceiling` lists. |
-| `ceiling_value` | A value of that ceiling, from its `min` to its `max`. |
+| `ceiling_value` | A value of that ceiling, from its `min` to its `max`. The result of the request of `use_ceiling` must not go past this value. The case U37 expects that the use runs, so a PEP that applies the ceiling passes it. |
 | `options_type` | The type of the nodes at the first level of the options route. |
 | `mcp_path` | The path of the MCP endpoint. |
 | `token_header` | The name of the header of the identity token. |
