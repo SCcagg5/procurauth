@@ -68,6 +68,25 @@ pub(crate) fn has_header(headers: &Headers, name: &str) -> bool {
     headers.iter().any(|(n, _)| n.eq_ignore_ascii_case(name))
 }
 
+/// Add the headers `Mcp-Method` and `Mcp-Name` of a JSON-RPC request ([CONTRACT, 2.5]).
+///
+/// `Mcp-Method` has the method of the body. For `tools/call`, `Mcp-Name` has the tool name.
+/// A header that the step already sets stays as it is.
+fn add_mcp_headers(headers: &mut Headers, body: &Value) {
+    let Some(method) = body.get("method").and_then(Value::as_str) else {
+        return;
+    };
+    if !has_header(headers, "mcp-method") {
+        put_header(headers, "Mcp-Method", method);
+    }
+    if method == "tools/call"
+        && !has_header(headers, "mcp-name")
+        && let Some(name) = body.pointer("/params/name").and_then(Value::as_str)
+    {
+        put_header(headers, "Mcp-Name", name);
+    }
+}
+
 /// Build the request of an operation.
 ///
 /// # Errors
@@ -140,6 +159,11 @@ pub(crate) fn build(operation: Operation, def: &OpDef, vars: &Vars) -> Result<Pa
     } else {
         None
     };
+    if let Some(value) = &body
+        && operation.is_mcp()
+    {
+        add_mcp_headers(&mut headers, value);
+    }
     let bytes = match (&body, &def.body_text) {
         (Some(value), _) => {
             if !has_header(&headers, "content-type") {
@@ -229,6 +253,8 @@ mod tests {
                 .map(|(_, v)| v.clone())
         };
         assert_eq!(get("MCP-Protocol-Version").as_deref(), Some("2026-07-28"));
+        assert_eq!(get("Mcp-Method").as_deref(), Some("tools/call"));
+        assert_eq!(get("Mcp-Name").as_deref(), Some("read_rows"));
         assert_eq!(
             get("Accept").as_deref(),
             Some("application/json, text/event-stream")
@@ -251,6 +277,33 @@ mod tests {
         assert_eq!(accepts.len(), 1);
         assert_eq!(accepts[0].1, "application/json");
         assert_eq!(parts.body.unwrap(), br#"{"custom":true}"#);
+    }
+
+    #[test]
+    fn a_header_of_the_step_replaces_the_default_mcp_headers() {
+        let def = OpDef {
+            headers: [("mcp-method".to_owned(), "ping".to_owned())].into(),
+            ..OpDef::default()
+        };
+        let parts = build(Operation::McpCallPlain, &def, &vars()).unwrap();
+        let methods: Vec<_> = parts
+            .headers
+            .iter()
+            .filter(|(h, _)| h.eq_ignore_ascii_case("mcp-method"))
+            .collect();
+        assert_eq!(methods.len(), 1);
+        assert_eq!(methods[0].1, "ping");
+    }
+
+    #[test]
+    fn a_body_without_a_method_gets_no_mcp_method_header() {
+        let def = OpDef {
+            body: Some(json!({"custom": true})),
+            ..OpDef::default()
+        };
+        let parts = build(Operation::McpApprove, &def, &vars()).unwrap();
+        assert!(!has_header(&parts.headers, "mcp-method"));
+        assert!(!has_header(&parts.headers, "mcp-name"));
     }
 
     #[test]

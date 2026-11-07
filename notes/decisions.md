@@ -101,3 +101,7 @@ Each item gives one choice and the reason in one sentence.
 ## Publication
 
 67. A service publishes only the actions that it serves (5.2a), because a grant form must not offer a right that does nothing.
+
+## Conformance runner
+
+68. The runner and the cases send `Mcp-Method` and `Mcp-Name` on each MCP request, because the MCP server contract (2.5) requires them.

@@ -20,7 +20,8 @@
           "Content-Type": "application/json",
           "Accept": "application/json, text/event-stream",
           "MCP-Protocol-Version": "2026-07-28",
-          "Authorization": "Bearer {{valid_key_text}}"
+          "Authorization": "Bearer {{valid_key_text}}",
+          "Mcp-Method": "ping"
         },
         "body": {
           "jsonrpc": "2.0",

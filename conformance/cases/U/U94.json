@@ -40,7 +40,9 @@
         "headers": {
           "Content-Type": "application/json",
           "Accept": "application/json, text/event-stream",
-          "MCP-Protocol-Version": "2026-07-28"
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "INJECTED-MARKER-7f3a"
         },
         "body": {
           "jsonrpc": "2.0",
@@ -81,7 +83,8 @@
           "Content-Type": "application/json",
           "Accept": "application/json, text/event-stream",
           "MCP-Protocol-Version": "2026-07-28",
-          "X-Marker": "INJECTED-MARKER-7f3a"
+          "X-Marker": "INJECTED-MARKER-7f3a",
+          "Mcp-Method": "ping"
         },
         "body": {
           "jsonrpc": "2.0",

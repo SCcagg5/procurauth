@@ -126,7 +126,7 @@ These are the operations. The list is closed. A new operation needs a change of 
 | `mcp_approve` | The approval of the call of the step before, and the run of the tool. |
 | `mcp_refuse` | The refusal of the approval of the call of the step before. |
 
-The request of an MCP operation has the revision 2026-07-28 and the number 7 as its JSON-RPC id.
+The request of an MCP operation has the revision 2026-07-28 and the number 7 as its JSON-RPC id. It has the header `Mcp-Method` with the method of the body. For `tools/call`, it also has the header `Mcp-Name` with the name of the tool [CONTRACT, 2.5]. A header of the step replaces the default.
 
 ### Expect
 
