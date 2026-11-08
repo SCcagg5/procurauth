@@ -25,6 +25,8 @@ pub const VALID_KEY: &str = "pk_live_0000000000000000000000000000000000000000001
 pub const NO_ACCESS_KEY: &str = "pk_live_0000000000000000000000000000000000000000002";
 /// The text of a key that the edge does not know.
 pub const UNKNOWN_KEY: &str = "pk_live_0000000000000000000000000000000000000000003";
+/// The text of a key that the edge knows and whose grant of `access` has `confirm`.
+pub const CONFIRM_KEY: &str = "pk_live_0000000000000000000000000000000000000000004";
 /// The credential of the mock for the PDP.
 pub const CREDENTIAL: &str = "mock-edge-credential";
 /// The header of the identity token.
@@ -141,6 +143,7 @@ impl State {
         let (subject, owner) = match text {
             VALID_KEY => ("key:ann-k1", "ann"),
             NO_ACCESS_KEY => ("key:ann-k2", "ann"),
+            CONFIRM_KEY => ("key:ann-k3", "ann"),
             _ => return refusal(defects, true),
         };
         if !defects.skip_access_check && !self.access(subject) {

@@ -146,3 +146,28 @@ Each item gives one choice and the reason in one sentence.
 98. The schema `conformance-case` has no endpoint `approval_requests` or `approval_status`. No case sends a request to the approval API of a PDP, because the API series stays with the tests of the PDP.
 99. The variable `approval_ref` has the fixed value `ref_conformance_0001`, and the base call of the runner gives `lease_s` 900. A case then needs no value from the profile for the control arguments.
 100. The reader of the core reads the member `approval` of an action (5.2b) and refuses another value. The schema and the lint examples of 5.2b need it, and the protocol makes it a rule for each reader.
+
+## The reference programs for the approval profile (lot S4a)
+
+101. The core has the module `effect`. It computes the canonical text and the effect, and it checks `op` and a `view`. The test `effect_vectors` keeps its own code, so two programs prove the vectors.
+102. The module `effect` takes a `Value` that the strict reader made. A duplicate member name and a lone surrogate cannot exist in a `Value`. The PDP maps the reader error under `op` to `invalid_op`.
+103. A `body` of a `view` must name a text of `op`. The protocol says "a pointer to a text of `op`", and a pointer to a number gives `invalid_view`.
+104. The reader of the core reads `confirm` in a grant and the list `approvals` in the data. Decisions 95 and 97 end for the PDP: the data file `approvals.json` is now read by the core.
+105. `confirm` has an effect for each action except `access`. The PDP does not look at the member `approval` of the action. A service that does not send an effect still gets `approval_required` (17.1).
+106. The order of a decision is: subject, resource, grants, approval, budget. A question that has no usable approval gets an approval reason, also when a budget is spent.
+107. The approval and the units go together. The PDP takes both in one step under the lock. When a budget refuses, the approval stays as it was (17.2).
+108. The latest approval is the last entry for the same service, subject, action, resource and effect. A new request for an effect that has an approval that can be used becomes the latest.
+109. The time of an approval is whole seconds. An approval can be used when the time is not after `consume_before` (case D80). A deny time has ended when the time is not before `deny_until`.
+110. A request is final at the first call that sees the end of its lease, of its `until` time or of its life. The PDP has no timer. A renewal after the lease revives the request and counts as a revival.
+111. The values that 17 says the PDP publishes are fixed in the code. They follow the portal plan. The lease is 30 s to 7 days, the grace is 120 s, and a request has 3 revivals. The life is 90 days, the wait is 25 s, and the consume time is 300 s.
+112. The PDP publishes these values in twelve metadata members with the prefix `procurauth_approval_`. A PEP that does not know them ignores them (AuthZEN 1.0).
+113. A `wait` above the bound waits the bound. An early `pending` is a valid answer, and a PEP asks again. The `lease_s` is different: a value outside the bounds gets `invalid_lease`.
+114. The `evaluation_id` is a random-looking text that the PDP keeps in memory for 300 seconds. The PDP needs the subject, the action and the resource at the submission, and the submission does not carry them.
+115. A submission is checked in this order: lease members, size, `evaluation_id`, `op`, effect, `view`, `approval_ref`, `supersedes`. The first error stops it.
+116. An `approval_ref` comes from the test control `POST /__fake/approval-refs`. It has the lease of the agent and the flag `allow_custom`. It is for one subject, one use and 900 seconds.
+117. The owner answers through the test control `POST /__fake/approvals/{id}/answer`. The control follows 17.11: `shown_effect` must be the effect, a text needs `allow_custom` and a decline, and the first answer counts.
+118. The PDP answers HTTP 429 when a subject has 20 requests that wait. The PDP never answers `no_device`, because the data has no device.
+119. The runner holds `no_approval_support` for a PDP unless the profile has `pdp.approvals` or starts fake-pdp. A profile that gives both stops the run. fake-pdp gives approvals, so the two keys contradict each other.
+120. The runner holds `no_approval_support` for an edge unless the profile has `edge.keys.confirm_access`. The case E19 needs a key whose grant of `access` has `confirm`.
+121. The test key `key:ann-k3` and its text `pk_live_...0004` are for E19. The directory `access.json` has a grant of `access` with `confirm` for it, and `reference-edge` knows its digest.
+122. The cases keep the condition `no_approval_support` in the data. The runner no longer holds it for fake-pdp and reference-edge. The cases U30 and U100 to U110 stay skipped until the lot S4b.

@@ -151,6 +151,21 @@
           "resource": "service:datastore"
         }
       ]
+    },
+    {
+      "id": "key:ann-k3",
+      "owner": "ann",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "confirm": true
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore"
+        }
+      ]
     }
   ]
 }

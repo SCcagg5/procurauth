@@ -158,7 +158,7 @@ access-conformance --role pdp  --profile my-pdp.json     --url http://127.0.0.1:
 access-conformance --role edge --profile my-edge.json    --url http://127.0.0.1:8002
 ```
 
-The runner prints one line for each case and a summary line, for example `110 cases: 98 passed, 0 failed, 12 skipped`. It skips the 26 cases of the approval profile (protocol section 17) in this version, because no reference program gives approvals yet.
+The runner prints one line for each case and a summary line, for example `110 cases: 98 passed, 0 failed, 12 skipped`. It skips the cases of the approval profile (protocol section 17) for a target that gives no approval. In this version, `fake-pdp` and `reference-edge` give them, so the runner runs D76 to D89 and E19 for them. It skips U30 and U100 to U110, because no reference service gives approvals yet.
 
 ## JSON schemas
 

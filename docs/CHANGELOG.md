@@ -13,7 +13,11 @@
 - MCP binding 3.5a is new. The new paragraphs 5.7, 5.7a and 5.7b give the result for a request that waits, the tool errors of an approval and the tool `get_action_status`. The case U30 is rewritten. Section 12 has two more open points.
 - The schemas `approval-submission`, `approval-verdict` and `approval-view` are new. The schemas `action-document`, `evaluation-context`, `fake-pdp-data` and `conformance-case` have the new members. The reader of the core reads the member `approval` of an action.
 - The conformance data has 26 new cases: U100 to U110, D76 to D89 and E19, and U30 is rewritten. The directory file `approvals.json` holds the data of the series D. The condition `no_approval_support` skips each case of the approval profile, because no reference program gives approvals yet. The runner reads the new members of a case.
-- The conformance data has 218 cases: 110 for a PEP, 89 for a PDP and 19 for an edge. The runner skips 26 of them: U30, U100 to U110, D76 to D89 and E19.
+- The conformance data has 218 cases: 110 for a PEP, 89 for a PDP and 19 for an edge. A target that gives no approval skips 26 of them: U30, U100 to U110, D76 to D89 and E19.
+
+- `procurauth-core` has the module `effect`: the canonical text and the effect of 17.3, the check of `op` and the check of a `view` (17.9). The vectors of `conformance/vectors/effect.json` pass with it. The reader of the data reads the member `confirm` of a grant and the list `approvals`. The reasons and the member `evaluation_id` of 17.1 are in the answer model.
+- `fake-pdp` gives the approvals of section 17. A grant with `confirm` makes the PDP answer `approval_required`, `approval_pending`, `approval_denied` or `approval_expired`. The PDP consumes the approval and takes the units in one decision (17.2). It serves the three routes of 17.4, with leases, revivals and a long poll. It publishes the bounds in twelve metadata members. The admin routes `/__fake/approvals` and `/__fake/approval-refs` stand in for the owner and for the channel of the agent.
+- Conformance runner. The profile key `pdp.approvals` and the key `edge.keys.confirm_access` make the condition `no_approval_support` depend on the target. The runner runs D76 to D89 against `fake-pdp` and E19 against `reference-edge`. The test key `key:ann-k3` and the directory `access.json` have a grant of `access` with `confirm`. The runner still skips U30 and U100 to U110.
 
 ## 1.0
 

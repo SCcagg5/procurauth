@@ -82,9 +82,13 @@ impl Capabilities {
             Condition::NoInputTool,
             Condition::NoApprovalTool,
             Condition::NoMultiAction,
-            Condition::NoApprovalSupport,
         ] {
             held.insert(condition);
+        }
+        // The edge asks only for `access` and ignores `confirm` (17.8). The case E19 needs a key
+        // whose grant of `access` has `confirm`: the profile gives its text.
+        if profile.confirm_access_key_file.is_none() {
+            held.insert(Condition::NoApprovalSupport);
         }
         if profile.mcp_path.is_none() {
             held.insert(Condition::NoMcpEndpoint);
@@ -98,11 +102,14 @@ impl Capabilities {
         Self { held }
     }
 
-    /// The conditions of a PDP. The reference PDP gives no approval until lot S4a.
-    pub(crate) fn for_pdp() -> Self {
-        Self {
-            held: BTreeSet::from([Condition::NoApprovalSupport]),
+    /// The conditions of a PDP. The PDP that the runner starts gives approvals. For another PDP,
+    /// the profile key `pdp.approvals` tells it. Without it, the runner skips the cases of section 17.
+    pub(crate) fn for_pdp(profile: &PdpProfile) -> Self {
+        let mut held = BTreeSet::new();
+        if !(profile.spawn_fake_pdp || profile.approvals) {
+            held.insert(Condition::NoApprovalSupport);
         }
+        Self { held }
     }
 
     /// True when the condition holds.

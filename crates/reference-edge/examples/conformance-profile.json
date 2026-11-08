@@ -19,6 +19,9 @@
       },
       "unknown": {
         "text_file": "../../access-conformance/examples/edge-unknown-key.txt"
+      },
+      "confirm_access": {
+        "text_file": "../../access-conformance/examples/edge-confirm-key.txt"
       }
     },
     "upstream": {

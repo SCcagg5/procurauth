@@ -31,3 +31,8 @@ This file lists the places where the tool `fake-pdp` differs from the page `docs
 16. The program keeps the last 10,000 questions in memory with full values. The admin endpoint `GET /__fake/log` gives them.
 17. The program checks the credential of a service as a SHA-256 digest (12). It answers `invalid_resource` for a question about another service than the service of the credential.
 18. A body above `procurauth_evaluations_max_bytes` gets HTTP 413. More items than `procurauth_evaluations_max_items` get HTTP 400. See `decisions-fake-pdp.md`.
+
+## Approvals (lot S4a)
+
+19. The page has no approval. The program gives the approval API of protocol 17.4, the reasons of 17.1, the test control `/__fake/approvals` and `/__fake/approval-refs`, and twelve metadata members `procurauth_approval_*`.
+20. The page lists the admin endpoints of the first version. The program has five more.

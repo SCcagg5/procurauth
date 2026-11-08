@@ -110,6 +110,10 @@ pub(crate) fn edge_runner<'a>(
     let valid = secret("edge.keys.valid.text_file", &edge.valid_key.text_file);
     let no_access = secret("edge.keys.no_access.text_file", &edge.no_access_key_file);
     let unknown = secret("edge.keys.unknown.text_file", &edge.unknown_key_file);
+    let confirm_access = edge
+        .confirm_access_key_file
+        .as_ref()
+        .map(|path| secret("edge.keys.confirm_access.text_file", path));
     let credential = match &edge.pdp.credential_file {
         Some(file) => match read_secret("edge.pdp.credential_file", file) {
             Ok(text) => Some(text),
@@ -152,6 +156,9 @@ pub(crate) fn edge_runner<'a>(
     global.set("valid_key_owner", json!(edge.valid_key.owner));
     global.set("no_access_key_text", json!(no_access));
     global.set("unknown_key_text", json!(unknown));
+    if let Some(text) = confirm_access {
+        global.set("confirm_access_key_text", json!(text));
+    }
     let caps = Capabilities::for_edge(edge, verifier.key_count());
     Ok(Runner {
         catalog,
@@ -187,7 +194,7 @@ pub(crate) fn pdp_runner<'a>(
         timeouts: profile.timeouts.clone(),
         target: target.clone(),
         now: clock,
-        caps: Capabilities::for_pdp(),
+        caps: Capabilities::for_pdp(pdp),
         global: Vars::new(),
         notes: std::sync::Mutex::default(),
         env: Env::Pdp(PdpEnv {

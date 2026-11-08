@@ -56,3 +56,11 @@ This file lists the places where the text of the protocol or of the MCP binding 
 35. **17.9.** The effect and the pointers are checked by the PDP only. A case cannot check that a pointer of the `view` names a value of the `op` that the PEP sent. A new matcher could do it.
 36. **15, item 2.** The series A of the papers (API of the PDP) is not in the data. Does the owner want it as conformance cases for a PDP, with the endpoints `approval_requests` and `approval_status`?
 
+37. **17.1, 17.2.** Does a question with no usable approval and a spent budget get `approval_required` or `budget_exceeded`? The text says that the PDP first decides as for a question without the effect. The code answers the approval reason, because the approval comes before the budget (decision 106).
+38. **17.6.** Does the deny time end at `deny_until` or after it? Does the consume time end at `consume_before` or after it? The case D80 says that `consume_before` is the last good second. The code ends the deny time at `deny_until` (decision 109).
+39. **17.4.** The text says that the PDP bounds `wait` and publishes the bound. It does not say what happens above the bound. The code waits the bound and answers the verdict, with no error (decision 113).
+40. **17.4, 17.5.** The text does not say how a PDP publishes its bounds. The code uses twelve metadata members `procurauth_approval_*` (decision 112). The names are not in the protocol.
+41. **17.1, 17.4.** The submission has no subject, action or resource. The `evaluation_id` must give them back. A stateless id needs a long text, so the code keeps the binding in memory (decision 114).
+42. **17.5.** Does a renewal after the end of a lease count as a revival? The code says yes, because the first call that sees the end also makes the request `abandoned` (decision 110).
+43. **17.4.** A request for an effect that has an approval that can be used still gets a new request. Is this an error? The code makes the new request the latest approval (decision 108).
+44. **17.8, 5.2b.** Does `confirm` apply to an action that has no member `approval`? The text says that the member "tells" that a grant can have it. The code applies `confirm` to each action except `access` (decision 105).

@@ -38,12 +38,46 @@ fn a_correct_edge_passes_every_case_that_the_runner_can_run() {
     let out = two_keys("edge_correct", EdgeDefects::default());
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
     assert_eq!(out.summary(), "19 cases: 16 passed, 0 failed, 3 skipped");
-    // The case E19 waits for the lot that gives approvals to the reference edge.
+    // The case E19 needs the key `confirm_access`, and this profile has none.
     assert_eq!(out.ids_with("skip"), vec!["E15", "E16", "E19"]);
+    assert!(
+        out.line("E19")
+            .ends_with("the target does not give approvals yet (protocol section 17)")
+    );
     assert!(
         out.line("E15")
             .ends_with("the edge keeps no identity token")
     );
+}
+
+#[test]
+fn p_17_8_a_profile_with_a_confirm_access_key_runs_the_case_e19() {
+    let dir = temp_dir("edge_confirm");
+    let pdp_port = free_port();
+    let upstream_port = free_port();
+    let mock = MockEdge::start(
+        format!("127.0.0.1:{pdp_port}").parse().unwrap(),
+        format!("127.0.0.1:{upstream_port}").parse().unwrap(),
+        EdgeDefects::default(),
+    );
+    let mut profile =
+        mock_edge::profile(pdp_port, upstream_port, &dir, "edge-jwks.json", true, false);
+    let key_file = write(
+        &dir,
+        "confirm-key.txt",
+        &format!("{}\n", mock_edge::CONFIRM_KEY),
+    );
+    profile["edge"]["keys"]["confirm_access"] = serde_json::json!({"text_file": key_file});
+    let profile_path = write(&dir, "profile.json", &profile.to_string());
+    let url = mock.url();
+    let out = run_cli(&["--role", "edge", "--profile", &profile_path, "--url", &url]);
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert_eq!(out.summary(), "19 cases: 17 passed, 0 failed, 2 skipped");
+    assert_eq!(out.ids_with("skip"), vec!["E15", "E16"]);
+    assert!(out.line("E19").contains("pass"), "{}", out.line("E19"));
+    // The text of the key is a secret: it never shows.
+    assert!(!out.stdout.contains(mock_edge::CONFIRM_KEY));
+    assert!(!out.stderr.contains(mock_edge::CONFIRM_KEY));
 }
 
 #[test]

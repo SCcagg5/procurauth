@@ -101,6 +101,8 @@ The edge under test is at `--url`. The runner acts as the client, as the service
 
 The profile gives three key texts, each in a file. The edge must know the first, and its subject must have `access` in the directory. The edge must know the second, and its subject must have no `access`. The edge must not know the third. The example `examples/edge.json` uses the directory `access.json`.
 
+A fourth key text is optional: `edge.keys.confirm_access`. The edge must know it, and the grant of `access` of its subject has `confirm`. The case E19 uses it to prove that the edge ignores `confirm` (protocol 17.8). Without this key, the runner skips E19.
+
 The runner checks the identity token with the public keys of `edge.trust`.
 
 ## The profile
@@ -137,7 +139,7 @@ An operation that the profile does not define makes the runner skip the steps th
 | `no_multi_action` | The profile has no `use_multi` and no `mcp_call_multi`. |
 | `no_token_cache` | `edge.token_cache` is false. |
 | `single_key_set` | The key set of `edge.trust` holds one key. |
-| `no_approval_support` | Always true in this version. No reference program gives approvals yet, so the runner skips the cases of protocol section 17. The lots that give approvals make it depend on the profile. |
+| `no_approval_support` | For a PDP: `pdp.approvals` is false and `pdp.spawn_fake_pdp` is not true. For an edge: `edge.keys.confirm_access` is absent. For a PEP: always true in this version, because no reference service gives approvals yet. The runner skips the cases of protocol section 17 when it holds. |
 
 A token of a case can use a key of the algorithm `ES256`. When the profile has no such key, the runner skips the case and gives the reason.
 
@@ -196,6 +198,7 @@ The option `--print-config` checks the profile and the files, prints each key wi
 | `pep.operations.<operation>.arguments` | profile | JSON | none, an empty object | The arguments of the tool of an MCP call. |
 | `pep.operations.<operation>.capture.<name>` | profile | JSON Pointer | none | A name for a member of the JSON answer to the step before. The templates of the operation read it as a variable. |
 | `pdp.spawn_fake_pdp` | profile | boolean | false | True to start fake-pdp in the process, with the directory of each case. Do not give it with `--url`. |
+| `pdp.approvals` | profile | boolean | false | True when the PDP gives approvals (protocol section 17). The runner then runs the cases of this section. Do not give it with `pdp.spawn_fake_pdp`: the PDP that the runner starts gives approvals. |
 | `pdp.credential_file` | profile | path | none, no credential | A file with the credential that the PDP asks for. The credential is a secret. |
 | `pdp.directory_check.mode` | profile | `control_questions` or `none` | control_questions | How the runner proves that the PDP holds the directory of a case. |
 | `pdp.directory_check.max_questions` | profile | whole number from 1 to 10000 | 100 | The most control questions for one directory. |
@@ -216,6 +219,7 @@ The option `--print-config` checks the profile and the files, prints each key wi
 | `edge.keys.valid.owner` | profile | text | none, mandatory | The owner of that key. |
 | `edge.keys.no_access.text_file` | profile | path | none, mandatory | A file with the text of a key that the edge knows and whose subject has no `access`. The text is a secret. |
 | `edge.keys.unknown.text_file` | profile | path | none, mandatory | A file with the text of a key that the edge does not know. The text is a secret. |
+| `edge.keys.confirm_access.text_file` | profile | path | none, the case E19 is skipped | A file with the text of a key that the edge knows and whose grant of `access` has `confirm`. The text is a secret. |
 | `edge.upstream.listen` | profile | ADDRESS:PORT | none, mandatory | The address of the service behind the edge. The edge sends its requests there. |
 | `edge.pdp.listen` | profile | ADDRESS:PORT | none, mandatory | The address of the PDP that the edge calls. |
 | `edge.pdp.directory` | profile | name of a directory file | none, give this key or `directory_file` | The data of the PDP, from the directory files of the cases. |

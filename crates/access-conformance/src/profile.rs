@@ -177,6 +177,8 @@ pub(crate) struct LoadHook {
 pub(crate) struct PdpProfile {
     /// True to start `fake-pdp` in the process, with the directory of each case.
     pub(crate) spawn_fake_pdp: bool,
+    /// True when the PDP gives approvals (protocol section 17). `fake-pdp` gives them.
+    pub(crate) approvals: bool,
     /// The file with the credential that the PDP asks for.
     pub(crate) credential_file: Option<PathBuf>,
     /// The check of the directory.
@@ -250,6 +252,8 @@ pub(crate) struct EdgeProfile {
     pub(crate) no_access_key_file: PathBuf,
     /// The file with the text of a key that the edge does not know.
     pub(crate) unknown_key_file: PathBuf,
+    /// The file with the text of a key whose grant of `access` has `confirm` (17.8). The case E19 needs it.
+    pub(crate) confirm_access_key_file: Option<PathBuf>,
     /// The address of the listener for the service behind the edge.
     pub(crate) upstream_listen: SocketAddr,
     /// The PDP.
@@ -866,6 +870,7 @@ fn read_mcp(r: &mut Reader, obj: &mut Obj<'_>) -> Option<McpProfile> {
 fn read_pdp(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PdpProfile> {
     let mut obj = r.obj(value, path)?;
     let spawn = r.boolean(&mut obj, "spawn_fake_pdp").unwrap_or(false);
+    let approvals = r.boolean(&mut obj, "approvals");
     let credential_file = r.file(&mut obj, "credential_file", false);
     let mut check = DirectoryCheck {
         enabled: true,
@@ -893,6 +898,12 @@ fn read_pdp(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PdpProfile
     let reset_url = r.url(&mut obj, "reset_url");
     let clock_admin_url = r.url(&mut obj, "clock_admin_url");
     obj.finish(&mut r.report);
+    if spawn && approvals.is_some() {
+        r.error(
+            &path.key("approvals"),
+            "Members `spawn_fake_pdp` and `approvals` contradict each other: the PDP that the runner starts gives approvals, so the key is not needed.".to_owned(),
+        );
+    }
     if spawn {
         for (name, present) in [
             ("load", load.is_some()),
@@ -909,6 +920,7 @@ fn read_pdp(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PdpProfile
     }
     Some(PdpProfile {
         spawn_fake_pdp: spawn,
+        approvals: approvals.unwrap_or(false),
         credential_file,
         directory_check: check,
         load,
@@ -988,6 +1000,7 @@ fn read_edge(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<EdgeProfi
     let trust = read_trust(r, &mut obj, path);
     let keys_path = obj.member_path("keys");
     let (mut valid, mut no_access, mut unknown) = (None, None, None);
+    let mut confirm_access = None;
     if let Some(mut k) = obj.object("keys", RULE, Unknown::Error, &mut r.report) {
         if let Some(mut v) = k.object("valid", RULE, Unknown::Error, &mut r.report) {
             let text_file = r.file(&mut v, "text_file", true);
@@ -1008,6 +1021,10 @@ fn read_edge(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<EdgeProfi
                 v.finish(&mut r.report);
             }
         }
+        if let Some(mut v) = k.object_opt("confirm_access", RULE, Unknown::Error, &mut r.report) {
+            confirm_access = r.file(&mut v, "text_file", true);
+            v.finish(&mut r.report);
+        }
         k.finish(&mut r.report);
     }
     let _ = keys_path;
@@ -1027,6 +1044,7 @@ fn read_edge(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<EdgeProfi
         valid_key: valid?,
         no_access_key_file: no_access?,
         unknown_key_file: unknown?,
+        confirm_access_key_file: confirm_access,
         upstream_listen: upstream_listen?,
         pdp: pdp?,
         mcp_path,

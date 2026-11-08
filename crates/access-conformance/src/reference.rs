@@ -350,6 +350,13 @@ pub(crate) const KEYS: &[Key] = &[
         "True to start fake-pdp in the process, with the directory of each case. Do not give it with `--url`."
     ),
     key!(
+        "pdp.approvals",
+        "profile",
+        "boolean",
+        "false",
+        "True when the PDP gives approvals (protocol section 17). The runner then runs the cases of this section. Do not give it with `pdp.spawn_fake_pdp`: the PDP that the runner starts gives approvals."
+    ),
+    key!(
         "pdp.credential_file",
         "profile",
         "path",
@@ -488,6 +495,13 @@ pub(crate) const KEYS: &[Key] = &[
         "path",
         REQUIRED,
         "A file with the text of a key that the edge does not know. The text is a secret."
+    ),
+    key!(
+        "edge.keys.confirm_access.text_file",
+        "profile",
+        "path",
+        "none, the case E19 is skipped",
+        "A file with the text of a key that the edge knows and whose grant of `access` has `confirm`. The text is a secret."
     ),
     key!(
         "edge.upstream.listen",
@@ -730,6 +744,12 @@ pub(crate) fn effective(cli: &Cli, role: Role, raw: &Value, base: &Path) -> Vec<
         Role::Pdp => {
             if !has("pdp.spawn_fake_pdp") {
                 defaults.push(ConfigLine::new("pdp.spawn_fake_pdp", "false", "default"));
+            }
+            let spawn = profile
+                .iter()
+                .any(|l| l.key == "pdp.spawn_fake_pdp" && l.value == "true");
+            if !has("pdp.approvals") && !spawn {
+                defaults.push(ConfigLine::new("pdp.approvals", "false", "default"));
             }
             if !has("pdp.directory_check.mode") {
                 defaults.push(ConfigLine::new(

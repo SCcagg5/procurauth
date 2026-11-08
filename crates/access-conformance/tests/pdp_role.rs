@@ -60,13 +60,12 @@ fn changed_data(name: &str, changes: &[(&str, Change<'_>)]) -> PathBuf {
 }
 
 #[test]
-fn the_75_cases_of_the_series_d_pass_and_the_14_of_the_approval_profile_are_skipped_in_the_process()
-{
+fn all_89_cases_of_the_series_d_pass_against_fake_pdp_in_the_process() {
     let dir = temp_dir("pdp_spawn_all");
     let profile = spawn_profile(&dir);
     let out = run_cli(&["--role", "pdp", "--profile", &profile]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "89 cases: 75 passed, 0 failed, 14 skipped");
+    assert_eq!(out.summary(), "89 cases: 89 passed, 0 failed, 0 skipped");
     assert_eq!(out.stdout.lines().count(), 90);
     assert!(
         out.line("D01").starts_with("D01  pass  4.3,7.3"),
@@ -76,7 +75,7 @@ fn the_75_cases_of_the_series_d_pass_and_the_14_of_the_approval_profile_are_skip
 }
 
 #[test]
-fn the_json_form_has_75_passed_cases_14_skipped_cases_and_no_target() {
+fn the_json_form_has_89_passed_cases_and_no_target() {
     let dir = temp_dir("pdp_spawn_json");
     let profile = spawn_profile(&dir);
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--format", "json"]);
@@ -84,8 +83,8 @@ fn the_json_form_has_75_passed_cases_14_skipped_cases_and_no_target() {
     let report = out.json();
     assert_eq!(report["role"], "pdp");
     assert_eq!(report["target"], Value::Null);
-    assert_eq!(report["summary"]["passed"], 75);
-    assert_eq!(report["summary"]["skipped"], 14);
+    assert_eq!(report["summary"]["passed"], 89);
+    assert_eq!(report["summary"]["skipped"], 0);
     assert_eq!(report["cases"].as_array().unwrap().len(), 89);
 }
 
@@ -441,6 +440,81 @@ fn a_pdp_with_a_load_request_passes_75_cases_and_skips_the_14_of_the_approval_pr
     let loads = pdp.loads.lock().unwrap();
     assert_eq!(loads.len(), 75);
     assert!(loads.iter().any(|data| data["counters"].is_array()));
+}
+
+#[test]
+fn p_17_a_pdp_that_says_it_gives_approvals_runs_the_cases_of_section_17() {
+    let dir = temp_dir("pdp_external_approvals");
+    let pdp = LoadablePdp::start();
+    let base = pdp.url();
+    let profile = external_profile(
+        &dir,
+        json!({"approvals": true,
+               "load": {"url": format!("{base}/__load"), "method": "PUT"},
+               "clock_admin_url": format!("{base}/__fake/clock"),
+               "reset_url": format!("{base}/__fake/reset")}),
+    );
+    let out = run_cli(&["--role", "pdp", "--profile", &profile, "--url", &base]);
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert_eq!(out.summary(), "89 cases: 89 passed, 0 failed, 0 skipped");
+    assert_eq!(pdp.loads.lock().unwrap().len(), 89);
+}
+
+#[test]
+fn p_17_the_key_approvals_and_the_key_spawn_fake_pdp_contradict_each_other() {
+    let dir = temp_dir("pdp_approvals_contradiction");
+    let profile = write(
+        &dir,
+        "profile.json",
+        r#"{"pdp": {"spawn_fake_pdp": true, "approvals": true}}"#,
+    );
+    let out = run_cli(&["--role", "pdp", "--profile", &profile]);
+    assert_eq!(out.code, 2, "{}\n{}", out.stdout, out.stderr);
+    assert!(
+        out.stderr.contains("$.pdp.approvals") && out.stderr.contains("contradict each other"),
+        "{}",
+        out.stderr
+    );
+}
+
+#[test]
+fn p_17_the_effective_configuration_shows_approvals() {
+    let dir = temp_dir("pdp_approvals_config");
+    let base = "http://127.0.0.1:1";
+    let profile = external_profile(&dir, json!({"load": {"url": format!("{base}/__load")}}));
+    let out = run_cli(&[
+        "--role",
+        "pdp",
+        "--profile",
+        &profile,
+        "--url",
+        base,
+        "--print-config",
+    ]);
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert!(
+        out.stdout.contains("pdp.approvals = false (default)"),
+        "{}",
+        out.stdout
+    );
+    let profile = external_profile(
+        &dir,
+        json!({"approvals": true, "load": {"url": format!("{base}/__load")}}),
+    );
+    let out = run_cli(&[
+        "--role",
+        "pdp",
+        "--profile",
+        &profile,
+        "--url",
+        base,
+        "--print-config",
+    ]);
+    assert!(
+        out.stdout.contains("pdp.approvals = true (profile)"),
+        "{}",
+        out.stdout
+    );
 }
 
 #[test]

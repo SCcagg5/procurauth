@@ -114,7 +114,7 @@ fn print_config_shows_each_key_with_its_source_and_hides_the_secret() {
     );
     assert!(
         text.contains(
-            "keys = 2 entries  (file:crates/reference-edge/examples/keys.test-only.json)"
+            "keys = 3 entries  (file:crates/reference-edge/examples/keys.test-only.json)"
         ),
         "{text}"
     );

@@ -637,7 +637,7 @@ fn the_examples_are_good_files() {
         )
         .unwrap_or_else(|e| panic!("{name}: {e:?}"));
         assert_eq!(loaded.settings.service_id, "datastore");
-        assert_eq!(loaded.settings.keys.len(), 2);
+        assert_eq!(loaded.settings.keys.len(), 3);
     }
 }
 
@@ -662,6 +662,10 @@ fn the_keys_file_of_the_examples_matches_the_test_key_texts_of_the_runner() {
     assert_eq!(
         store.find(&read("edge-no-access-key.txt")).unwrap().subject,
         "key:ann-k2"
+    );
+    assert_eq!(
+        store.find(&read("edge-confirm-key.txt")).unwrap().subject,
+        "key:ann-k3"
     );
     assert!(store.find(&read("edge-unknown-key.txt")).is_none());
 }

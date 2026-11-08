@@ -63,7 +63,7 @@ A case in the series D loads its directory in the PDP under test before the firs
 
 ### Directory files
 
-Each file validates against the schema `fake-pdp-data`. The reader of the core gives no warning for it, except for `approvals.json`. The reader does not know the members `confirm` and `approvals` yet. A case that needs a value that the PDP ignores has its directory in the case itself.
+Each file validates against the schema `fake-pdp-data`. The reader of the core gives no warning for it. A case that needs a value that the PDP ignores has its directory in the case itself.
 
 | File | Content |
 | --- | --- |
@@ -245,7 +245,9 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `single_key_set` | The key set of the edge holds one key only. |
 | `no_approval_support` | The target does not give approvals (protocol section 17). |
 
-The runner holds the condition `no_approval_support` for each target in this version, because no reference program gives approvals yet. It skips the cases that cite section 17 and the paragraphs 5.2b, 5.7, 5.7a and 5.7b: U30, U100 to U110, D76 to D89 and E19. The lots that add the approval profile to the reference programs make the condition depend on the target.
+The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. For an edge, it holds it unless the profile has `edge.keys.confirm_access`. For a PEP, it holds it in this version, because no reference service gives approvals yet. 
+
+A target for which it holds skips the cases that cite section 17 and the paragraphs 5.2b, 5.7, 5.7a and 5.7b. These cases are U30, U100 to U110, D76 to D89 and E19. A target of the approval profile runs them.
 
 The checks enforce these rules. A step that uses `use_budget`, `use_ceiling`, `use_multi`, `list_options`, an MCP operation, or the variables `mcp_path` and `options_type`, has the condition that goes with it. The condition is in the step or in the case.
 

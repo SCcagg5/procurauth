@@ -617,6 +617,10 @@
           "description": "True to start fake-pdp in the process, with the directory of each case. Do not give it with the option --url. The default is false.",
           "type": "boolean"
         },
+        "approvals": {
+          "description": "True when the PDP gives approvals (protocol section 17). The runner then runs the cases of this section. Do not give it with spawn_fake_pdp: the PDP that the runner starts gives approvals. The default is false.",
+          "type": "boolean"
+        },
         "credential_file": {
           "description": "The file with the credential that the PDP asks for. The credential is a secret.",
           "$ref": "#/$defs/file"
@@ -685,6 +689,11 @@
           "then": {
             "not": {
               "anyOf": [
+                {
+                  "required": [
+                    "approvals"
+                  ]
+                },
                 {
                   "required": [
                     "load"
@@ -839,6 +848,19 @@
             },
             "unknown": {
               "description": "A text with the format of a key that the edge does not know.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "text_file"
+              ],
+              "properties": {
+                "text_file": {
+                  "$ref": "#/$defs/file"
+                }
+              }
+            },
+            "confirm_access": {
+              "description": "A key that the edge knows, and whose grant of the action access has confirm (protocol 17.8). The case E19 uses it: the edge ignores confirm. Without it, the runner skips the case.",
               "type": "object",
               "additionalProperties": false,
               "required": [
