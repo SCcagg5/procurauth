@@ -38,7 +38,7 @@ The terms of protocol section 2 apply. This binding adds these terms:
 - **Standalone key**: a key that a service checks by itself, with no edge (section 7). It is not a key of the protocol (protocol 2, Key).
 
 ## 3. The work of the service
-3.1 The service does the MCP work: the MCP endpoint, the map of the tools, the list of the tools and the approvals of the actions [CONTRACT, section 9]. The service is the PEP of each tool (protocol 1.3). The edge decides only the action `access` on the service (protocol 8.3). It answers no MCP method.
+3.1 The service does the MCP work: the MCP endpoint, the map of the tools and the list of the tools. For a tool with an effect, the service asks the decision point and it applies the answer (3.5a) [CONTRACT, section 9]. The service is the PEP of each tool (protocol 1.3). The edge decides only the action `access` on the service (protocol 8.3). It answers no MCP method.
 
 3.2 The map of the tools gives each tool one action of the action document (protocol 5.2). The arguments of a call name the resource of the call. The service builds the chain of this resource from its own data (protocol 4.1, 4.5). The map is not in the MCP messages (1.5).
 
@@ -50,7 +50,9 @@ The terms of protocol section 2 apply. This binding adds these terms:
 
 3.5 A call that only asks the client for input (MCP `InputRequiredResult`) is not a use. For this call, the service asks the action of the tool without `context.usage` (protocol 6.6, 10.1). The later call that gives the input and runs the tool is the use of 3.4. For an action that lists a budget, a kept `true` answer of the first call never starts this use (protocol 10.1).
 
-3.5a A tool with an effect has an action with the member `approval` (protocol 5.2b) [CONTRACT, 9.4]. For each call of this tool, the service follows protocol 17.7. At the call, it asks the action without `context.usage`, with `context.approval.effect` (protocol 17.1). After the approval, at the run, it sends the question of 3.4 with `context.usage` and the effect (protocol 17.2). A refused or void approval takes no unit.
+3.5a A tool with an effect has an action with the member `approval` (protocol 5.2b) [CONTRACT, 9.1, 9.4]. For each call of this tool, the service follows protocol 17.7. At the call, it asks the action without `context.usage`, with `context.approval.effect` (protocol 17.1). After the approval, at the run, it sends the question of 3.4 with `context.usage` and the effect (protocol 17.2). A refused or void approval takes no unit. The service keeps no state for an approval, and it learns only the verdict (5.7).
+
+A tool that only asks the owner of the key is not a tool with an effect [CONTRACT, 9.1]. It sends no other data out of the system and it changes no resource. It needs no approval, and it has no action with the member `approval`.
 
 The effect of a call has the tool and the arguments that decide what the tool does. It has no control argument (5.7).
 
@@ -224,14 +226,16 @@ Content-Length: 0
 - COAZ-MCP puts the map of a tool, `x-authzen-mapping`, in the `inputSchema` of the tool in the `tools/list` response [COAZ-MCP, l.374-376]. Thus a gateway can be the PEP of the tools [COAZ-MCP, l.191-197]. In this binding, the service is the PEP of its tools (3.1), and an MCP message has no added field (1.5).
 
 ## 12. Open points
-1. The contract of the MCP servers [CONTRACT] moves into this binding in a later version. Until then, this binding applies where the two texts differ. Items 2 to 6 give the differences.
+1. The contract of the MCP servers [CONTRACT] moves into this binding in a later version. Until then, this binding applies where the two texts differ. Items 2 to 10 give the differences.
 2. Its 2.7 gives the JSON-RPC codes `-32001` for 401 and `-32002` for 429. Section 5 gives a 401 with an empty body (5.2). It replaces `-32002` with `-31429`, only when the service knows the `id`. Before the service reads the `id`, each refusal has an empty body (5.6a, 7.4). An example is the 400 that its 2.7 gives to a body that is not JSON. Its 2.7 also gives status 200 to each error of a method. Section 5 gives HTTP 429 with `-31429` and HTTP 503 with `-32603`.
 3. Its 6.1 has `retry_after_ms` in place of `retry_after` in whole seconds (5.3). Its 6.2 has no code `budget_exceeded` (5.3a). Its 4.5 does not say that the `outputSchema` of a tool accepts the error object of its 6.1 and of 5.3.
 4. Its section 11 restates rules of the protocol and does not cite the protocol. Its 11.3 to 11.5 and 11.8 become references to the protocol. Then three differences end. Its 11.3 has `EdDSA` (protocol 9.2), and its 11.4 has a path of the action document other than `/.well-known/procurauth/actions` (protocol 5.1). Its 11.5 accepts a network without TLS (protocol 10.0, step 4). Its 11.1 says that AuthZEN does not apply to the MCP endpoint, but 3.3 accepts the identity token there.
 5. Its 11.5 gives `false` when the PDP fails, and its case U08 then expects 403: the protocol gives HTTP 503 (protocol 10.3). Its case D14 expects `false` with `invalid_request` for a bad `context.match` in one evaluation: the protocol gives HTTP 400 (protocol 11.1). Its 11.6 gives 403 to each `false`, also for `budget_exceeded` (protocol 10.3).
 6. Its file `IMPLEMENTATIONS.md` names products. It does not move into the repository of this specification.
-7. Its section 9 gives the approval of an action with blocks `approver` and a channel API. Section 5.7 and protocol 17 replace them: the service gets only a verdict. Its 6.2 has none of the codes of 5.7a. Its 9.8 gives more than the verdict. The amendment is in the repository of [CONTRACT].
-8. Section 5.7a has no code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (protocol 17.6, 17.12), so it gives `approval_expired`.
+7. Its section 9 follows the model of this binding: the PDP decides, and the service learns only the verdict. Its paragraphs 9.2, 9.6, 9.7 and 9.9 are Unused. Its 9.4, 9.5 and 9.8 agree with 5.7 and 5.7b. Items 8 to 10 give the differences that remain.
+8. Neither this binding nor [CONTRACT, 6.2] has a code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (protocol 17.6, 17.12), so it gives `approval_expired`.
+9. Its 6.1 lets a retryable error have `retry_after_ms`. The code `approval_rate_limited` of 5.7a has `retry_after` in whole seconds, as 5.3 has it and as protocol 10.3 and 17.4 give it. A client reads the seconds.
+10. Its 9.4 lets a server send a task when the client declares the extension `io.modelcontextprotocol/tasks`. This binding gives no form for it. Protocol 17.4 and 5.7a use the error `no_device` for an owner with no way to receive the request.
 
 ## References
 - [PROTOCOL] ProcurAuth Protocol, version 1.0: `spec/` in the repository of this specification.

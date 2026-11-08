@@ -40,4 +40,4 @@ This file lists the places where the code or the data of this repository differs
 22. The site lists the schemas of the earlier lots. The repository adds `approval-submission`, `approval-verdict` and `approval-view`, and it changes `action-document`, `evaluation-context`, `fake-pdp-data` and `conformance-case`. The folder `docs/schemas` has no copy of them.
 23. The page `conformance.html` and the README show 192 cases. The repository has 218: 110 for a PEP, 89 for a PDP and 19 for an edge. The runner skips 26 of them, with the condition `no_approval_support`. The image `docs/assets/conformance.svg` still shows 192.
 24. The page `conformance.html` lists the skip conditions. The repository has one more: `no_approval_support`. It also has the operation variants, the script of the approval API, `pdp_approvals` and five new variables.
-
+25. The page `mcp-binding.html` has the old 3.1 and the old open point 7. The repository has a new 3.1 and 3.5a, and the open points 7 to 10. They follow the contract of the MCP servers, section 9.

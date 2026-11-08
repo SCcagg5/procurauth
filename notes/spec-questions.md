@@ -64,3 +64,12 @@ This file lists the places where the text of the protocol or of the MCP binding 
 42. **17.5.** Does a renewal after the end of a lease count as a revival? The code says yes, because the first call that sees the end also makes the request `abandoned` (decision 110).
 43. **17.4.** A request for an effect that has an approval that can be used still gets a new request. Is this an error? The code makes the new request the latest approval (decision 108).
 44. **17.8, 5.2b.** Does `confirm` apply to an action that has no member `approval`? The text says that the member "tells" that a grant can have it. The code applies `confirm` to each action except `access` (decision 105).
+
+## The PEP for the approval of an effect (lot S4b)
+
+45. **Binding 5.7.** A call with a bad control argument gets `invalid_argument` and no question goes to the PDP. A subject that has no right on the tool then sees a different reply from the reply for an unknown tool (4.2). Does the owner accept this, or must the service ask the PDP first?
+46. **17.4, 17.5, binding 5.7.** A call with `wait_s` waits for the verdict and does not renew the lease, because the call does not name the request. The agent can still renew with `get_action_status`. Does the owner want the wait to renew?
+47. **17.4, binding 5.7a.** A late `evaluation_id` gets 422 `invalid_evaluation`, and the PEP gives HTTP 503. The PEP could ask the question again one time and submit with the new id. Does the owner want this retry?
+48. **Binding 5.7, protocol 15.** The operations `mcp_approve` and `mcp_refuse` of the data model stand for the old request for input. No case uses them now. Does the owner want to remove them from the schema and the README?
+49. **MCP server contract 4.3, 4.5.** A tool with an effect has `readOnlyHint` false and `openWorldHint` true, and an `outputSchema` with the object `action`. The type `ToolSpec` of the library has no annotation and no `outputSchema`. Does the owner want them in the type?
+50. **Binding 5.7a, 10.3.** The binding has no HTTP form for a refusal of the approval on a route that is not MCP. The library gives 403, 422, 503 and 429 (decision 125). Does the owner want a form in the protocol? This extends question 28.

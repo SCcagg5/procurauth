@@ -150,7 +150,7 @@ The member `variant` changes the base call of the operation `mcp_call_approval`.
 | `approval_ref` | The control argument `approval_ref` has the value of the variable `approval_ref`, in place of `lease_s`. |
 | `wait` | The control argument `wait_s` is added. The effect does not change (protocol 17.9a). |
 
-The profile of the service under test gives the base call and the two changes of the arguments. The runner computes the variables `effect`, `effect_2` and `effect_3` from them with protocol 17.3.
+The profile of the service under test gives the base call and the two changes of the arguments. It gives the `op` that the service builds for each of the three calls, in the member `approval` of the operation. The runner computes the variables `effect`, `effect_2` and `effect_3` from them with protocol 17.3. The runner adds the control arguments: `lease_s` equal to 900, or `approval_ref`, and `wait_s` equal to 1 for the variant `wait`.
 
 ### Expect
 
@@ -245,7 +245,7 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `single_key_set` | The key set of the edge holds one key only. |
 | `no_approval_support` | The target does not give approvals (protocol section 17). |
 
-The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. For an edge, it holds it unless the profile has `edge.keys.confirm_access`. For a PEP, it holds it in this version, because no reference service gives approvals yet. 
+The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. For an edge, it holds it unless the profile has `edge.keys.confirm_access`. For a PEP, it holds it unless the profile has `pep.approvals`. 
 
 A target for which it holds skips the cases that cite section 17 and the paragraphs 5.2b, 5.7, 5.7a and 5.7b. These cases are U30, U100 to U110, D76 to D89 and E19. A target of the approval profile runs them.
 
