@@ -1,15 +1,16 @@
 //! The MCP endpoint of the service, with the helpers of `procurauth-pep::mcp`.
 //!
-//! The endpoint has five tools. The tools show each flow that the binding
-//! describes.
+//! The endpoint has five tools, and the tool `get_action_status`. The tools show each
+//! flow that the binding describes.
 //!
 //! | Tool | Action | Flow |
 //! | --- | --- | --- |
 //! | `read_rows` | `data.read` | One use of an action that lists a budget (3.4). |
 //! | `list_tables` | `data.inspect` | A use of an action that lists no budget. |
-//! | `write_rows` | `data.write` | An approval: a question without usage, then one with usage (3.5a). |
+//! | `append_rows` | `data.append` | An approval of the owner: the steps of protocol 17.7 (3.5a, 5.7). |
 //! | `copy_table` | `data.write` | Two permissions: a read and a write (3.7, 10.1a). |
 //! | `query_table` | `data.read` | A call that asks the client for the table (3.5). |
+//! | `get_action_status` | none | The verdict of a request that waits (5.7b). |
 //!
 //! The form of the request for input follows the draft of the MCP revision
 //! 2026-07-28. The result has `resultType` `input_required` and `inputRequests`.
@@ -17,17 +18,21 @@
 
 use procurauth_core::names::validate_id;
 use procurauth_pep::mcp::{
-    Kind, McpGate, McpReply, REVISION, RpcRequest, Stage, ToolMap, ToolMapError, ToolSpec,
-    check_version, classify, input_required_reply, input_responses, invalid_params_reply,
-    method_not_found_reply, parse_error_reply, refusal_reply, result_reply, tool_error,
-    tools_list_reply, unknown_tool_reply,
+    Kind, McpGate, McpReply, REVISION, RpcRequest, STATUS_TOOL, Stage, ToolMap, ToolMapError,
+    ToolSpec, awaiting_reply, check_version, classify, input_required_reply, input_responses,
+    invalid_argument_reply, invalid_params_reply, method_not_found_reply, parse_error_reply,
+    refusal_reply, result_reply, split_approval_arguments, status_reply, status_request_id,
+    tool_error, tools_list_reply_with_status, unknown_tool_reply,
 };
 use procurauth_pep::operation::{NodePath, Operation, node};
-use procurauth_pep::{Allowed, Identity};
+use procurauth_pep::{Allowed, Identity, Outcome};
 use serde_json::{Value, json};
 
 use crate::app::{App, DEFAULT_LIMIT, MAX_WRITE_ROWS, Routed};
-use crate::document::{INSPECT, READ, WRITE};
+
+/// The most bytes of the body of a `view` ([CONTRACT, 9.5]).
+const MAX_BODY_BYTES: usize = 16 * 1024;
+use crate::document::{APPEND, INSPECT, READ, WRITE};
 
 fn tool(name: &str, action: &str, description: &str, schema: Value) -> ToolSpec {
     ToolSpec {
@@ -63,10 +68,20 @@ pub fn tool_map() -> Result<ToolMap, ToolMapError> {
             table_schema(&json!({"limit": {"type": "integer", "minimum": 1}})),
         ),
         tool(
-            "write_rows",
-            WRITE,
-            "Add rows to a table. The client must approve the write.",
-            table_schema(&json!({"rows": {"type": "array", "items": {"type": "object"}}})),
+            "append_rows",
+            APPEND,
+            "Add rows to a table. The tool can need the approval of the owner, and the decision point decides. \
+             If it does, the tool gives an action in the status awaiting_approval with executed false, and the tool did not run. \
+             After the approval, call the tool again with the same arguments. Read the verdict with get_action_status. \
+             Give exactly one of approval_ref, lease_s and until. The arguments wait_s and supersedes are optional.",
+            table_schema(&json!({
+                "rows": {"type": "array", "items": {"type": "object"}},
+                "approval_ref": {"type": "string"},
+                "lease_s": {"type": "integer", "minimum": 1},
+                "until": {"type": "string"},
+                "wait_s": {"type": "integer", "minimum": 0},
+                "supersedes": {"type": "string"},
+            })),
         ),
         tool(
             "copy_table",
@@ -141,7 +156,6 @@ fn tool_result(rpc: &RpcRequest, structured: &Value) -> Routed {
         json!({
             "content": [{"type": "text", "text": structured.to_string()}],
             "structuredContent": structured,
-            "isError": false,
         }),
     ))
 }
@@ -165,7 +179,11 @@ impl App {
         let gate = McpGate::new(&self.pep, &self.tools);
         match classify(&rpc.method) {
             Kind::ToolsList => match gate.list_tools(who) {
-                Ok(list) => done(&tools_list_reply(&rpc, &list)),
+                Ok(list) => done(&tools_list_reply_with_status(
+                    &rpc,
+                    &list,
+                    gate.lists_status_tool(&list),
+                )),
                 Err(refusal) => refused(&refusal, &rpc, false),
             },
             Kind::ToolsCall => self.mcp_call(&rpc, who, &gate),
@@ -192,6 +210,9 @@ impl App {
         let Some((name, args)) = rpc.tool_call() else {
             return done(&invalid_params_reply(rpc));
         };
+        if name == STATUS_TOOL && gate.has_status_tool() {
+            return Self::mcp_status(rpc, who, gate, args);
+        }
         if self.tools.get(name).is_none() {
             return done(&unknown_tool_reply(rpc));
         }
@@ -228,7 +249,7 @@ impl App {
                     },
                 }
             }
-            "write_rows" => self.mcp_write_rows(rpc, who, gate, args),
+            "append_rows" => self.mcp_append_rows(rpc, who, gate, args),
             "copy_table" => self.mcp_copy_table(rpc, who, gate, args),
             "query_table" => self.mcp_query_table(rpc, who, gate, args),
             _ => done(&unknown_tool_reply(rpc)),
@@ -260,8 +281,12 @@ impl App {
         }
     }
 
-    /// A tool with an effect: it waits for an approval (3.5a).
-    fn mcp_write_rows(
+    /// A tool with an effect: it runs only after the approval of the owner (3.5a, 5.7, protocol 17.7).
+    ///
+    /// The `op` has the values that decide what the tool does, and no control argument (17.9a).
+    /// The rows go in `op` as the compact JSON text of the array, so that the `view` can show
+    /// them as a body (17.9). The tool refuses rows that do not fit in the body of a `view`.
+    fn mcp_append_rows(
         &self,
         rpc: &RpcRequest,
         who: &Identity,
@@ -278,50 +303,57 @@ impl App {
         if rows.len() > MAX_WRITE_ROWS || !rows.iter().all(Value::is_object) {
             return done(&invalid_params_reply(rpc));
         }
-        let operation = Operation::new(WRITE, path);
-        let approval = response(rpc, "approval")
-            .and_then(|r| r.get("action"))
-            .and_then(Value::as_str);
-        match approval {
-            // The call: the PEP asks the action without `context.usage`. This is not a use (3.5a).
-            None => match Self::ask(gate, who, rpc, "write_rows", &operation, Stage::Ask) {
-                Err(routed) => routed,
-                Ok(_) => done(&input_required_reply(
-                    rpc,
-                    json!({"approval": {"method": "elicitation/create", "params": {
-                        "message": "Approve the write of these rows?",
-                        "requestedSchema": {"type": "object", "properties": {}}}}}),
-                    None,
-                )),
-            },
-            // A refused approval takes no unit, and the service asks nothing.
-            Some("decline") => done(&tool_error(
-                rpc,
-                "approval_refused",
-                "The approval is refused.",
-            )),
-            // The run, after the approval: the use, with `context.usage` (3.5a).
-            Some("accept") => match Self::ask(gate, who, rpc, "write_rows", &operation, Stage::Run)
-            {
-                Err(routed) => routed,
-                Ok(_) => {
-                    let (host, database, table) = (
-                        id(args, "host").unwrap_or(""),
-                        id(args, "database").unwrap_or(""),
-                        id(args, "table").unwrap_or(""),
-                    );
-                    match self
-                        .store
-                        .append(host, database, table, rows.clone(), false)
-                    {
-                        Some(total) => {
-                            tool_result(rpc, &json!({"appended": rows.len(), "total": total}))
-                        }
-                        None => done(&tool_error(rpc, "not_found", "The table does not exist.")),
+        // Step 2 of [CONTRACT, 9.4]: the control arguments. A bad call asks the PDP nothing.
+        let Ok(controls) = split_approval_arguments(args) else {
+            return done(&invalid_argument_reply(rpc));
+        };
+        let text = Value::Array(rows.clone()).to_string();
+        if text.len() > MAX_BODY_BYTES {
+            // [CONTRACT, 9.5]: a part that does not fit in the `view` is refused, never hidden.
+            return done(&invalid_argument_reply(rpc));
+        }
+        let (host, database, table) = (
+            id(args, "host").unwrap_or(""),
+            id(args, "database").unwrap_or(""),
+            id(args, "table").unwrap_or(""),
+        );
+        let op = json!({
+            "tool": "append_rows", "host": host, "database": database, "table": table, "rows": text,
+        });
+        let view = json!({
+            "title": "Add rows to a table",
+            "fields": [["Host", "/host"], ["Database", "/database"], ["Table", "/table"]],
+            "body": "/rows",
+            "body_label": "Rows, as JSON",
+        });
+        let operation = Operation::new(APPEND, path);
+        let call = controls.into_call(op, view);
+        match gate.approve(who, "append_rows", &operation, &call) {
+            Outcome::Allowed(_) => {
+                match self
+                    .store
+                    .append(host, database, table, rows.clone(), false)
+                {
+                    Some(total) => {
+                        tool_result(rpc, &json!({"appended": rows.len(), "total": total}))
                     }
+                    None => done(&tool_error(rpc, "not_found", "The table does not exist.")),
                 }
-            },
-            Some(_) => done(&invalid_params_reply(rpc)),
+            }
+            Outcome::ApprovalRequired(pending) => done(&awaiting_reply(rpc, &pending)),
+            Outcome::Refused(refusal) => refused(&refusal, rpc, true),
+        }
+    }
+
+    /// The tool `get_action_status` (5.7b). It asks the PDP no question. It reads the verdict on
+    /// the approval API with the subject of the token. The read renews the lease.
+    fn mcp_status(rpc: &RpcRequest, who: &Identity, gate: &McpGate<'_>, args: &Value) -> Routed {
+        let Some(request_id) = status_request_id(args) else {
+            return done(&invalid_argument_reply(rpc));
+        };
+        match gate.status(who, request_id) {
+            Ok(verdict) => done(&status_reply(rpc, verdict)),
+            Err(refusal) => refused(&refusal, rpc, true),
         }
     }
 

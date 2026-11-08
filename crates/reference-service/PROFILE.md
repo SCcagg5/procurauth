@@ -92,9 +92,7 @@ The body is a JSON-RPC request with the id 7 and the method `tools/call`. The me
 | `mcp_call_budget` | `read_rows` | `{"host": "prod", "database": "test2", "table": "orders", "limit": 1}` | none |
 | `mcp_call_input` | `query_table` | `{"host": "prod", "database": "test2"}` | none |
 | `mcp_call_multi` | `copy_table` | `{"from": {"host": "prod", "database": "test1", "table": "orders"}, "to": {"host": "prod", "database": "test2"}}` | none |
-| `mcp_call_approval` | `write_rows` | `{"host": "prod", "database": "test2", "table": "orders", "rows": [{"id": 1}]}` | none |
-| `mcp_approve` | `write_rows` | The same as `mcp_call_approval` | `"inputResponses": {"approval": {"action": "accept"}}` |
-| `mcp_refuse` | `write_rows` | The same as `mcp_call_approval` | `"inputResponses": {"approval": {"action": "decline"}}` |
+| `mcp_call_approval` | `append_rows` | `{"host": "prod", "database": "test2", "table": "orders", "rows": [{"id": 1}], "lease_s": 900}` | none |
 
 | Operation | `tool` | `action` | `resource_type` | `resource_id` | `ancestors` |
 | --- | --- | --- | --- | --- | --- |
@@ -102,7 +100,19 @@ The body is a JSON-RPC request with the id 7 and the method `tools/call`. The me
 | `mcp_call_budget` | `read_rows` | `data.read` | `table` | `orders` | service `datastore`, host `prod`, database `test2` |
 | `mcp_call_input` | `query_table` | `data.read` | `database` | `test2` | service `datastore`, host `prod` |
 | `mcp_call_multi` | `copy_table` | `data.write` | `database` | `test2` | service `datastore`, host `prod` |
-| `mcp_call_approval` | `write_rows` | `data.write` | `table` | `orders` | service `datastore`, host `prod`, database `test2` |
+| `mcp_call_approval` | `append_rows` | `data.append` | `table` | `orders` | service `datastore`, host `prod`, database `test2` |
+
+For `mcp_call_approval`, the runner adds the control arguments of the base call: `lease_s` equal to 900. The variant `approval_ref` has `approval_ref` in place of it. The variant `wait` adds `wait_s` equal to 1. The member `approval` of the profile gives the `op` of each call, as the table below shows. The variants `effect_2` and `effect_3` change the rows to `[{"id": 2}]` and `[{"id": 3}]`.
+
+| Call | `op` |
+| --- | --- |
+| Base | `{"tool": "append_rows", "host": "prod", "database": "test2", "table": "orders", "rows": "[{\"id\":1}]"}` |
+| `effect_2` | The same, with `rows` equal to `[{"id":2}]` as a text. |
+| `effect_3` | The same, with `rows` equal to `[{"id":3}]` as a text. |
+
+The member `rows` of `op` is the compact JSON text of the array of rows. The `view` of the tool has the fields `Host`, `Database` and `Table`, and the body `/rows`. A body of a `view` must name a text of `op`.
+
+The tool `get_action_status` has the argument `request_id`. The cases U106 and U110 write its request in full.
 
 For `mcp_call_input`, the first question has the resource of the database. The service asks the client for the table. A later call that gives the table is a use of `data.read` on the table.
 
@@ -113,9 +123,9 @@ For `mcp_call_input`, the first question has the resource of the database. The s
 | `use_*` | HTTP 200 with a JSON body. |
 | `read_actions` | HTTP 200 with the action document. |
 | `list_options` | HTTP 200 with `{"items": [...], "next": ...}`. |
-| `mcp_call_plain`, `mcp_call_budget`, `mcp_call_multi`, `mcp_approve` | HTTP 200 with a JSON-RPC result that has `resultType` `complete`. |
-| `mcp_call_input`, `mcp_call_approval` | HTTP 200 with a result that has `resultType` `input_required`. |
-| `mcp_refuse` | HTTP 200 with a tool error: `isError` is true and the code is `approval_refused`. |
+| `mcp_call_plain`, `mcp_call_budget`, `mcp_call_multi` | HTTP 200 with a JSON-RPC result that has `resultType` `complete`. |
+| `mcp_call_input` | HTTP 200 with a result that has `resultType` `input_required`. |
+| `mcp_call_approval` | HTTP 200 with a result that has `resultType` `complete`. The result tells that the action waits (binding 5.7), or it is the result of the tool, or it is the tool error of 5.7a. |
 
 The form of the request for input follows the draft of the MCP revision 2026-07-28. The MCP binding does not define it. The reference service gives `inputRequests` in the result and reads `inputResponses` in the next call. The service ignores `requestState`.
 
@@ -134,7 +144,7 @@ The form of the request for input follows the draft of the MCP revision 2026-07-
 | `no_multi_action` | false |
 | `no_token_cache` | Not for a service. This condition is for an edge. |
 | `single_key_set` | false. The configuration trusts two keys. |
-| `no_approval_support` | true. The service gives no approval yet, so the runner skips the cases of protocol section 17. |
+| `no_approval_support` | false. The profile has `pep.approvals`, so the runner runs U30 and U100 to U110. |
 
 ## Other requests that the cases write in full
 

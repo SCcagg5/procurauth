@@ -16,7 +16,7 @@ use procurauth_pep::ceilings::Ceilings;
 use procurauth_pep::operation::{Operation, node};
 use procurauth_pep::options::OptionsQuery;
 use procurauth_pep::reply::HttpReply;
-use procurauth_pep::{Allowed, Identity, Outcome, Pep, Refusal};
+use procurauth_pep::{Allowed, Identity, Pep, Refusal};
 use serde_json::{Value, json};
 
 use crate::data::Store;
@@ -204,10 +204,11 @@ impl App {
 
     /// Ask the PDP, and give the answer or the reply for the refusal.
     fn allow(&self, who: &Identity, operation: &Operation) -> Result<Allowed, Routed> {
-        match self.pep.decide(who, operation) {
-            Outcome::Allowed(allowed) => Ok(allowed),
-            Outcome::Refused(refusal) => Err(Routed::refused(&refusal)),
-        }
+        // `decide` never gives `ApprovalRequired`: this route has no action with an approval.
+        self.pep
+            .decide(who, operation)
+            .into_result()
+            .map_err(|refusal| Routed::refused(&refusal))
     }
 
     fn hosts(&self, who: &Identity) -> Routed {

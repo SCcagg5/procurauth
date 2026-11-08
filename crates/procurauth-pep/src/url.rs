@@ -70,6 +70,19 @@ impl Url {
     /// with a host. Returns an error when it has user information, a query or a
     /// fragment.
     pub fn parse(text: &str) -> Result<Self, UrlError> {
+        Self::parse_with(text, false)
+    }
+
+    /// Read the URL of a request that a transport sends. It is like [`Url::parse`], and it
+    /// can have a query. The query stays in `path`, so the request line has it.
+    ///
+    /// # Errors
+    /// Returns the errors of [`Url::parse`], except the error for a query.
+    pub fn parse_request(text: &str) -> Result<Self, UrlError> {
+        Self::parse_with(text, true)
+    }
+
+    fn parse_with(text: &str, allow_query: bool) -> Result<Self, UrlError> {
         let (scheme, rest) = if let Some(rest) = text.strip_prefix("https://") {
             (Scheme::Https, rest)
         } else if let Some(rest) = text.strip_prefix("http://") {
@@ -89,7 +102,10 @@ impl Url {
         if authority.contains('@') {
             return Err(bad("the URL has user information"));
         }
-        if path.contains('?') || path.contains('#') || authority.contains(['?', '#']) {
+        if path.contains('#')
+            || authority.contains(['?', '#'])
+            || (!allow_query && path.contains('?'))
+        {
             return Err(bad("the URL has a query or a fragment"));
         }
         let (host, port) = if let Some(inner) = authority.strip_prefix('[') {
@@ -210,6 +226,15 @@ mod tests {
         assert_eq!(url.authority(), "127.0.0.1:8181");
         assert_eq!(url.host_header(), "127.0.0.1:8181");
         assert_eq!(url.base_text(), "http://127.0.0.1:8181/pdp");
+    }
+
+    #[test]
+    fn the_url_of_a_request_can_have_a_query_and_the_url_of_the_configuration_cannot() {
+        let url = Url::parse_request("http://pdp:8181/approval/v1/requests/a?subject=b").unwrap();
+        assert_eq!(url.path, "/approval/v1/requests/a?subject=b");
+        assert!(Url::parse("http://pdp:8181/a?subject=b").is_err());
+        assert!(Url::parse_request("http://pdp:8181/a#x").is_err());
+        assert!(Url::parse_request("http://pdp:8181?x=1").is_err());
     }
 
     #[test]

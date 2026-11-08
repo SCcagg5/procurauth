@@ -29,6 +29,7 @@ use procurauth_core::identity::{TokenPolicy, verify_for_pep};
 use procurauth_core::jws::KeySet;
 use procurauth_core::path::NodePath;
 
+use crate::approval::PendingApproval;
 use crate::cache::{AnswerCache, Key};
 use crate::ceilings::Ceilings;
 use crate::clock::{Clock, SystemClock};
@@ -61,6 +62,14 @@ pub struct Allowed {
 }
 
 impl Allowed {
+    pub(crate) fn new(units: u64, used: Granted, others: Vec<Granted>) -> Self {
+        Self {
+            units,
+            used,
+            others,
+        }
+    }
+
     /// The units that the PDP took for the use: 1, or 0 when no budget applies
     /// to the subject (6.12). It is 0 for an action without a budget.
     pub fn units(&self) -> u64 {
@@ -96,6 +105,10 @@ impl Allowed {
 pub enum Outcome {
     /// The operation may run. Apply the ceilings.
     Allowed(Allowed),
+    /// The action needs the approval of the owner, and the PEP submitted the request (17.7).
+    /// The operation must not run. Tell the agent that the action waits. Only
+    /// [`Pep::decide_approval`] gives this outcome.
+    ApprovalRequired(PendingApproval),
     /// The operation must not run. Map the refusal with [`Refusal::to_http`].
     Refused(Refusal),
 }
@@ -108,6 +121,11 @@ impl Outcome {
     pub fn into_result(self) -> Result<Allowed, Refusal> {
         match self {
             Self::Allowed(allowed) => Ok(allowed),
+            // A caller that does not know approvals gets the refusal of a `false` answer.
+            Self::ApprovalRequired(_) => Err(Refusal::Forbidden {
+                reason: Some(Reason::ApprovalRequired),
+                cause: DenialCause::Decision,
+            }),
             Self::Refused(refusal) => Err(refusal),
         }
     }
@@ -121,7 +139,7 @@ impl Outcome {
     pub fn refusal(&self) -> Option<&Refusal> {
         match self {
             Self::Refused(refusal) => Some(refusal),
-            Self::Allowed(_) => None,
+            Self::Allowed(_) | Self::ApprovalRequired(_) => None,
         }
     }
 }
@@ -134,7 +152,7 @@ pub struct Pep {
     keys: KeySet,
     document: ActionDocument,
     served: ServedDocument,
-    client: PdpClient,
+    pub(crate) client: PdpClient,
     cache: Mutex<AnswerCache>,
     clock: Arc<dyn Clock>,
     display_max_questions: usize,
@@ -391,7 +409,7 @@ impl Pep {
     /// mistake of the service, not of the client. For a use, the action must list
     /// the type of the node (5.2). A display question has no such rule, because
     /// `subtree` also looks below the node (4.4).
-    fn validate(&self, permission: &Permission, for_use: bool) -> Result<(), Refusal> {
+    pub(crate) fn validate(&self, permission: &Permission, for_use: bool) -> Result<(), Refusal> {
         let mistake = |text: String| Err(Refusal::Internal(text));
         let Some(action) = self.document.action(&permission.action) else {
             return mistake(format!(
@@ -413,7 +431,11 @@ impl Pep {
     }
 
     /// The ceilings of a `true` answer, for the action that was asked (7.3, 7.5).
-    fn ceilings_of(&self, action: &str, decision: &Decision) -> Result<Ceilings, Refusal> {
+    pub(crate) fn ceilings_of(
+        &self,
+        action: &str,
+        decision: &Decision,
+    ) -> Result<Ceilings, Refusal> {
         let listed = self.document.action(action).map(|a| &a.limits);
         for name in decision.context.limits.keys() {
             let declaration = self.document.limit(name);

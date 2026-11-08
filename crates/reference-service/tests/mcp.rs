@@ -210,13 +210,15 @@ fn mcp_4_1_the_list_names_the_tools_that_the_pdp_lets_the_subject_do() {
         names(&s.edge.token("alice")),
         [
             "read_rows",
-            "write_rows",
+            "append_rows",
             "copy_table",
             "list_tables",
-            "query_table"
+            "query_table",
+            "get_action_status"
         ]
     );
-    // The key has `data.read` and `data.inspect` on `test2` and no `data.write`.
+    // The key has `data.read` and `data.inspect` on `test2` and no `data.write` and no `data.append`.
+    // The list has no `get_action_status`, because it has no tool with an approval (5.7b).
     assert_eq!(
         names(&s.edge.key_token(KEY_ALICE, "alice")),
         ["read_rows", "list_tables", "query_table"]
@@ -226,8 +228,8 @@ fn mcp_4_1_the_list_names_the_tools_that_the_pdp_lets_the_subject_do() {
     assert!(log.iter().all(|e| !e.usage));
     assert_eq!(
         log.iter().filter(|e| e.endpoint == "evaluations").count(),
-        6,
-        "3 actions for each of the two lists"
+        8,
+        "4 actions for each of the two lists"
     );
     assert_eq!(s.used("alice", "second"), 0);
 }
@@ -240,8 +242,8 @@ fn mcp_4_2_a_refused_tool_and_an_unknown_tool_get_the_same_refusal() {
         Some(&token),
         &call(
             7,
-            "write_rows",
-            &json!({"host": "prod", "database": "test2", "table": "orders", "rows": []}),
+            "append_rows",
+            &json!({"host": "prod", "database": "test2", "table": "orders", "rows": [], "lease_s": 900}),
         ),
     );
     let unknown = s.mcp(Some(&token), &call(7, "no_such_tool", &json!({})));
@@ -271,7 +273,7 @@ fn mcp_3_4_read_rows_is_one_use_with_the_ceiling_of_the_table() {
     );
     assert_eq!(reply.status, 200);
     let result = reply.json()["result"].clone();
-    assert_eq!(result["isError"], false);
+    assert!(result.get("isError").is_none());
     assert_eq!(result["structuredContent"]["limit"], 100);
     assert_eq!(result["structuredContent"]["count"], 100);
     let text: Value = serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap();
@@ -295,7 +297,7 @@ fn mcp_5_3_a_spent_budget_gives_the_tool_error_with_retry_after() {
                 &json!({"host": "prod", "database": "test2", "table": "orders", "limit": 1}),
             ),
         );
-        assert_eq!(reply.json()["result"]["isError"], false);
+        assert!(reply.json()["result"].get("isError").is_none());
     }
     let reply = s.mcp(Some(&token), &call(7, "read_rows", &orders_args()));
     assert_eq!(reply.status, 200);
@@ -341,46 +343,8 @@ fn mcp_3_5_a_call_for_input_asks_without_usage_and_the_next_call_is_the_use() {
     let params = json!({"name": "query_table", "arguments": {"host": "prod", "database": "test2"},
         "inputResponses": {"table": {"action": "accept", "content": {"table": "orders"}}}});
     let second = s.mcp(Some(&token), &rpc(8, "tools/call", params));
-    assert_eq!(second.json()["result"]["isError"], false);
+    assert!(second.json()["result"].get("isError").is_none());
     assert_eq!(second.json()["result"]["structuredContent"]["limit"], 100);
-    assert_eq!(s.used("alice", "second"), 1);
-}
-
-#[test]
-fn mcp_3_5a_an_approval_asks_without_usage_at_the_call_and_with_usage_after_it() {
-    let s = stack();
-    let token = s.edge.token("alice");
-    let args =
-        json!({"host": "prod", "database": "test2", "table": "customers", "rows": [{"id": 51}]});
-    let first = s.mcp(Some(&token), &call(7, "write_rows", &args));
-    assert_eq!(first.json()["result"]["resultType"], "input_required");
-    assert_eq!(s.used("alice", "second"), 0);
-    let log = s.pdp.log();
-    assert_eq!(
-        (log.len(), log[0].usage, log[0].action.as_str()),
-        (1, false, "data.write")
-    );
-    // The approval, and the run.
-    let params = json!({"name": "write_rows", "arguments": args, "inputResponses": {"approval": {"action": "accept"}}});
-    let run = s.mcp(Some(&token), &rpc(8, "tools/call", params));
-    assert_eq!(
-        run.json()["result"]["structuredContent"],
-        json!({"appended": 1, "total": 51})
-    );
-    let log = s.pdp.log();
-    assert_eq!(log.len(), 2);
-    assert!(log[1].usage);
-    assert_eq!(s.used("alice", "second"), 1);
-    // A refused approval takes no unit and asks nothing.
-    let params = json!({"name": "write_rows", "arguments": args, "inputResponses": {"approval": {"action": "decline"}}});
-    let refused = s.mcp(Some(&token), &rpc(9, "tools/call", params));
-    let body = refused.json();
-    assert_eq!(body["result"]["isError"], true);
-    assert_eq!(
-        body["result"]["structuredContent"]["error"]["code"],
-        "approval_refused"
-    );
-    assert_eq!(s.pdp.log().len(), 2);
     assert_eq!(s.used("alice", "second"), 1);
 }
 

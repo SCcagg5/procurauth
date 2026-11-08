@@ -34,19 +34,21 @@ struct MetaState {
 const RETRY_AFTER_FAILURE_MS: u64 = 5_000;
 
 pub(crate) struct PdpClient {
-    base: Url,
-    credential: Secret,
-    request_timeout: Duration,
+    pub(crate) base: Url,
+    pub(crate) credential: Secret,
+    pub(crate) request_timeout: Duration,
     usage_wait_margin: Duration,
     idle_close_after: Duration,
     evaluations_max_bytes: u64,
     evaluations_max_items: u64,
-    max_response_bytes: u64,
-    plain_retries: u32,
+    pub(crate) max_response_bytes: u64,
+    pub(crate) plain_retries: u32,
     metadata_max_age_ms: u64,
-    transport: Arc<dyn PdpTransport>,
+    pub(crate) transport: Arc<dyn PdpTransport>,
     clock: Arc<dyn Clock>,
     state: Mutex<MetaState>,
+    /// What the PEP received on the approval API (17.4).
+    pub(crate) approval_stats: Mutex<crate::approval::ApprovalStats>,
 }
 
 /// The limits of one Access Evaluations request.
@@ -101,6 +103,7 @@ impl PdpClient {
                 meta: None,
                 refresh_at_ms: 0,
             }),
+            approval_stats: crate::approval::new_stats(),
         }
     }
 

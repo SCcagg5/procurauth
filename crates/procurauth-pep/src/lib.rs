@@ -24,6 +24,7 @@
 //! | [`config`] | The typed configuration, the documented defaults and the checks. |
 //! | [`pep`] | The object [`Pep`], and the types [`Outcome`] and [`Allowed`]. |
 //! | [`access`] | The question of an edge for the action `access` (8.3). |
+//! | [`approval`] | The approval of an effect: the steps of 17.7, the narrow API of 17.4 and the counters of what the PEP received. |
 //! | [`operation`] | One operation: the use and the other permissions. |
 //! | [`document`] | The action document: a builder, a loader and the reply of 5.1. |
 //! | [`ceilings`] | The ceilings of an answer, and the way to apply them. |
@@ -90,6 +91,7 @@
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 pub mod access;
+pub mod approval;
 mod cache;
 pub mod ceilings;
 pub mod clock;

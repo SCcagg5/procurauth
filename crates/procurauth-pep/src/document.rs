@@ -89,6 +89,18 @@ impl ActionDocumentBuilder {
         self
     }
 
+    /// Give the declared action the member `approval` (5.2b). A grant of the action can have `confirm`.
+    /// A service with such an action follows protocol 17 for each use of it.
+    /// The call does nothing when the action is not declared, and `build` then reports no error:
+    /// declare the action first.
+    #[must_use]
+    pub fn approval(mut self, action: &str) -> Self {
+        if let Some(found) = self.document.actions.iter_mut().find(|a| a.name == action) {
+            found.approval = true;
+        }
+        self
+    }
+
     /// Declare a budget (6.1).
     #[must_use]
     pub fn budget(mut self, name: &str, label: &str, description: &str, unit: &str) -> Self {

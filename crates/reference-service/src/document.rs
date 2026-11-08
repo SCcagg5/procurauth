@@ -11,6 +11,9 @@ use procurauth_pep::document::{ActionDocument, ActionDocumentBuilder};
 pub const READ: &str = "data.read";
 /// The action to change data. It lists a budget and one ceiling.
 pub const WRITE: &str = "data.write";
+/// The action to add rows with the approval of the owner. It has the member `approval` (5.2b).
+/// It lists a budget. The tool `append_rows` uses it.
+pub const APPEND: &str = "data.append";
 /// The action to read the structure of the data. It lists no limit.
 pub const INSPECT: &str = "data.inspect";
 /// The action for the MCP methods that have no tool (binding 3.6a).
@@ -49,7 +52,14 @@ pub fn reference_document_with(
             &["requests", "max_rows", "max_duration"],
         )
         .action(WRITE, &all, "Change data.", &["requests", "max_duration"])
-        .action(INSPECT, &all, "Read the structure of the data.", &[]);
+        .action(INSPECT, &all, "Read the structure of the data.", &[])
+        .action(
+            APPEND,
+            &all,
+            "Add rows to a table after the approval of the owner.",
+            &["requests"],
+        )
+        .approval(APPEND);
     if cfg!(feature = "mcp") {
         builder = builder.action(
             SESSION,
@@ -100,6 +110,23 @@ mod tests {
             assert!(document.action_lists_budget(WRITE));
             assert!(!document.action_lists_budget(INSPECT));
         }
+    }
+
+    #[test]
+    fn p_5_2b_the_action_append_has_the_member_approval_and_no_other_action_has_it() {
+        let document = reference_document("datastore").unwrap();
+        for action in &document.actions {
+            assert_eq!(action.approval, action.name == APPEND, "{}", action.name);
+        }
+        assert_eq!(
+            document.to_value()["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|a| a["approval"] == "optional")
+                .count(),
+            1
+        );
     }
 
     #[cfg(feature = "mcp")]

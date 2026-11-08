@@ -10,6 +10,7 @@ use std::fmt;
 use procurauth_core::authzen::Reason;
 use serde_json::json;
 
+use crate::approval::ApprovalRefusal;
 use crate::reply::HttpReply;
 
 /// Why the PEP refuses an identity token (9.4).
@@ -73,6 +74,9 @@ pub enum Refusal {
         /// The seconds to wait, a whole number from 1.
         retry_after: u64,
     },
+    /// The approval of an effect refuses the call (17.7, binding 5.7a). The cause is
+    /// in [`ApprovalRefusal`]. The client sees no text of the owner (17.12).
+    Approval(ApprovalRefusal),
     /// The PDP gave no valid answer: HTTP 503 (10.3).
     Unavailable(UnavailableCause),
     /// The service made a mistake, for example an operation with an action that the
@@ -86,7 +90,10 @@ impl Refusal {
         match self {
             Self::Unauthenticated(_) => 401,
             Self::Forbidden { .. } => 403,
-            Self::RateLimited { .. } => 429,
+            Self::Approval(ApprovalRefusal::Denied | ApprovalRefusal::Expired) => 403,
+            Self::Approval(ApprovalRefusal::InvalidArgument) => 422,
+            Self::Approval(ApprovalRefusal::NoDevice) => 503,
+            Self::RateLimited { .. } | Self::Approval(ApprovalRefusal::RateLimited { .. }) => 429,
             Self::Unavailable(_) => 503,
             Self::Internal(_) => 500,
         }
@@ -95,7 +102,8 @@ impl Refusal {
     /// The value of the header `Retry-After`, in seconds, for a 429.
     pub fn retry_after(&self) -> Option<u64> {
         match self {
-            Self::RateLimited { retry_after } => Some(*retry_after),
+            Self::RateLimited { retry_after }
+            | Self::Approval(ApprovalRefusal::RateLimited { retry_after }) => Some(*retry_after),
             _ => None,
         }
     }
@@ -104,8 +112,13 @@ impl Refusal {
     pub fn public_message(&self) -> &'static str {
         match self {
             Self::Unauthenticated(_) => "unauthorized",
-            Self::Forbidden { .. } => "forbidden",
-            Self::RateLimited { .. } => "rate_limited",
+            Self::Forbidden { .. }
+            | Self::Approval(ApprovalRefusal::Denied | ApprovalRefusal::Expired) => "forbidden",
+            Self::Approval(ApprovalRefusal::InvalidArgument) => "invalid_argument",
+            Self::Approval(ApprovalRefusal::NoDevice) => "unavailable",
+            Self::RateLimited { .. } | Self::Approval(ApprovalRefusal::RateLimited { .. }) => {
+                "rate_limited"
+            }
             Self::Unavailable(_) => "unavailable",
             Self::Internal(_) => "internal_error",
         }
@@ -162,6 +175,20 @@ impl fmt::Display for Refusal {
             Self::RateLimited { retry_after } => {
                 write!(f, "429: the budget is spent, retry after {retry_after} s")
             }
+            Self::Approval(cause) => match cause {
+                ApprovalRefusal::Denied => write!(f, "403: the owner declined the action"),
+                ApprovalRefusal::Expired => write!(f, "403: the approval is not valid any more"),
+                ApprovalRefusal::InvalidArgument => {
+                    write!(f, "422: a control argument of the approval is not valid")
+                }
+                ApprovalRefusal::NoDevice => {
+                    write!(f, "503: the owner has no way to receive the request")
+                }
+                ApprovalRefusal::RateLimited { retry_after } => write!(
+                    f,
+                    "429: the PDP limits the requests of the owner, retry after {retry_after} s"
+                ),
+            },
             Self::Unavailable(cause) => match cause {
                 UnavailableCause::Transport(text) => {
                     write!(f, "503: the exchange with the PDP failed: {text}")

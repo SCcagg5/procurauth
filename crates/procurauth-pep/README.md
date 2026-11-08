@@ -72,9 +72,10 @@ The type `Refusal` has the status of 10.3. The reason of the PDP stays in the lo
 | Item | Content |
 | --- | --- |
 | `PepConfig`, `PdpConfig` | The typed configuration. `check` returns every error. |
-| `Pep` | `authenticate`, `decide`, `check`, `display`, `options`, `actions_reply`, `metadata`. |
+| `Pep` | `authenticate`, `decide`, `decide_approval`, `check`, `display`, `options`, `actions_reply`, `metadata`, `approval_status`, `approval_keepalive`, `approval_stats`. |
 | `Operation`, `Permission` | One use, the other permissions (5.5a), and several actions for the use (10.1). |
-| `Outcome`, `Allowed`, `Granted` | The result of `decide`: the units, and the ceilings of each permission. |
+| `Outcome`, `Allowed`, `Granted` | The result of `decide`: the units, and the ceilings of each permission. `Outcome::ApprovalRequired` is the result of `decide_approval` for a request that waits. |
+| `approval` | `ApprovalCall`, `Control`, `Verdict`, `ApprovalRefusal` and `ApprovalStats` for an action with the member `approval` (protocol 17). |
 | `Ceilings` | `cap`, `cap_or_ceiling`, `check` and `cap_duration`. |
 | `ActionDocumentBuilder`, `load_file`, `ServedDocument` | Build, load and serve the action document (section 5). |
 | `OptionsQuery`, `OptionsSource` | The options route (5.6 to 5.8). |
@@ -87,6 +88,9 @@ The type `Refusal` has the status of 10.3. The reason of the PDP stays in the lo
 
 - `decide` asks the other permissions first, without `context.usage`. Then it asks the use. For an action that lists a budget, the question of the use has `context.usage`.
 - `check` asks without `context.usage` and takes no unit. Use it for a call that asks the client for input or for an approval (binding 3.5, 3.5a).
+- `decide_approval` follows the steps of 17.7 for an action with the member `approval`. It asks with the effect and no usage. It submits the request on `approval_required` or `approval_pending`. After a `true` answer, it asks with `context.usage` and the same effect. The caller gives `op`, `view` and the control: `approval_ref`, `lease_s` or `until`.
+- `approval_status` reads the verdict with `renew=true` and the subject of the token. `approval_keepalive` renews the lease. Call them only for a call of the agent that names the request. The PEP never renews on a timer.
+- `approval_stats` gives the counters of what the PEP received from the approval API. The PEP reads only `verdict`, `request_id` and `code`. It never reads an intent, an explanation or an `approval_ref`.
 - `display` asks with `context.match` equal to `subtree` for a list of permissions (4.4). The answers are for the display only. They never let an operation run.
 - `options` builds the answer of the options route. It asks one question for each child (5.6).
 

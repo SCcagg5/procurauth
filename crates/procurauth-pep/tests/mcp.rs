@@ -367,3 +367,128 @@ fn mcp_3_2_the_map_is_checked_against_the_document() {
     // The document of section 13 has no `mcp.session`.
     assert!(tools().check_against(&datastore_document()).is_err());
 }
+
+#[test]
+fn mcp_5_7_the_control_arguments_are_split_from_the_arguments_and_exactly_one_gives_the_wait() {
+    use procurauth_pep::approval::Control;
+    use procurauth_pep::mcp::split_approval_arguments;
+    let good = split_approval_arguments(
+        &json!({"table": "orders", "lease_s": 900, "wait_s": 100, "supersedes": "apr_0"}),
+    )
+    .unwrap();
+    assert_eq!(good.control, Control::LeaseSeconds(900));
+    assert_eq!(good.supersedes.as_deref(), Some("apr_0"));
+    // The wait is bounded.
+    assert_eq!(good.wait_seconds, Some(25));
+    // The control arguments never enter the arguments that build `op`.
+    assert_eq!(good.rest, json!({"table": "orders"}));
+    let reference = split_approval_arguments(&json!({"approval_ref": "r"})).unwrap();
+    assert_eq!(reference.control, Control::Reference("r".into()));
+    let until = split_approval_arguments(&json!({"until": "2030-01-01T00:00:00Z"})).unwrap();
+    assert_eq!(until.control, Control::Until("2030-01-01T00:00:00Z".into()));
+    for bad in [
+        json!({}),
+        json!({"lease_s": 900, "until": "x"}),
+        json!({"lease_s": 900, "approval_ref": "x"}),
+        json!({"lease_s": 0}),
+        json!({"lease_s": 1.5}),
+        json!({"lease_s": "900"}),
+        json!({"approval_ref": ""}),
+        json!({"approval_ref": 5}),
+        json!({"lease_s": 900, "wait_s": -1}),
+        json!({"lease_s": 900, "supersedes": 3}),
+        json!([1]),
+    ] {
+        assert!(split_approval_arguments(&bad).is_err(), "{bad}");
+    }
+}
+
+#[test]
+fn mcp_5_7_the_replies_of_an_approval_have_the_forms_of_the_binding() {
+    use procurauth_pep::approval::{ApprovalRefusal, PendingApproval, Verdict};
+    use procurauth_pep::mcp::{approval_tool_error, awaiting_reply, status_reply};
+    let call = request("tools/call", json!({"name": "append_rows"}));
+    let waiting = awaiting_reply(
+        &call,
+        &PendingApproval {
+            request_id: "apr_9f3a".into(),
+            code: "K7QF".into(),
+        },
+    )
+    .body
+    .unwrap();
+    let result = &waiting["result"];
+    assert_eq!(result["resultType"], "complete");
+    assert!(result.get("isError").is_none());
+    assert_eq!(
+        result["structuredContent"],
+        json!({"action": {"id": "apr_9f3a", "status": "awaiting_approval", "code": "K7QF", "executed": false}})
+    );
+    assert!(
+        result["content"][1]["text"]
+            .as_str()
+            .unwrap()
+            .starts_with("NOT EXECUTED")
+    );
+    for (cause, code, retryable) in [
+        (ApprovalRefusal::Denied, "approval_denied", false),
+        (ApprovalRefusal::Expired, "approval_expired", false),
+        (ApprovalRefusal::InvalidArgument, "invalid_argument", false),
+        (ApprovalRefusal::NoDevice, "approval_unavailable", true),
+        (
+            ApprovalRefusal::RateLimited { retry_after: 60 },
+            "approval_rate_limited",
+            true,
+        ),
+    ] {
+        let body = approval_tool_error(&call, &cause).body.unwrap();
+        let error = &body["result"]["structuredContent"]["error"];
+        assert_eq!(body["result"]["isError"], true);
+        assert_eq!(error["code"], code);
+        assert_eq!(error["retryable"], retryable);
+        assert_eq!(
+            error.get("retry_after").is_some(),
+            code == "approval_rate_limited"
+        );
+        // The text of the content is the compact JSON of the structured content ([CONTRACT, 6.1]).
+        let text = body["result"]["content"][0]["text"].as_str().unwrap();
+        assert_eq!(
+            serde_json::from_str::<Value>(text).unwrap(),
+            body["result"]["structuredContent"]
+        );
+    }
+    let status = status_reply(&call, Verdict::Void).body.unwrap();
+    assert_eq!(
+        status["result"]["structuredContent"],
+        json!({"status": "void"})
+    );
+    assert!(status["result"].get("isError").is_none());
+    // The refusal of the approval is the same reply through `refusal_reply`.
+    let refusal = procurauth_pep::Refusal::Approval(ApprovalRefusal::Denied);
+    assert_eq!(
+        refusal_reply(&refusal, &call, true).body.unwrap()["result"]["structuredContent"]["error"]
+            ["code"],
+        "approval_denied"
+    );
+    assert_eq!(refusal_reply(&refusal, &call, false).status, 403);
+}
+
+#[test]
+fn mcp_5_7b_the_status_tool_is_read_only_and_a_request_id_is_a_short_text() {
+    use procurauth_pep::mcp::{status_request_id, status_tool_entry};
+    let entry = status_tool_entry();
+    assert_eq!(entry["name"], "get_action_status");
+    assert_eq!(entry["annotations"]["readOnlyHint"], true);
+    assert_eq!(
+        status_request_id(&json!({"request_id": "apr_1"})),
+        Some("apr_1")
+    );
+    for bad in [
+        json!({}),
+        json!({"request_id": 1}),
+        json!({"request_id": ""}),
+        json!({"request_id": "a b"}),
+    ] {
+        assert_eq!(status_request_id(&bad), None, "{bad}");
+    }
+}

@@ -39,9 +39,19 @@ struct Question {
     headers: Vec<(String, String)>,
 }
 
+/// A request that the test PDP received on its approval API.
+#[derive(Clone, Debug)]
+struct ApprovalReq {
+    route: &'static str,
+    json: Value,
+    query: BTreeMap<String, String>,
+}
+
 struct PdpState {
     script: Vec<Value>,
+    approval_script: Vec<Value>,
     questions: Vec<Question>,
+    approvals: Vec<ApprovalReq>,
 }
 
 struct ScriptedPdp {
@@ -138,8 +148,66 @@ fn rule_matches(when: &Value, question: &Value) -> bool {
                 .map_or("node", |m| m.as_str().unwrap_or("node"))
                 == expected.as_str().unwrap()
         }
+        "effect" => question.pointer("/context/approval/effect") == Some(expected),
         other => panic!("the runner does not know the member `when.{other}`"),
     })
+}
+
+fn percent_decode(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%'
+            && i + 2 < bytes.len()
+            && let Ok(byte) = u8::from_str_radix(&text[i + 1..i + 3], 16)
+        {
+            out.push(byte);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8(out).unwrap()
+}
+
+/// The route and the id of a request to the approval API.
+fn approval_route(method: &str, path: &str) -> Option<(&'static str, Option<String>)> {
+    let target = path.split('?').next().unwrap();
+    if target == "/approval/v1/requests" {
+        return (method == "POST").then_some(("submit", None));
+    }
+    let tail = target.strip_prefix("/approval/v1/requests/")?;
+    match tail.split_once('/') {
+        None if method == "GET" => Some(("status", Some(percent_decode(tail)))),
+        Some((id, "keepalive")) if method == "POST" => {
+            Some(("keepalive", Some(percent_decode(id))))
+        }
+        _ => None,
+    }
+}
+
+/// Answer a request of the approval API with the first rule that matches, or with 404.
+fn approval_answer(script: &[Value], route: &str, request_id: Option<&str>) -> (u16, Value) {
+    for rule in script {
+        let when = &rule["when"];
+        let route_ok = when.get("route").is_none_or(|r| r == route);
+        let id_ok = when
+            .get("request_id")
+            .is_none_or(|i| i.as_str() == request_id);
+        if route_ok && id_ok {
+            let status = rule["respond"]
+                .get("status")
+                .and_then(Value::as_u64)
+                .unwrap_or(200);
+            return (
+                u16::try_from(status).unwrap(),
+                rule["respond"]["body"].clone(),
+            );
+        }
+    }
+    (404, json!({"error": "not_found"}))
 }
 
 /// The answer of the script to one question: a status and a body, or `None` for no answer.
@@ -162,6 +230,27 @@ fn answer_for(script: &[Value], question: &Value) -> Option<(u16, Value)> {
 
 fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &AtomicBool) {
     while let Some((method, path, headers, body)) = read_request(&mut stream, stop) {
+        if let Some((route, request_id)) = approval_route(&method, &path) {
+            let query: BTreeMap<String, String> = path
+                .split_once('?')
+                .map(|(_, q)| q)
+                .unwrap_or("")
+                .split('&')
+                .filter(|p| !p.is_empty())
+                .map(|p| {
+                    let (n, v) = p.split_once('=').unwrap_or((p, ""));
+                    (percent_decode(n), percent_decode(v))
+                })
+                .collect();
+            let json = serde_json::from_slice(&body).unwrap_or(Value::Null);
+            let (status, answer) = {
+                let mut guard = state.lock().unwrap();
+                guard.approvals.push(ApprovalReq { route, json, query });
+                approval_answer(&guard.approval_script, route, request_id.as_deref())
+            };
+            respond(&mut stream, status, &answer);
+            continue;
+        }
         if method == "GET" {
             respond(&mut stream, 404, &json!({}));
             continue;
@@ -253,7 +342,7 @@ fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &Atomi
 }
 
 impl ScriptedPdp {
-    fn start(addr: SocketAddr, script: Vec<Value>) -> Self {
+    fn start(addr: SocketAddr, script: Vec<Value>, approval_script: Vec<Value>) -> Self {
         let listener = (0..50)
             .find_map(|_| match TcpListener::bind(addr) {
                 Ok(l) => Some(l),
@@ -266,7 +355,9 @@ impl ScriptedPdp {
         listener.set_nonblocking(true).unwrap();
         let state = Arc::new(Mutex::new(PdpState {
             script,
+            approval_script,
             questions: Vec::new(),
+            approvals: Vec::new(),
         }));
         let connections = Arc::new(AtomicUsize::new(0));
         let stop = Arc::new(AtomicBool::new(false));
@@ -308,7 +399,13 @@ impl ScriptedPdp {
     }
 
     fn clear_questions(&self) {
-        self.state.lock().unwrap().questions.clear();
+        let mut state = self.state.lock().unwrap();
+        state.questions.clear();
+        state.approvals.clear();
+    }
+
+    fn approvals(&self) -> Vec<ApprovalReq> {
+        self.state.lock().unwrap().approvals.clone()
     }
 }
 
@@ -506,6 +603,38 @@ fn table_chain() -> Value {
     ])
 }
 
+/// The operation `mcp_call_approval` of the profile of the service. The profile gives the tool,
+/// the arguments, the node and the `op` of each call, as `PROFILE.md` says.
+fn approval_profile() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/conformance-profile.json");
+    let profile: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    profile["pep"]["operations"]["mcp_call_approval"].clone()
+}
+
+/// The effects of the base call and of the two variants (protocol 17.3).
+fn approval_effects(def: &Value) -> [String; 3] {
+    use procurauth_core::effect::{effect_hash, resource_text};
+    use procurauth_core::path::{NodePath, NodeRef};
+    let mut nodes: Vec<NodeRef> = def["ancestors"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|a| NodeRef::new(a["type"].as_str().unwrap(), a["id"].as_str().unwrap()))
+        .collect();
+    nodes.push(NodeRef::new(
+        def["resource_type"].as_str().unwrap(),
+        def["resource_id"].as_str().unwrap(),
+    ));
+    let resource = resource_text(&NodePath::from_nodes(nodes).unwrap());
+    let effect =
+        |op: &Value| effect_hash(SERVICE, def["action"].as_str().unwrap(), &resource, op).unwrap();
+    [
+        effect(&def["approval"]["op"]),
+        effect(&def["approval"]["variants"]["effect_2"]["op"]),
+        effect(&def["approval"]["variants"]["effect_3"]["op"]),
+    ]
+}
+
 fn operation_vars(op: &str) -> Vars {
     let mut v = Vars::new();
     let mut set = |k: &str, val: Value| {
@@ -570,12 +699,21 @@ fn operation_vars(op: &str) -> Vars {
                 ancestors(&[("service", SERVICE), ("host", "prod")]),
             );
         }
-        "mcp_call_approval" | "mcp_approve" | "mcp_refuse" => {
-            set("tool", json!("write_rows"));
-            set("action", json!("data.write"));
-            set("resource_type", json!("table"));
-            set("resource_id", json!("orders"));
-            set("ancestors", table_chain());
+        "mcp_call_approval" => {
+            let def = approval_profile();
+            for name in [
+                "tool",
+                "action",
+                "resource_type",
+                "resource_id",
+                "ancestors",
+            ] {
+                set(name, def[name].clone());
+            }
+            let [base, second, third] = approval_effects(&def);
+            set("effect", json!(base));
+            set("effect_2", json!(second));
+            set("effect_3", json!(third));
         }
         _ => {}
     }
@@ -613,7 +751,27 @@ fn tools_call(name: &str, arguments: Value, extra: Value) -> Vec<u8> {
         .into_bytes()
 }
 
-fn build_operation(op: &str) -> Built {
+/// The call of `mcp_call_approval`, with the control arguments of the base call and a variant.
+fn approval_call(variant: Option<&str>) -> Vec<u8> {
+    let def = approval_profile();
+    let mut arguments = match variant {
+        Some("effect_2" | "effect_3") => {
+            def["approval"]["variants"][variant.unwrap()]["arguments"].clone()
+        }
+        _ => def["arguments"].clone(),
+    };
+    if variant == Some("approval_ref") {
+        arguments["approval_ref"] = json!("ref_conformance_0001");
+    } else {
+        arguments["lease_s"] = json!(900);
+    }
+    if variant == Some("wait") {
+        arguments["wait_s"] = json!(1);
+    }
+    tools_call(def["tool"].as_str().unwrap(), arguments, json!({}))
+}
+
+fn build_operation(op: &str, variant: Option<&str>) -> Built {
     let table = "/hosts/prod/databases/test2/tables/orders";
     let get = |path: String| Built {
         method: "GET".into(),
@@ -623,8 +781,6 @@ fn build_operation(op: &str) -> Built {
     };
     let orders = json!({"host": "prod", "database": "test2", "table": "orders"});
     let copy = json!({"from": {"host": "prod", "database": "test1", "table": "orders"}, "to": {"host": "prod", "database": "test2"}});
-    let write =
-        json!({"host": "prod", "database": "test2", "table": "orders", "rows": [{"id": 1}]});
     let mcp = |body: Vec<u8>| Built {
         method: "POST".into(),
         path: "/mcp".into(),
@@ -663,17 +819,7 @@ fn build_operation(op: &str) -> Built {
             json!({}),
         )),
         "mcp_call_multi" => mcp(tools_call("copy_table", copy, json!({}))),
-        "mcp_call_approval" => mcp(tools_call("write_rows", write, json!({}))),
-        "mcp_approve" => mcp(tools_call(
-            "write_rows",
-            write,
-            json!({"inputResponses": {"approval": {"action": "accept"}}}),
-        )),
-        "mcp_refuse" => mcp(tools_call(
-            "write_rows",
-            write,
-            json!({"inputResponses": {"approval": {"action": "decline"}}}),
-        )),
+        "mcp_call_approval" => mcp(approval_call(variant)),
         other => panic!("the profile has no operation {other}"),
     }
 }
@@ -683,11 +829,17 @@ fn skipped(conditions: Option<&Value>) -> bool {
         return false;
     };
     list.iter().any(|c| match c.as_str().unwrap() {
-        // The reference service gives no approval until the lot S4b.
-        "no_answer_cache" | "no_budget_session" | "no_approval_support" => true,
+        "no_answer_cache" | "no_budget_session" => true,
         "no_mcp_endpoint" => !cfg!(feature = "mcp"),
-        "no_budget_action" | "no_ceiling_action" | "no_options_route" | "no_input_tool"
-        | "no_approval_tool" | "no_multi_action" | "no_token_cache" | "single_key_set" => false,
+        "no_budget_action"
+        | "no_ceiling_action"
+        | "no_options_route"
+        | "no_input_tool"
+        | "no_approval_tool"
+        | "no_multi_action"
+        | "no_token_cache"
+        | "single_key_set"
+        | "no_approval_support" => false,
         other => panic!("unknown condition {other}"),
     })
 }
@@ -863,6 +1015,38 @@ fn check_step(
             }
         }
     }
+    if let Some(list) = expect.get("pdp_approvals").and_then(Value::as_array) {
+        let requests = pdp.approvals();
+        for entry in list {
+            let count = requests
+                .iter()
+                .filter(|r| {
+                    r.route == entry["route"].as_str().unwrap()
+                        && entry
+                            .get("json")
+                            .and_then(Value::as_object)
+                            .is_none_or(|j| j.iter().all(|(p, m)| matches(m, r.json.pointer(p))))
+                        && entry
+                            .get("query")
+                            .and_then(Value::as_object)
+                            .is_none_or(|q| {
+                                q.iter().all(|(n, m)| {
+                                    matches(m, r.query.get(n).map(|v| json!(v)).as_ref())
+                                })
+                            })
+                })
+                .count();
+            let ok = match entry.get("count") {
+                Some(m) => matches(m, Some(&json!(count))),
+                None => count == 1,
+            };
+            if !ok {
+                fail(&format!(
+                    "{count} requests of the approval API match {entry}; all: {requests:?}"
+                ));
+            }
+        }
+    }
     if let Some(m) = expect.get("pdp_connections") {
         let n = pdp.connections.load(Ordering::SeqCst);
         if !matches(m, Some(&json!(n))) {
@@ -894,6 +1078,7 @@ fn run_case(suite: &Suite, case: &Value) -> Option<Vec<String>> {
         ("mcp_path", json!("/mcp")),
         ("options_type", json!("host")),
         ("token_header", json!("X-Identity-Token")),
+        ("approval_ref", json!("ref_conformance_0001")),
     ] {
         default_vars.insert(k.to_owned(), v);
     }
@@ -916,7 +1101,17 @@ fn run_case(suite: &Suite, case: &Value) -> Option<Vec<String>> {
                 .collect()
         })
         .unwrap_or_default();
-    let pdp = ScriptedPdp::start(suite.pdp_addr, script);
+    let approval_script: Vec<Value> = given
+        .get("approval_script")
+        .and_then(Value::as_array)
+        .map(|rules| {
+            rules
+                .iter()
+                .map(|r| subst(r, &default_vars, false))
+                .collect()
+        })
+        .unwrap_or_default();
+    let pdp = ScriptedPdp::start(suite.pdp_addr, script, approval_script);
     let mut failures = Vec::new();
     for step in steps {
         if skipped(step.get("skip_if")) {
@@ -927,7 +1122,7 @@ fn run_case(suite: &Suite, case: &Value) -> Option<Vec<String>> {
         let mut vars = default_vars.clone();
         let built = if let Some(op) = request.get("operation").and_then(Value::as_str) {
             vars.extend(operation_vars(op));
-            let mut built = build_operation(op);
+            let mut built = build_operation(op, request.get("variant").and_then(Value::as_str));
             if let Some(extra) = request.get("headers").and_then(Value::as_object) {
                 for (k, v) in extra {
                     built
@@ -1015,13 +1210,10 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
         failures.join("\n")
     );
     if cfg!(feature = "mcp") {
-        assert_eq!(ran, 97, "the number of cases that ran");
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
-        // The cases of the approval profile (U30 and U100 to U110) wait for the lot S4b.
+        // U30 and U100 to U110 are the cases of the approval profile: they run.
+        assert_eq!(ran, 109, "the number of cases that ran");
         skipped_ids.sort();
-        let mut expected = vec!["U95".to_owned(), "U30".to_owned()];
-        expected.extend((100..=110).map(|n| format!("U{n}")));
-        expected.sort();
-        assert_eq!(skipped_ids, expected);
+        assert_eq!(skipped_ids, ["U95"]);
     }
 }

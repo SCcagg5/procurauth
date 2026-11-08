@@ -25,6 +25,7 @@
     },
     "answer_cache": false,
     "options_type": "host",
+    "approvals": true,
     "mcp": {
       "path": "/mcp",
       "session_budget": false
@@ -222,7 +223,7 @@
         ]
       },
       "mcp_call_approval": {
-        "tool": "write_rows",
+        "tool": "append_rows",
         "arguments": {
           "host": "prod",
           "database": "test2",
@@ -233,7 +234,7 @@
             }
           ]
         },
-        "action": "data.write",
+        "action": "data.append",
         "resource_type": "table",
         "resource_id": "orders",
         "ancestors": [
@@ -249,59 +250,52 @@
             "type": "database",
             "id": "test2"
           }
-        ]
-      },
-      "mcp_approve": {
-        "body": {
-          "jsonrpc": "2.0",
-          "id": 7,
-          "method": "tools/call",
-          "params": {
-            "name": "write_rows",
-            "arguments": {
-              "host": "prod",
-              "database": "test2",
-              "table": "orders",
-              "rows": [
-                {
-                  "id": 1
-                }
-              ]
-            },
-            "_meta": {
-              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
-            },
-            "inputResponses": {
-              "approval": {
-                "action": "accept"
+        ],
+        "approval": {
+          "op": {
+            "tool": "append_rows",
+            "host": "prod",
+            "database": "test2",
+            "table": "orders",
+            "rows": "[{\"id\":1}]"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "rows": [
+                  {
+                    "id": 2
+                  }
+                ]
+              },
+              "op": {
+                "tool": "append_rows",
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "rows": "[{\"id\":2}]"
               }
-            }
-          }
-        }
-      },
-      "mcp_refuse": {
-        "body": {
-          "jsonrpc": "2.0",
-          "id": 7,
-          "method": "tools/call",
-          "params": {
-            "name": "write_rows",
-            "arguments": {
-              "host": "prod",
-              "database": "test2",
-              "table": "orders",
-              "rows": [
-                {
-                  "id": 1
-                }
-              ]
             },
-            "_meta": {
-              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
-            },
-            "inputResponses": {
-              "approval": {
-                "action": "decline"
+            "effect_3": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "rows": [
+                  {
+                    "id": 3
+                  }
+                ]
+              },
+              "op": {
+                "tool": "append_rows",
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "rows": "[{\"id\":3}]"
               }
             }
           }

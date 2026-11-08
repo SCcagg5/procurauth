@@ -229,7 +229,8 @@ impl HttpTransport {
         body: Option<&[u8]>,
         timeout: Duration,
     ) -> Result<HttpResponse, TransportError> {
-        let url = Url::parse(url).map_err(|e| TransportError::Unsupported(e.to_string()))?;
+        let url =
+            Url::parse_request(url).map_err(|e| TransportError::Unsupported(e.to_string()))?;
         if url.scheme != Scheme::Http {
             return Err(TransportError::Unsupported(
                 "this client has no TLS: give it an `http` URL, or use a transport with TLS"

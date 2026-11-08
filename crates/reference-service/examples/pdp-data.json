@@ -62,6 +62,20 @@
             "description": "Read the structure of the data."
           },
           {
+            "name": "data.append",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Add rows to a table after the approval of the owner.",
+            "limits": [
+              "requests"
+            ],
+            "approval": "optional"
+          },
+          {
             "name": "mcp.session",
             "resource_types": [
               "service"
@@ -153,6 +167,11 @@
           "limits": {
             "max_duration": 10
           }
+        },
+        {
+          "action": "data.append",
+          "resource": "service:datastore/host:prod/database:test2",
+          "confirm": true
         },
         {
           "action": "data.inspect",

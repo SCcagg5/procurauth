@@ -118,6 +118,7 @@ pub fn config_value(pdp_url: &str, edge: &Edge) -> Value {
 
 /// A test PDP and a service that uses it.
 pub struct Stack {
+    pub app: std::sync::Arc<reference_service::app::App>,
     pub pdp: RunningServer,
     pub service: RunningService,
     pub edge: Edge,
@@ -189,14 +190,16 @@ pub fn stack_with(data: &Value, options: Options, tweak: impl FnOnce(&mut Value)
         Box::new(log.clone()),
     )
     .unwrap();
+    let app = std::sync::Arc::new(app);
     let service = reference_service::service::start(
-        std::sync::Arc::new(app),
+        std::sync::Arc::clone(&app),
         loaded.settings.listen,
         loaded.settings.workers,
         loaded.settings.limits,
     )
     .unwrap();
     Stack {
+        app,
         pdp,
         service,
         edge,

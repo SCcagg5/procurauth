@@ -25,6 +25,9 @@ use std::collections::BTreeSet;
 
 use serde_json::{Map, Value, json};
 
+use crate::approval::{
+    ApprovalCall, ApprovalRefusal, Control, PendingApproval, Verdict, WAIT_MAX_SECONDS,
+};
 use crate::document::ActionDocument;
 use crate::identity::Identity;
 use crate::operation::{Operation, Permission, node};
@@ -444,6 +447,8 @@ pub fn tool_error(request: &RpcRequest, code: &str, message: &str) -> McpReply {
 /// - `false`: HTTP 403 and `-32001`.
 /// - `budget_exceeded`: HTTP 429 with `Retry-After` and `-31429`.
 ///
+/// A refusal of the approval (binding 5.7a) gives the tool error of [`approval_tool_error`] on `tools/call`.
+///
 /// For each method, no answer of the PDP gives HTTP 503 and `-32603`. A refusal
 /// of the token gives HTTP 401 with an empty body. The reply has the
 /// JSON-RPC error only when the request has an `id` (5.6a). The messages are fixed.
@@ -473,11 +478,210 @@ pub fn refusal_reply(refusal: &Refusal, request: &RpcRequest, for_tool_call: boo
                 .push(("Retry-After".to_owned(), retry_after.to_string()));
             reply
         }
+        Refusal::Approval(cause) if for_tool_call => approval_tool_error(request, cause),
+        Refusal::Approval(_) => McpReply::error(403, id, CODE_FORBIDDEN, "forbidden", None),
         Refusal::Unavailable(_) => {
             McpReply::error(503, id, CODE_INTERNAL, "Service unavailable", None)
         }
         Refusal::Internal(_) => McpReply::error(500, id, CODE_INTERNAL, "Internal error", None),
     }
+}
+
+/// The tool error of a refused approval (binding 5.7a). The message is fixed and has no text of
+/// the owner (protocol 17.12). `approval_rate_limited` has `retry_after`, in whole seconds as 5.3 does.
+pub fn approval_tool_error(request: &RpcRequest, cause: &ApprovalRefusal) -> McpReply {
+    let (code, message, retryable, retry_after) = match cause {
+        ApprovalRefusal::Denied => (
+            "approval_denied",
+            "The owner declined the action.",
+            false,
+            None,
+        ),
+        ApprovalRefusal::Expired => (
+            "approval_expired",
+            "The approval is not valid. Call the tool again.",
+            false,
+            None,
+        ),
+        ApprovalRefusal::InvalidArgument => (
+            "invalid_argument",
+            "An argument of the approval is not valid.",
+            false,
+            None,
+        ),
+        ApprovalRefusal::NoDevice => (
+            "approval_unavailable",
+            "The owner has no way to receive the approval request.",
+            true,
+            None,
+        ),
+        ApprovalRefusal::RateLimited { retry_after } => (
+            "approval_rate_limited",
+            "The approval requests of the owner are limited.",
+            true,
+            Some(*retry_after),
+        ),
+    };
+    let mut error = Map::new();
+    error.insert("code".into(), json!(code));
+    error.insert("message".into(), json!(message));
+    error.insert("retryable".into(), json!(retryable));
+    if let Some(seconds) = retry_after {
+        error.insert("retry_after".into(), json!(seconds));
+    }
+    let structured = json!({"error": Value::Object(error)});
+    result_reply(
+        request,
+        json!({
+            "content": [{"type": "text", "text": structured.to_string()}],
+            "structuredContent": structured,
+            "isError": true,
+        }),
+    )
+}
+
+/// The tool error `invalid_argument` for a control argument that is not valid (binding 5.7).
+pub fn invalid_argument_reply(request: &RpcRequest) -> McpReply {
+    approval_tool_error(request, &ApprovalRefusal::InvalidArgument)
+}
+
+/// The result for a call whose action waits for the approval (binding 5.7). It is not an error.
+/// The second item of `content` starts with `NOT EXECUTED`, and it has no value of the request.
+pub fn awaiting_reply(request: &RpcRequest, pending: &PendingApproval) -> McpReply {
+    let structured = json!({"action": {
+        "id": pending.request_id,
+        "status": "awaiting_approval",
+        "code": pending.code,
+        "executed": false,
+    }});
+    result_reply(
+        request,
+        json!({
+            "content": [
+                {"type": "text", "text": structured.to_string()},
+                {"type": "text", "text": "NOT EXECUTED. The action waits for the approval of its owner."},
+            ],
+            "structuredContent": structured,
+        }),
+    )
+}
+
+/// The result of `get_action_status` (binding 5.7b). It is not an error, also for `denied` and `void`.
+pub fn status_reply(request: &RpcRequest, verdict: Verdict) -> McpReply {
+    let structured = json!({"status": verdict.as_str()});
+    result_reply(
+        request,
+        json!({
+            "content": [{"type": "text", "text": structured.to_string()}],
+            "structuredContent": structured,
+        }),
+    )
+}
+
+/// The name of the tool that reads the verdict (binding 5.7b).
+pub const STATUS_TOOL: &str = "get_action_status";
+
+/// The control arguments of a call of a tool with an approval (binding 5.7).
+const CONTROL_ARGUMENTS: [&str; 5] = ["approval_ref", "wait_s", "supersedes", "lease_s", "until"];
+/// The longest text of a control argument.
+const CONTROL_MAX_BYTES: usize = 512;
+
+/// The control arguments of a call, and the other arguments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ApprovalArguments {
+    /// `approval_ref`, `lease_s` or `until`.
+    pub control: Control,
+    /// `supersedes`.
+    pub supersedes: Option<String>,
+    /// `wait_s`, bounded by the PEP.
+    pub wait_seconds: Option<u64>,
+    /// The arguments of the call without the control arguments. The tool builds `op` from them (17.9a).
+    pub rest: Value,
+}
+
+impl ApprovalArguments {
+    /// The call for [`crate::Pep::decide_approval`], with the `op` and the `view` that the tool built.
+    pub fn into_call(self, op: Value, view: Value) -> ApprovalCall {
+        ApprovalCall {
+            op,
+            view,
+            control: self.control,
+            supersedes: self.supersedes,
+            wait_seconds: self.wait_seconds,
+        }
+    }
+}
+
+/// Split the control arguments from the arguments of a call (binding 5.7). A call must give
+/// exactly one of `approval_ref`, `lease_s` and `until`. A control argument has the right type.
+/// The control arguments never enter `op`.
+///
+/// # Errors
+/// Returns `()` when the call does not follow the rule. The tool then sends
+/// [`invalid_argument_reply`] and asks the PDP nothing.
+#[allow(clippy::result_unit_err)]
+pub fn split_approval_arguments(arguments: &Value) -> Result<ApprovalArguments, ()> {
+    let Value::Object(map) = arguments else {
+        return Err(());
+    };
+    let text = |name: &str| -> Result<Option<String>, ()> {
+        match map.get(name) {
+            None => Ok(None),
+            Some(Value::String(t)) if !t.is_empty() && t.len() <= CONTROL_MAX_BYTES => {
+                Ok(Some(t.clone()))
+            }
+            Some(_) => Err(()),
+        }
+    };
+    let whole = |name: &str, min: u64| -> Result<Option<u64>, ()> {
+        match map.get(name) {
+            None => Ok(None),
+            Some(Value::Number(n)) => n.as_u64().filter(|v| *v >= min).map(Some).ok_or(()),
+            Some(_) => Err(()),
+        }
+    };
+    let (reference, lease, until) = (text("approval_ref")?, whole("lease_s", 1)?, text("until")?);
+    let control = match (reference, lease, until) {
+        (Some(r), None, None) => Control::Reference(r),
+        (None, Some(l), None) => Control::LeaseSeconds(l),
+        (None, None, Some(u)) => Control::Until(u),
+        _ => return Err(()),
+    };
+    let supersedes = text("supersedes")?;
+    let wait_seconds = whole("wait_s", 0)?.map(|w| w.min(WAIT_MAX_SECONDS));
+    let rest: Map<String, Value> = map
+        .iter()
+        .filter(|(name, _)| !CONTROL_ARGUMENTS.contains(&name.as_str()))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+    Ok(ApprovalArguments {
+        control,
+        supersedes,
+        wait_seconds,
+        rest: Value::Object(rest),
+    })
+}
+
+/// The `request_id` argument of `get_action_status` (binding 5.7b), when it is a text that the PEP accepts.
+pub fn status_request_id(arguments: &Value) -> Option<&str> {
+    let id = arguments.get("request_id")?.as_str()?;
+    (!id.is_empty() && id.len() <= 256 && id.bytes().all(|b| (0x21..0x7f).contains(&b)))
+        .then_some(id)
+}
+
+/// The entry of `get_action_status` in the list of the tools (binding 5.7b, [CONTRACT, 9.8]).
+/// The tool has `readOnlyHint` true. It has no action in the map of the tools (3.2).
+pub fn status_tool_entry() -> Value {
+    json!({
+        "name": STATUS_TOOL,
+        "description": "Read the verdict of an action that waits for the approval of its owner: pending, approved, denied or void. The agent calls this tool with the id that the action gave. The read keeps the request alive. The tool runs nothing.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"request_id": {"type": "string"}},
+            "required": ["request_id"],
+        },
+        "annotations": {"readOnlyHint": true, "idempotentHint": true, "openWorldHint": false},
+    })
 }
 
 /// The stage of a `tools/call` (3.4, 3.5, 3.5a).
@@ -575,9 +779,72 @@ impl<'a> McpGate<'a> {
     }
 }
 
+impl McpGate<'_> {
+    /// True when `tools/list` names `get_action_status`: the list names a tool whose action has
+    /// the member `approval` (binding 5.7b).
+    pub fn lists_status_tool(&self, visible: &[&ToolSpec]) -> bool {
+        visible
+            .iter()
+            .any(|tool| self.pep.action_has_approval(&tool.action))
+    }
+
+    /// Ask for one call of a tool whose action has the member `approval` (binding 3.5a, protocol 17.7).
+    /// A tool that the map does not have gets the refusal of a `false` answer (4.2, 5.1).
+    pub fn approve(
+        &self,
+        who: &Identity,
+        tool: &str,
+        operation: &Operation,
+        call: &ApprovalCall,
+    ) -> crate::pep::Outcome {
+        if self.tools.get(tool).is_none() {
+            return crate::pep::Outcome::Refused(Refusal::Forbidden {
+                reason: None,
+                cause: crate::refusal::DenialCause::Decision,
+            });
+        }
+        self.pep.decide_approval(who, operation, call)
+    }
+
+    /// Read the verdict for `get_action_status` (binding 5.7b). The tool is not a use, and it asks no question.
+    /// The service has the tool only when its document has an action with the member `approval`.
+    ///
+    /// # Errors
+    /// Returns the refusal. The error for a request that is unknown or that is of another subject is
+    /// [`ApprovalRefusal::InvalidArgument`].
+    pub fn status(&self, who: &Identity, request_id: &str) -> Result<Verdict, Refusal> {
+        self.pep.approval_status(who, request_id)
+    }
+
+    /// True when the service has a tool with an approval: `get_action_status` exists.
+    pub fn has_status_tool(&self) -> bool {
+        self.tools
+            .tools()
+            .iter()
+            .any(|tool| self.pep.action_has_approval(&tool.action))
+    }
+}
+
+/// The result of a `tools/list`, with the entry of `get_action_status` when `status_tool` is true.
+pub fn tools_list_reply_with_status(
+    request: &RpcRequest,
+    tools: &[&ToolSpec],
+    status_tool: bool,
+) -> McpReply {
+    let mut list = tool_entries(tools);
+    if status_tool {
+        list.push(status_tool_entry());
+    }
+    result_reply(request, json!({"tools": list}))
+}
+
 /// The result of a `tools/list`.
 pub fn tools_list_reply(request: &RpcRequest, tools: &[&ToolSpec]) -> McpReply {
-    let list: Vec<Value> = tools
+    result_reply(request, json!({"tools": tool_entries(tools)}))
+}
+
+fn tool_entries(tools: &[&ToolSpec]) -> Vec<Value> {
+    tools
         .iter()
         .map(|t| {
             json!({
@@ -586,8 +853,7 @@ pub fn tools_list_reply(request: &RpcRequest, tools: &[&ToolSpec]) -> McpReply {
                 "inputSchema": t.input_schema,
             })
         })
-        .collect();
-    result_reply(request, json!({"tools": list}))
+        .collect()
 }
 
 /// The result of a call that asks the client for input, in the form of the revision 2026-07-28.
