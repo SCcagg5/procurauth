@@ -27,12 +27,15 @@ This protocol is the only normative text for the subject, chain, coverage, actio
 A service (its PEP) conforms when it follows these paragraphs:
 - 3.3, 3.4, 4.1, 4.4 and 4.5;
 - 5.1, 5.2, 5.2a, the last sentence of 5.3c, 5.4, 5.5 and 5.5a, and 5.6 to 5.8 when it publishes the list of the options;
+- 5.2b, when it has an action with the member `approval`;
 - 6.1, 6.2, 6.4, 6.11 and 6.12;
 - 7.1 and 7.3 to 7.6;
 - the last sentence of 8.3;
 - 9.3 to 9.7, 10 and 11, and item 6 of section 15.
 
 An edge conforms when it follows 1.4, 8.3, 9.1 to 9.3, the second paragraph of 9.4, 9.8 and 9.9. The system that makes keys follows 3.2 and 3.8 for this job. A caller of the route of 5.6 follows 5.6 to 5.9. A service with an MCP endpoint, and an edge in front of such a service, also follow the MCP binding [MCP-BINDING].
+
+Section 17 is optional. A PDP that gives approvals also follows 17.1 to 17.6 and 17.8 to 17.12. A service with an action that has the member `approval` (5.2b) follows 5.2b, 17.1, 17.3, 17.4, 17.7, 17.9, 17.9a and 17.12. An edge follows the last sentence of 17.8.
 
 1.4 In this version, an agent sends the text of its key to the edge in the header `Authorization: Bearer` [RFC 6750, 2.1]. This version is for local clients that can send this header.
 A hosted client, which runs on the servers of a third party, is not in this version. This version defines no OAuth flow.
@@ -112,6 +115,7 @@ For a key, a `true` answer for `subtree` needs one node that a grant of the key 
 - `limits`: optional, the limit declarations of the service (6.1). A limit name has 1 to 32 characters: a to z first, then a to z, 0 to 9 or underscore.
 
 5.2a A service publishes only the actions that it serves. An action of a feature that the configuration of the service turns off is not in `actions`, and the service sends no question for it. A service that serves an action for some of its hosts or settings publishes the action when it serves it for at least one of them. When the feature turns on, the service publishes the action again with the same name and the same `resource_types`. The reader finds it at its next read (5.3b).
+5.2b An action can have the member `approval`. Its only value is the text `optional`. It tells that a grant of the action can have `confirm` (17.8), and that the service follows section 17 for the use of this action. Another value is a bad member (5.3). An action without the member never waits for an approval.
 5.3 The reader checks the document. A bad member, or an unknown member of a limit declaration, makes the whole document bad.
 
 A read fails when it gets a status other than 200, also 404, or no answer. After a bad document or a failed read, the reader keeps the last good document, for a maximum time (5.3a). Only a good document replaces it.
@@ -261,12 +265,13 @@ Then the PEP integrates in seven steps:
 6. Apply each ceiling of `context.limits` (7.5). For a use, take the ceilings of the action of the use from the answer to its question. For an action that lists a budget, this is the question with `context.usage` (6.4). Take the ceilings of each other permission from its own answer (5.5a).
 7. Map each refusal with 10.3.
 
-10.1 The PEP MUST ask the PDP for each operation, with two exceptions. For a read of the action document (5.1), the PEP asks no question. For a request to the route of 5.6, it asks only the questions of 5.6, without `context.usage`. For a use of an action that lists a budget, the question with `context.usage` is the question of the operation (6.4). The PEP MUST NOT send the same question without `context.usage` before it, except to choose among several actions (below). The PEP MAY keep an answer to a question without `context.usage` for at most `cache_ttl`, a time that its configuration sets.
+10.1 The PEP MUST ask the PDP for each operation, with two exceptions. For a read of the action document (5.1), the PEP asks no question. For a request to the route of 5.6, it asks only the questions of 5.6, without `context.usage`. For a use of an action that lists a budget, the question with `context.usage` is the question of the operation (6.4). The PEP MUST NOT send the same question without `context.usage` before it, except to choose among several actions (below). For an action with the member `approval`, 17.7 gives one more exception. The PEP MAY keep an answer to a question without `context.usage` for at most `cache_ttl`, a time that its configuration sets.
 
 A kept answer applies only to the same subject, action, resource with its chain (`resource.properties.ancestors`), and `context.match`. These rules apply to the kept answers:
 - A kept `true` answer never starts a use of an action that lists a budget. The PEP keeps the answers to questions with `context.usage` separate from the other answers. It never keeps a `true` answer with `units` above 0. It MAY keep a `true` answer with `units` equal to 0 for at most `cache_ttl`. That kept answer is the one exception: it lets a use run with no question (6.12).
 - A kept `false` answer MAY refuse a use with no question.
 - The PEP MAY keep a `false` answer with `budget_exceeded` for the same subject, action, and resource with its chain. It keeps that answer for the lower of `retry_after` and `cache_ttl` at most. Until then, it refuses the use as 10.3 says. Its `retry_after` gives the seconds to the end of that time.
+- A PEP never keeps an answer to a question with `context.approval`, and it never keeps an answer with a reason of 17.1 (17.7). A `true` answer that consumed an approval is never kept, also when its `units` is 0.
 - A PEP that chooses among several actions for one operation MAY first ask them without `context.usage`, in one request. Then it sends one question with `context.usage` for the action of the use, when this action lists a budget (6.4).
 - Or that PEP MAY ask them with `context.usage`, one at a time, in its order of preference. It stops at the first `true` or at the first `budget_exceeded`. A `false` answer without `budget_exceeded` counted nothing. The PEP MAY keep it as an answer to the same question without `context.usage`. If the PEP kept a `true` answer to that question, it deletes its kept answers for that subject and that resource.
 
@@ -275,8 +280,8 @@ A kept answer applies only to the same subject, action, resource with its chain 
 The value `max_rows` 1000 applies to the read: thus the copy reads 1000 rows at most. The first question takes no unit, although `data.read` also lists the budget `requests`.
 10.1b The PEP bounds the number of kept answers (10.1). The bound does not depend on the requests of the clients, because a client chooses the resources of the questions. When the table is full, the PEP keeps no new answer.
 10.2 The PEP applies the ceilings as 7.3 and 7.5 say.
-10.3 The PEP MUST fail closed. It MUST NOT send `context.reason` to the client. On an HTTP route, it maps each answer of the PDP as the list below shows. The MCP binding gives the map for an MCP request [MCP-BINDING]. Its tool error for `budget_exceeded` is the one exception to the rule on `context.reason`.
-- `false` with no reason, or with a reason other than `budget_exceeded`: HTTP 403.
+10.3 The PEP MUST fail closed. It MUST NOT send `context.reason` to the client. On an HTTP route, it maps each answer of the PDP as the list below shows. The MCP binding gives the map for an MCP request [MCP-BINDING]. Its tool errors for `budget_exceeded` and for the reasons of 17.1 are the exceptions to the rule on `context.reason`.
+- `false` with no reason, or with a reason other than `budget_exceeded`: HTTP 403. This includes the reasons of 17.1, after the steps of 17.7.
 - `false` with `budget_exceeded`: HTTP 429, with `Retry-After` set to the seconds of `retry_after` (11.1).
 - No answer, an HTTP error, or an answer that is not valid: HTTP 503.
 
@@ -291,6 +296,7 @@ The units of a lost answer stay counted. The PEP refuses that use as for a PDP t
 - `unknown_subject`: the PDP does not know the subject. A revoked, expired or deleted key, a deleted person, and a key whose owner does not exist, get this reason. A subject of a type other than `user` (3.3), and an id with an unknown prefix or a bad local part (3.7), also get it;
 - `invalid_resource`: the PDP checks the resource with the last good action document of the service of the PEP (5.3). It gives this reason when the first object of the chain is not that service, or when the resource is the service of another PEP. A resource below the service with no `ancestors`, or an empty array, has no first object of the chain, so it also gets this reason (4.1). It also gives it when the types of the chain and of the resource do not follow the parents of the document. It also gives it when the document does not declare a type, or when the depth is more than 4. With no good document of the service, the PDP answers `false` without a reason for each node, except a question for `access` on the service (8.3, 11.2);
 - `invalid_request`: only in an item of an Access Evaluations answer. The item has a bad `context.match`, or a `resource.properties.ancestors` that is not an array of objects with `type` and `id`. In a request with one evaluation, a bad member of this protocol gives HTTP 400. This is a rule of this protocol: the core makes 400 mandatory only when the request does not have a mandatory attribute [AUTHZEN 1.0, l.1416]. Its error table gives 400 to a bad request in general [AUTHZEN 1.0, l.1425-1432];
+- `approval_required`, `approval_pending`, `approval_denied` and `approval_expired`: the action needs the approval of the owner, and 17.1 tells which reason applies. A PDP that gives no approval never answers them;
 - `budget_exceeded`: a counter of the use has too few units left. The PDP answers HTTP 200 with `false`, never 429. The context also has `retry_after`: the seconds to the latest end among the windows of the counters that refuse. It is a whole number, at least 1: a time of 11.2 seconds gives 12. It has the meaning of the HTTP field `Retry-After` [RFC 9110, 10.2.3].
 
 11.2 Any other `false` answer has no reason, for example when no grant covers the resource. An answer never shows the grants.
@@ -307,6 +313,8 @@ The units of a lost answer stay counted. The PEP refuses that use as for a PDP t
 - A client that reaches a service without the edge can use an identity token that it gets until its `exp`. It then skips the checks of the edge, for example the decision for `access` (8.3). This is why 9.4 makes a service accept requests only through the edge.
 - An edge that sends the text of a key to a service lets that service use the key on each other service of the owner. This is why 9.1 makes the edge remove it.
 - A client that sends a request again makes a new use. The PDP counts it again. This over-count is safe.
+- A PEP that is not safe can submit any `op` and any `view` for an approval. The PDP checks only that they fit the effect (17.9). The owner decides on the text that the PEP gave, so the owner must trust the service.
+- A PDP that gives approvals sees the body of each request (17.9). It is the only place that shows the command to the owner. A PDP that is not safe can show a text that is not the command that the PEP runs. The owner and the service can find the difference only with their own records of the effect (17.10).
 - The credential of each service for the PDP (10.0, step 4) SHOULD have at least 128 random bits. The PDP SHOULD keep only its SHA-256 digest, so that a leak of the data of the PDP gives no credential. The digests take approximately 32 KB for 1,000 services and approximately 320 KB for 10,000.
 
 ## 13. Examples
@@ -408,11 +416,12 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 - A question with `context.usage` is not idempotent. Two equal questions can get `true`, then `false` with `budget_exceeded`. The idempotence case of the AuthZEN certification (c-2-6) applies only to questions without `context.usage`.
 - `owner` is a private claim [RFC 7519, 4.3]. It is not in the IANA JWT Claims registry. In OAuth token exchange [RFC 8693], `sub` is the person and `act` is the actor. In this protocol, `sub` is the key. A service that reads only `sub` thus decides for the key, never for the person.
 - The relation of the MCP refusals to the COAZ binding for MCP is in the MCP binding [MCP-BINDING, section 11].
+- Section 17 uses the idea of the denial that a person can approve, with `evaluation_id`, from ARAP [ARAP]. It differs in four points. An approval has one use. A request has a lease, and the states `abandoned` and `superseded`. The PDP keeps the body that the PEP sends. The API gives the PEP only a verdict.
 - The metadata members of 6.9, 10.7 and 10.7a are not in the IANA registry "AuthZEN Policy Decision Point Metadata" [AUTHZEN 1.0, l.1821-1823]. A PEP that does not know them MUST ignore them [AUTHZEN 1.0, l.1342]. Register them before a publication outside the network of the author.
 
 ## 15. Open points
 1. If AuthZEN adopts the extensibility model of pull request #697 as written, the adoption by the action document (7.5) is not adoption on the wire. A PEP then sends `supported_mandatory_extensions`, and the three members of section 14 get names that resist collision.
-2. The conformance cases are data in `conformance/` of the repository of this specification, and each case cites a paragraph of this document. The series U is for a PEP, and the series D is for a PDP. The series E is for an edge (1.3), and its cases test 1.4, 8.3, 9.1 to 9.3, the second paragraph of 9.4, 9.8 or 9.9. The MCP binding holds the cases that only MCP needs: U18, U23, U25 to U31 and E01 [MCP-BINDING]. `conformance/` gives none of these ids to another case, so its series E starts at E02. No series tests the system that makes keys (3.2, 3.8) or the caller of the route of 5.6 (5.6 to 5.9) in this version.
+2. The conformance cases are data in `conformance/` of the repository of this specification, and each case cites a paragraph of this document. The series U is for a PEP, and the series D is for a PDP. The series E is for an edge (1.3), and its cases test 1.4, 8.3, 9.1 to 9.3, the second paragraph of 9.4, 9.8 or 9.9, or the last sentence of 17.8. The MCP binding holds the cases that only MCP needs: U18, U23, U25 to U31 and E01 [MCP-BINDING]. `conformance/` gives none of these ids to another case, so its series E starts at E02. No series tests the system that makes keys (3.2, 3.8) or the caller of the route of 5.6 (5.6 to 5.9) in this version.
 3. A later version can add `remaining` to `context.usage`. A PEP can then copy it into the `RateLimit` field [RATELIMIT]. The seconds to the end of a window keep one name: `retry_after`.
 4. Before a publication outside the network of the author, register the well-known name `procurauth` [RFC 8615]. The two documents of this protocol are below this name: `/.well-known/procurauth/actions` (5.1) and `/.well-known/procurauth/resources` (5.6).
 5. The token issuance profile registers a capability URN for an extension that adds response vocabulary. `context.limits` is such a vocabulary. The project ProcurAuth defines a capability URN later, after a check of its format. No URN member exists in this version. Until then, `context.usage.units` in each counted answer shows that a PDP counts (6.12).
@@ -422,7 +431,26 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 16.1 `IMPLEMENTATIONS.md` of the repository of this specification lists the known implementations. The repository also has a linter of action documents, a test PDP and a maker of test identity tokens. It also has a checker of key texts, a runner of the conformance cases (15, item 2) and a reference PEP library in Rust. The checker of key texts takes the format of the text as an input, because this protocol defines no format (3.8). `docs/` and the README of each crate describe them.
 
 ## 17. Approval of an effect
-The paragraph numbers 17.1 to 17.12 are reserved for the approval profile of this protocol. This version writes only the paragraph 17.3. The other numbers stay free until a later version writes them. A free number is not an unused paragraph.
+An action can run only after the approval of a person, the owner of the key. This section is optional (1.3). It defines the question and the answers (17.1, 17.2), the effect (17.3) and a narrow API for the PEP (17.4). It also gives the rules of the approval (17.5 to 17.12). The PEP learns only the verdict (17.6, 17.12).
+
+17.1 A PEP that serves an action with the member `approval` (5.2b) computes the effect of the operation (17.3). It sends the effect as `context.approval.effect` in each question for a use of this action. `context.approval` is an object with one member, `effect`. A bad effect gets HTTP 400. The question never has `op` or `view` (17.9).
+
+For such a question, the PDP first decides as for a question without the effect (3.5). When this decision is `false`, the answer does not change. When no grant of the action that covers the resource has `confirm` (17.8), the PDP ignores the effect. It also ignores it when `context.match` is `subtree` (4.4). Otherwise the action needs an approval.
+
+The PDP then looks at the latest approval for the same service, subject, action, resource and effect (17.6). It answers as the list below shows. A `false` answer takes no unit (6.5).
+- There is no approval, or the approval is consumed: `false` with the reason `approval_required`.
+- The approval is `pending` or `replied` (17.6): `false` with `approval_pending`.
+- The approval is `answered` with `decline`, and the deny time of 17.6 has not ended: `false` with `approval_denied`. After the deny time, the answer is as for no approval.
+- The approval is void (17.6): for a question without `context.usage`, the answer is as for no approval. For a question with `context.usage`, it is `false` with `approval_expired`.
+- The approval can be used (17.6): for a question without `context.usage`, the answer is `true`, and the PDP consumes nothing. For a question with `context.usage`, 17.2 applies.
+
+A question with no `context.approval` gets `false` with `approval_required` when the action needs an approval and `context.match` is not `subtree`. The PDP cannot approve an operation that has no effect.
+
+The answers with `approval_required` and `approval_pending` also have `context.evaluation_id` when the question had an effect. It is a text that only the PDP reads. It binds the service, the subject, the action, the resource and the effect of the question. It stays valid for a time that the PDP publishes. The PEP sends it back as 17.4 says, and it never reads it.
+
+17.2 A question with `context.usage` and an effect, for an approval that can be used (17.1), is the use of the action. The PDP takes the units and consumes the approval in one atomic step, or neither (6.5). The answer is `true` with `context.usage.units` (6.12). The PDP never consumes an approval two times.
+
+When a counter refuses, the answer is `false` with `budget_exceeded` (6.5). The PDP consumes nothing, and the approval stays usable until its `consume_before` (17.6). The PEP sends `context.usage` for the use of an action with the member `approval` also when the action lists no budget. This is an exception to 6.4. The answer then has `units` 0.
 
 17.3 The effect of an operation is a hash. It binds the service, the action, the resource and the operation. The hash input is this JSON object, with these four values:
 
@@ -452,6 +480,76 @@ A `view` is a template over `op`. It is not part of the effect. Each value that 
 
 The file `conformance/vectors/effect.json` holds test vectors of this paragraph. For each vector of the group V01, an implementation MUST give the canonical text and the effect of the vector. For each vector of the group V02, it MUST refuse the input.
 
+17.4 A PDP that gives approvals serves a narrow API to the PEP. It has the three routes below, and no other route for a PEP. The PEP sends the credential of the service (10.0, step 4). The PDP answers 403 to a service that it did not enable for approvals. Each body is a JSON object, and the schemas `approval-submission` and `approval-verdict` define them.
+- `POST /approval/v1/requests` submits a request. The body has `evaluation_id` (17.1), `effect`, `op` and `view` (17.3, 17.9). It also has exactly one of `approval_ref`, `lease_s` and `until` (17.5). It can have `supersedes`, the id of a request of the same subject that this request replaces.
+- `GET /approval/v1/requests/{request_id}?subject={subject}&wait={seconds}&renew=true` reads the verdict. The query parameter `subject` is mandatory. The query parameters `wait` and `renew` are optional. The PDP waits at most `wait` seconds for a verdict other than `pending`. It bounds `wait` and publishes the bound.
+- `POST /approval/v1/requests/{request_id}/keepalive` has the body `{"subject": "<subject>"}`. It renews the lease (17.5) and gives the verdict.
+
+The answer to a submission is HTTP 201 with `request_id`, `code` and `verdict` equal to `pending`. The `code` is a short text that the owner sees, and the PEP gives it to the agent. A request for the same service, subject, action, resource and effect can still be `pending`. The answer is then HTTP 200 with the same `request_id` and `code`. This second submission does not renew the lease and does not change the body. The answer to each other route is `{"verdict": "<verdict>"}`, with a verdict of 17.6.
+
+A read renews the lease only with `renew=true`, and only when `subject` is the subject of the request. An unknown request, a request of another service and a request of another subject get the same answer: HTTP 404 with the error `not_found`. An error has the body `{"error": "<code>"}`. The codes are:
+- 413 `command_too_large`: `op` and `view` are larger than the PDP bound, which it publishes;
+- 422 `effect_mismatch`, `invalid_view`, `invalid_op`, `invalid_evaluation`, `invalid_argument`, `lease_required` and `invalid_lease`: 17.5 and 17.9 give the causes. The code `invalid_argument` also covers a bad `approval_ref`;
+- 409 `no_device`: the owner has no way to receive the request. 409 `cannot_supersede`: the request in `supersedes` is consumed;
+- 429 `rate_limited`, with `retry_after` as in 11.1.
+
+An `approval_ref` is an opaque text that the agent gets from the PDP by a channel outside this protocol. It is for one use, for one key, and for a time that the PDP publishes. The PDP attaches the intent of the agent to the request. It refuses a reference that is unknown, used, late or from another subject.
+
+17.5 The agent says how long it waits. It gives `lease_s`, a whole number of seconds, or `until`, a time [RFC 3339]. It gives only one of them, in its intent or in the submission. The PDP refuses a request with none (`lease_required`) and a request with both (`invalid_lease`). The PDP bounds `lease_s` and publishes the bounds. It refuses a value outside them, and it never changes it.
+
+The lease of a request with `lease_s` lasts 3 times `lease_s` after the last renewal. A renewal is a call of the subject of the request. It is a read with `renew=true`, a keepalive, or a call of the agent to the PDP. When the lease and a grace time of the PDP have ended, the request is `abandoned`. A request with `until` is `expired` at that time. Each request is `expired` after the longest life that the PDP publishes for a request and the requests that replace it.
+
+The agent can revive an `abandoned` request with a renewal. The PDP bounds the time after which it refuses, and the number of revivals, and it publishes both. The PEP never renews on its own (17.7).
+
+17.6 A request has one of these statuses: `pending`, `replied`, `answered`, `abandoned`, `expired`, `cancelled` and `superseded`. `replied` is `pending` with a question of the owner to the agent. The owner can still decide. A request is `answered` when the owner answers `approve` or `decline` (17.11). The statuses `abandoned`, `expired`, `cancelled` and `superseded` are final, except `abandoned` during the revival time (17.5).
+
+The verdict is what a PEP learns. It has four values:
+- `pending`: the status is `pending` or `replied`;
+- `approved`: the status is `answered` with `approve`, and the approval is consumed or can be used;
+- `denied`: the status is `answered` with `decline`;
+- `void`: the status is `abandoned`, `expired`, `cancelled` or `superseded`, or the approval was not consumed before its `consume_before`.
+
+An approval is void when its verdict is `void`. An approval can be used when it is `answered` with `approve`, it is not consumed, and the time is not past `consume_before`. The PDP sets `consume_before` when the owner answers. It is not before the time of the answer plus a consume time that the PDP publishes. For a request with `lease_s`, the window is not shorter than `lease_s`. The agent, an administrator or the revocation of the key can cancel a request.
+
+After a `decline`, the PDP answers `approval_denied` for the same effect during a deny time that it publishes (17.1). A void or consumed approval starts no such time. An approval for another effect never depends on it.
+
+17.7 A PEP that serves an action with the member `approval` follows these steps for each call.
+1. Compute the effect (17.3) from the values that the call will run. Send the question without `context.usage`, with `context.approval.effect` (17.1).
+2. On `approval_required` or `approval_pending`: submit the request (17.4) with the `evaluation_id` of the answer. A second submission gives the same id and code. Tell the agent that the action waits, and run nothing.
+3. On `approval_denied` or `approval_expired`: refuse the call, and send no question with `context.usage`.
+4. On `true`: compute the effect again from the values that the PEP runs. Send the question with `context.usage` and this effect (17.2). Run the action only after a `true` answer to this question.
+5. Treat any other answer as 10.3 says. This includes a reason of 17.1 for an action that has no member `approval`.
+
+The PEP never runs an action after an answer to a question without `context.usage`. It never keeps an answer to a question with `context.approval`, and it never keeps an answer with a reason of 17.1 (10.1). The PEP renews a lease only for a call of the agent that names the request, never on a timer of its own.
+
+The PEP sends the control arguments of the agent to the PDP in the form that 17.4 gives, and no other text of the agent. It never reads an `approval_ref` or an intent. It gives the agent only the verdict (17.12). A verdict that the PEP does not know is `void`.
+
+17.8 A grant can have the member `confirm`, `true` or `false`. The default is `false`. It is a restriction, like a ceiling (8.1). An action needs an approval when one grant of the action that covers the resource (4.3) has `confirm` equal to `true`. For a key, the grants of the key and the grants of its owner both count (3.5, 8.1). The strictest side wins.
+
+The member has no effect on the action `access` (8.3), and no effect on a question with `context.match` equal to `subtree` (4.4). An edge asks only `access`, so it never asks for an approval, and it ignores `confirm`. A `true` answer for `access` from a grant with `confirm` stays a `true` answer.
+
+17.9 The PDP MUST check each submission before it keeps it. The effect MUST be the effect (17.3) of the service of the credential, the action and the resource of the `evaluation_id`, and the `op`. A difference gets `effect_mismatch`. An `op` that 17.3 refuses gets `invalid_op`. An `evaluation_id` that is unknown, late, or from another subject or effect gets `invalid_evaluation`.
+
+A `view` is a JSON object. Each of these members is optional, and the `view` has no other member:
+- `title`: a text;
+- `fields`: an array of pairs, a text and a JSON Pointer to a value of `op`;
+- `body`: a JSON Pointer to a text of `op`;
+- `body_label`: a text.
+
+A pointer that names no value, or a pair that is not a text and a pointer, makes the `view` invalid (`invalid_view`). The text of a label and of a title is the text of the service. The owner reads the values of `op`, never a text that the service wrote separately. The PEP sends `op`, `view` and `effect` only in a submission. The question has the effect only.
+
+17.9a The body of a request has two parts. The command is `op` and `view`. The service gives it, it is bound to the effect, and it is the text that the owner trusts. The explanation is a text of the agent that has no value for the decision. The agent gives it to the PDP, by a channel outside this protocol.
+
+The explanation never enters the effect. The PEP never sees it. The values `explanation`, `allow_custom`, `allow_ask_back`, `hint`, `lease_s`, `until`, `approval_ref`, `wait_s` and `supersedes` are control arguments of the agent. They never enter `op`.
+
+17.10 A PDP that keeps the body of a request SHOULD encrypt it at rest. It SHOULD delete the body after a time that it publishes, and keep the effect. It never writes a body in a log. A service SHOULD record the effect and the command that it ran. This record lets the owner find a difference between the command shown and the command run.
+
+17.11 The PDP accepts an answer to a request only from an authenticated session or device of the owner of the key. It never accepts it from a key or from the service. The answer has `approve` or `decline` and `shown_effect`. The PDP refuses an answer when `shown_effect` is not the effect of the request. Only the first valid answer counts.
+
+A `decline` can have a text, with the intent `comment` or `change_request`. The PDP accepts it only when the intent of the agent says so. An `approve` never has a text. The text goes only to the agent. The owner never changes the command, so a change request is a refusal.
+
+17.12 A PDP gives a PEP only the verdict (17.6), the reasons of 17.1 and, at submission, the id and the code of the request. It never gives the PEP the text of a refusal, the identity of the owner, a device or the explanation. It gives no discussion, no time of an answer, no lease and no count of renewals. A PEP never tries to get them.
+
 ## References
 - [AUTHZEN] (also cited as [AUTHZEN 1.0]) AuthZEN Authorization API 1.0, Final Specification, OpenID Foundation. A citation l.N is a line of `api/authorization-api-1_0.md` in the repository `openid/authzen` at commit `4deba63`.
 - [AUTHZEN-ISSUANCE] AuthZEN Profile for OAuth 2.0 Token Issuance, Draft 1: `profiles/authzen-oauth/authzen-oauth-token-issuance-1_0.md` at the same commit.
@@ -460,6 +558,7 @@ The file `conformance/vectors/effect.json` holds test vectors of this paragraph.
 - [MCP-BINDING] The MCP binding of ProcurAuth, an internal binding of this protocol: `bindings/mcp/` in the repository of this specification. It is normative for a service with an MCP endpoint and for an edge in front of such a service (1.3).
 - [RATELIMIT] IETF RateLimit header fields for HTTP, draft-ietf-httpapi-ratelimit-headers-11.
 - [RFC 2119] Key words for use in RFCs to Indicate Requirement Levels. [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words.
+- [RFC 3339] Date and Time on the Internet: Timestamps.
 - [RFC 3986] Uniform Resource Identifier (URI): Generic Syntax.
 - [RFC 6750] The OAuth 2.0 Authorization Framework: Bearer Token Usage.
 - [RFC 6901] JavaScript Object Notation (JSON) Pointer. [RFC 8785] JSON Canonicalization Scheme (JCS). [FIPS 180-4] Secure Hash Standard, which defines SHA-256.

@@ -50,7 +50,9 @@ The terms of protocol section 2 apply. This binding adds these terms:
 
 3.5 A call that only asks the client for input (MCP `InputRequiredResult`) is not a use. For this call, the service asks the action of the tool without `context.usage` (protocol 6.6, 10.1). The later call that gives the input and runs the tool is the use of 3.4. For an action that lists a budget, a kept `true` answer of the first call never starts this use (protocol 10.1).
 
-3.5a A tool with an effect gives an action that waits for an approval [CONTRACT, 9.4]. At the call, the service asks this action without `context.usage` (protocol 6.6, 10.1). After the approval, at the run, the service sends the question of 3.4 with `context.usage`. A refused approval takes no unit.
+3.5a A tool with an effect has an action with the member `approval` (protocol 5.2b) [CONTRACT, 9.4]. For each call of this tool, the service follows protocol 17.7. At the call, it asks the action without `context.usage`, with `context.approval.effect` (protocol 17.1). After the approval, at the run, it sends the question of 3.4 with `context.usage` and the effect (protocol 17.2). A refused or void approval takes no unit.
+
+The effect of a call has the tool and the arguments that decide what the tool does. It has no control argument (5.7).
 
 3.6a A request for an MCP method with no tool asks the action `mcp.session` on the resource of type `service` with the id of the service (protocol 4.1). Such methods are `initialize`, `ping`, `server/discover` and the notifications. The service declares the action `mcp.session` in its action document (protocol 5.2). When this action lists a budget, each such request is one use (protocol 6.4).
 
@@ -68,8 +70,9 @@ The terms of protocol section 2 apply. This binding adds these terms:
 4.4 For one `tools/list`, tools with the same action share one item (4.1), so the items are not more than the actions of the action document (protocol 5.3c). Example: with 20 actions and one `tools/list` each minute on each service, the PDP gets approximately 17 requests (333 items) each second for 1,000 services. For 10,000 services, it gets approximately 167 requests (3,333 items) each second. The kept answers of 4.3 take one entry for each subject and action of one service. For 1,000 subjects and 20 actions, they take 20,000 entries, approximately 2 MB at 100 bytes each. This number is the same for 1,000 and for 10,000 services.
 
 ## 5. Refusals of a service
-5.1 Protocol 10.3 applies to an MCP request: the service fails closed and sends no `context.reason` to the client. The one exception is the code `budget_exceeded` in the tool error of 5.3. The service maps each answer of the PDP as the list below shows:
-- `false` with no reason, or with a reason other than `budget_exceeded`: on `tools/call`, HTTP 200 and the JSON-RPC error `-32602`, as for an unknown tool [CONTRACT, 3.6]. On another MCP request, HTTP 403 with the body of 5.1b.
+5.1 Protocol 10.3 applies to an MCP request: the service fails closed and sends no `context.reason` to the client. The exceptions are the code `budget_exceeded` in the tool error of 5.3 and the codes of 5.7a. The service maps each answer of the PDP as the list below shows:
+- `false` with no reason, or with any other reason: on `tools/call`, HTTP 200 and `-32602`, as for an unknown tool [CONTRACT, 3.6]. The next two items hold the exceptions. On another MCP request, HTTP 403 with the body of 5.1b.
+- `false` with a reason of protocol 17.1: on `tools/call` of a tool with an approval, the result of 5.7 or the tool error of 5.7a. On another MCP request, HTTP 403 with the body of 5.1b.
 - `false` with `budget_exceeded`: on `tools/call`, HTTP 200 and the tool error of 5.3. On another MCP request, HTTP 429 with `Retry-After`, and the JSON-RPC error of 5.4.
 - No answer, an HTTP error, or an answer that is not valid: HTTP 503 and the JSON-RPC error of 5.5.
 
@@ -96,6 +99,29 @@ The terms of protocol section 2 apply. This binding adds these terms:
 5.6 Each error of this section has a fixed message, and the service copies no value of the request into it [CONTRACT, 5.2].
 
 5.6a When the service refuses an MCP request before it reads the `id`, the body of the answer is empty, as for an edge (6.1). The client reads the HTTP status and the headers. The service sends a JSON-RPC error only when it knows the `id` of the request.
+
+5.7 A tool whose action has the member `approval` accepts these optional control arguments: `approval_ref`, `wait_s`, `supersedes`, `lease_s` and `until`. The service sends them to the approval API as protocol 17.4 gives (protocol 17.9a). They never enter the effect. `wait_s` is the most seconds that the service waits for a verdict, and the service bounds it. A call must give exactly one of `approval_ref`, `lease_s` and `until`. Another call gets the tool error `invalid_argument` (5.7a), and the service takes no further step.
+
+When protocol 17.7 tells that the action waits, the service answers HTTP 200 with a result that is not an error. Its `structuredContent.action` has `id` (the `request_id`), `status` equal to `awaiting_approval`, `code` and `executed` equal to `false`. The second item of `content` is a fixed text that starts with `NOT EXECUTED`. The service copies no value of the request into it (5.6). The result has this form:
+```json
+{ "resultType": "complete",
+  "content": [ { "type": "text", "text": "{\"action\":{\"id\":\"apr_9f3a\",\"status\":\"awaiting_approval\",\"code\":\"K7QF\",\"executed\":false}}" },
+               { "type": "text", "text": "NOT EXECUTED. The action waits for the approval of its owner." } ],
+  "structuredContent": { "action": { "id": "apr_9f3a", "status": "awaiting_approval", "code": "K7QF", "executed": false } } }
+```
+
+5.7a A refused call of a tool with an approval is a tool error, in the form of 5.3. It has a fixed message and never has the text of the owner (protocol 17.12). The codes are:
+- `approval_denied`, `retryable` false: the PDP answered `approval_denied` (protocol 17.1);
+- `approval_expired`, `retryable` false: the PDP answered `approval_expired`. The code does not tell if the approval expired, was abandoned, was cancelled or was replaced (protocol 17.6);
+- `invalid_argument`, `retryable` false: a control argument is bad (5.7), or the PDP answered 413 `command_too_large`, or 422 with `invalid_argument`, `invalid_lease` or `lease_required` (protocol 17.4);
+- `approval_unavailable`, `retryable` true: the PDP answered 409 `no_device` to a submission (protocol 17.4);
+- `approval_rate_limited`, `retryable` true, with `retry_after`: the PDP answered 429 to a submission. The service copies `retry_after`.
+
+Another answer of the approval API gives HTTP 503 and the JSON-RPC error of 5.5. A call to the approval API that fails gives the same result. A request that the service sends again is a new request (protocol 12).
+
+5.7b A service with a tool that has an approval also has the tool `get_action_status`. Its argument is `request_id`. Its result has `structuredContent` equal to `{"status": "<verdict>"}`, with a verdict of protocol 17.6. The annotation `readOnlyHint` is true. The result is not an error, also for `denied` and `void`.
+
+The tool has no action in the map of the tools (3.2), and it is not a use. The service sends no question to the PDP for it. It reads the verdict with `renew=true` and the subject of the token, and so it renews the lease for the agent (protocol 17.4, 17.5). A request that is unknown, or that is of another subject, gives the tool error `invalid_argument`. `tools/list` names the tool when it names a tool with an approval (4.1).
 
 ## 6. Refusals of an edge
 6.1 When an edge refuses an MCP request, the body of the answer is empty, for each status. The client reads the HTTP status and the headers: `WWW-Authenticate` on a 401 (protocol 9.8) and `Retry-After` on a 429. The edge sends no JSON-RPC error, so it needs no part of the body of the request. Only a service that answers by itself uses the JSON-RPC errors of section 5.
@@ -132,7 +158,7 @@ The terms of protocol section 2 apply. This binding adds these terms:
 - U27 (3.3, 3.3a, 5.2, 5.6a): an MCP request with no identity token gets HTTP 401 and an empty body.
 - U28 (5.1, 5.5): when the test PDP does not answer, a `tools/call` gets HTTP 503 and `-32603`.
 - U29 (3.6a): a `ping` asks the action `mcp.session` on the resource of type `service` with the id of the service. The test PDP answers `false`, and the `ping` gets HTTP 403 and `-32001`.
-- U30 (3.5a): a tool whose action waits for an approval sends one question without `context.usage` at the call, and one question with `context.usage` equal to `{"units": 1}` after the approval. A refused approval sends no question with `context.usage`.
+- U30 (3.5a, 5.7; protocol 17.1, 17.7): a tool whose action has the member `approval` sends one question without `context.usage`, with the effect, at the call. The service gives the result of 5.7. After the approval, it sends one question with `context.usage` equal to `{"units": 1}` and the effect. A refused approval sends none.
 - U31 (5.1b): the test PDP answers `false` with no reason for a `server/discover`. The answer is HTTP 403 with the body `{"jsonrpc": "2.0", "id": 7, "error": {"code": -32001, "message": "forbidden"}}`.
 - E01 (6.1, 6.2, 6.3; protocol 9.8): an MCP request with a key text that the edge does not know gets HTTP 401, `WWW-Authenticate: Bearer error="invalid_token"` with no `resource_metadata`, and an empty body. No refusal of the edge has the status 400, 404 or 405.
 
@@ -204,6 +230,8 @@ Content-Length: 0
 4. Its section 11 restates rules of the protocol and does not cite the protocol. Its 11.3 to 11.5 and 11.8 become references to the protocol. Then three differences end. Its 11.3 has `EdDSA` (protocol 9.2), and its 11.4 has a path of the action document other than `/.well-known/procurauth/actions` (protocol 5.1). Its 11.5 accepts a network without TLS (protocol 10.0, step 4). Its 11.1 says that AuthZEN does not apply to the MCP endpoint, but 3.3 accepts the identity token there.
 5. Its 11.5 gives `false` when the PDP fails, and its case U08 then expects 403: the protocol gives HTTP 503 (protocol 10.3). Its case D14 expects `false` with `invalid_request` for a bad `context.match` in one evaluation: the protocol gives HTTP 400 (protocol 11.1). Its 11.6 gives 403 to each `false`, also for `budget_exceeded` (protocol 10.3).
 6. Its file `IMPLEMENTATIONS.md` names products. It does not move into the repository of this specification.
+7. Its section 9 gives the approval of an action with blocks `approver` and a channel API. Section 5.7 and protocol 17 replace them: the service gets only a verdict. Its 6.2 has none of the codes of 5.7a. Its 9.8 gives more than the verdict. The amendment is in the repository of [CONTRACT].
+8. Section 5.7a has no code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (protocol 17.6, 17.12), so it gives `approval_expired`.
 
 ## References
 - [PROTOCOL] ProcurAuth Protocol, version 1.0: `spec/` in the repository of this specification.
