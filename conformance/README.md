@@ -10,6 +10,7 @@ This directory holds the conformance cases of the ProcurAuth protocol, as data. 
 | `cases/D/` | Cases for a PDP, the decision point. |
 | `cases/E/` | Cases for an edge. |
 | `directories/` | Data files for the test PDP. A case can name one. |
+| `vectors/` | Test vectors for a rule that a case cannot state, for example the hash of protocol 17.3. A vector file is not a case. |
 | `COVERAGE.md` | The cases of each paragraph, and the rules that no case tests. |
 | `schema-check/` | A Rust crate. Its tests check each file of this directory. |
 
@@ -20,6 +21,8 @@ One file holds one case. The name of the file is the id of the case, for example
 An id has the letter of the series and a number of two or three digits. The series U tests a PEP, the series D tests a PDP, and the series E tests an edge (protocol 15, item 2).
 
 The numbers of a series have no gap. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9. These cases are in this directory, and they have exactly these ids. Each of them cites a paragraph of the binding and has the condition `no_mcp_endpoint`.
+
+The ids V01 and V02 are not case ids. They name two groups of vectors in `vectors/effect.json`. The schema `schemas/effect-vectors.schema.json` defines the format of this file. `COVERAGE.md` lists the groups.
 
 ## A case
 
@@ -237,6 +240,9 @@ The crate `schema-check` checks each file. A failed check names the case. These 
 - each condition that a step needs is in the step or in the case;
 - each directory file that a case names exists and is valid;
 - each series has at least six cases;
-- `COVERAGE.md` has a row for each paragraph that a role must follow, and it agrees with the cases.
+- `COVERAGE.md` has a row for each paragraph that a role must follow, and it agrees with the cases;
+- `vectors/effect.json` is valid against the schema `effect-vectors`, and its ids are unique;
+- the file has at least 12 vectors in the groups V01 and V02. It cites a paragraph that exists. `COVERAGE.md` has a row for each group;
+- the test `effect_vectors` in `crates/procurauth-core` computes the hash of each vector again.
 
 Run the checks with `scripts/cargo.sh test -p procurauth-schema-check`.

@@ -421,6 +421,37 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 ## 16. Implementations and tools (informative)
 16.1 `IMPLEMENTATIONS.md` of the repository of this specification lists the known implementations. The repository also has a linter of action documents, a test PDP and a maker of test identity tokens. It also has a checker of key texts, a runner of the conformance cases (15, item 2) and a reference PEP library in Rust. The checker of key texts takes the format of the text as an input, because this protocol defines no format (3.8). `docs/` and the README of each crate describe them.
 
+## 17. Approval of an effect
+The paragraph numbers 17.1 to 17.12 are reserved for the approval profile of this protocol. This version writes only the paragraph 17.3. The other numbers stay free until a later version writes them. A free number is not an unused paragraph.
+
+17.3 The effect of an operation is a hash. It binds the service, the action, the resource and the operation. The hash input is this JSON object, with these four values:
+
+```json
+{"v":1,"service":"datastore","action":"data.write","resource":"host:prod/database:analytics","op":{"tool":"run_write_query"}}
+```
+
+- `v` is the number 1. It is the version of the hash input.
+- `service` is the id of the service. `action` is the name of the action (5.2). Both are strings.
+- `resource` is the path of the resource, in the form that 5.2 gives for `resources`. The path does not hold the service. The service itself has the empty string.
+- `op` is a JSON object. The service puts in it each value that decides what the operation does. An empty object is valid.
+
+The PEP writes the hash input as JSON text with JCS [RFC 8785]. It encodes the text in UTF-8 and computes SHA-256 over the bytes. The effect is the text `sha256:` and the 64 lower-case hexadecimal digits of the hash. A PDP computes the effect in the same way.
+
+These rules of JCS matter most for an implementation:
+- The text has no white space between tokens.
+- The members of an object sort by the UTF-16 code units of their names. This order differs from the order of code points and of UTF-8 bytes for a name with a character above U+FFFF.
+- A string has the escapes `\b`, `\t`, `\n`, `\f`, `\r`, `\"` and `\\`. Each other character below U+0020 has the form `\u00xx`, with lower-case digits. Each other character stays as it is, also `/`, U+007F and U+2028.
+- An array keeps the order of its items.
+- No Unicode normalisation applies. Two forms of one letter give two different effects.
+
+`op` has only these kinds of value: objects, arrays, strings, `true`, `false`, `null` and integers. An integer is a JSON number with no fraction and no exponent, written as `0` or as digits with no zero at the start. Its value is from -(2^53-1) to 2^53-1.
+Any other number makes `op` invalid, for example `1.5`, `1.0`, `1e2`, `-0`, `9007199254740992` and an integer of more than 64 bits. This rule removes the differences between the number formats of the languages. An `op` with a duplicate member name or with an unpaired surrogate is also invalid, and so is an `op` that is not an object.
+A PEP MUST NOT compute the effect of an invalid `op`. A PDP MUST refuse it with the error `invalid_op`.
+
+A `view` is a template over `op`. It is not part of the effect. Each value that a `view` shows is a JSON Pointer [RFC 6901] to a value in `op`. A pointer that names no value in `op` makes the `view` invalid.
+
+The file `conformance/vectors/effect.json` holds test vectors of this paragraph. For each vector of the group V01, an implementation MUST give the canonical text and the effect of the vector. For each vector of the group V02, it MUST refuse the input.
+
 ## References
 - [AUTHZEN] (also cited as [AUTHZEN 1.0]) AuthZEN Authorization API 1.0, Final Specification, OpenID Foundation. A citation l.N is a line of `api/authorization-api-1_0.md` in the repository `openid/authzen` at commit `4deba63`.
 - [AUTHZEN-ISSUANCE] AuthZEN Profile for OAuth 2.0 Token Issuance, Draft 1: `profiles/authzen-oauth/authzen-oauth-token-issuance-1_0.md` at the same commit.
@@ -431,6 +462,7 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 - [RFC 2119] Key words for use in RFCs to Indicate Requirement Levels. [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words.
 - [RFC 3986] Uniform Resource Identifier (URI): Generic Syntax.
 - [RFC 6750] The OAuth 2.0 Authorization Framework: Bearer Token Usage.
+- [RFC 6901] JavaScript Object Notation (JSON) Pointer. [RFC 8785] JSON Canonicalization Scheme (JCS). [FIPS 180-4] Secure Hash Standard, which defines SHA-256.
 - [RFC 7515] JSON Web Signature (JWS). [RFC 7517] JSON Web Key (JWK).
 - [RFC 7519] JSON Web Token. [RFC 8693] OAuth 2.0 Token Exchange. [RFC 8725] JSON Web Token Best Current Practices.
 - [RFC 8615] Well-Known Uniform Resource Identifiers.

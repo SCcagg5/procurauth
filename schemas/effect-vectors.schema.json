@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/effect-vectors.schema.json",
+  "title": "Effect vectors",
+  "description": "The file conformance/vectors/effect.json. It holds test vectors for the effect of protocol 17.3. A vector of the group V01 gives the canonical text and the effect of its input. A vector of the group V02 has an input that a PEP and a PDP refuse with the error invalid_op. A schema cannot check the hash. The tests of the repository compute it again.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "description", "vectors"],
+  "properties": {
+    "v": {
+      "description": "The version of the hash input. It is the member v of the input, and it is 1.",
+      "const": 1
+    },
+    "description": {
+      "description": "One paragraph for the reader.",
+      "type": "string",
+      "minLength": 1
+    },
+    "vectors": {
+      "description": "The vectors. The ids are unique in the file.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/accepted" },
+          { "$ref": "#/$defs/rejected" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "description": "The id of a vector: lower-case words with a hyphen between them.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "title": {
+      "description": "One or two sentences that state the rule that the vector tests.",
+      "type": "string",
+      "minLength": 1
+    },
+    "input": {
+      "description": "The four values of the effect (protocol 17.3). The member op is any JSON value here, because a vector of the group V02 can have an op that is not valid.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service", "action", "resource", "op"],
+      "properties": {
+        "service": { "type": "string" },
+        "action": { "type": "string" },
+        "resource": {
+          "description": "The path of the resource (protocol 5.2). The service itself has the empty string.",
+          "type": "string"
+        },
+        "op": true
+      }
+    },
+    "accepted": {
+      "description": "A vector of the group V01. The op is an object.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "group", "title", "input", "canonical", "effect"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "group": { "const": "V01" },
+        "title": { "$ref": "#/$defs/title" },
+        "input": {
+          "allOf": [
+            { "$ref": "#/$defs/input" },
+            { "properties": { "op": { "type": "object" } } }
+          ]
+        },
+        "canonical": {
+          "description": "The JCS text of the hash input, as a string. The hash is over its UTF-8 bytes.",
+          "type": "string",
+          "minLength": 1
+        },
+        "effect": {
+          "description": "The effect: sha256: and 64 lower-case hexadecimal digits.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "rejected": {
+      "description": "A vector of the group V02.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "group", "title", "input", "error"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "group": { "const": "V02" },
+        "title": { "$ref": "#/$defs/title" },
+        "input": { "$ref": "#/$defs/input" },
+        "error": { "const": "invalid_op" }
+      }
+    }
+  },
+  "examples": [
+    {
+      "v": 1,
+      "description": "Two vectors.",
+      "vectors": [
+        {
+          "id": "empty-object",
+          "group": "V01",
+          "title": "An empty object is a valid op.",
+          "input": {
+            "service": "datastore",
+            "action": "data.write",
+            "resource": "host:prod/database:analytics",
+            "op": {}
+          },
+          "canonical": "{\"action\":\"data.write\",\"op\":{},\"resource\":\"host:prod/database:analytics\",\"service\":\"datastore\",\"v\":1}",
+          "effect": "sha256:d3d97c9d1621654d1f6247f1a94ae85b9aa37cdc3ffe07b957ddcaa1fc47b3d8"
+        },
+        {
+          "id": "float-fraction",
+          "group": "V02",
+          "title": "A number with a fraction is a float.",
+          "input": {
+            "service": "datastore",
+            "action": "data.write",
+            "resource": "host:prod/database:analytics",
+            "op": { "x": 1.5 }
+          },
+          "error": "invalid_op"
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 This file lists each paragraph that a role must follow, and the cases that test it.
 A role is a PEP (series U), a PDP (series D) or an edge (series E).
 The paragraphs come from protocol 1.3 and 15 (item 2), and from binding 1.4.
-The second table lists the rules that no case tests, with the reason.
+The second table lists the vectors of files that are not cases. The third table lists the rules that no case tests, with the reason.
 
 ## How to read the tables
 
@@ -149,6 +149,15 @@ The second table lists the rules that no case tests, with the reason.
 | mcp:6.1 | edge | E01, E17 |
 | mcp:6.2 | edge | E01, E18 |
 | mcp:6.3 | edge | E01, E17 |
+
+## Vectors
+
+A vector file is not a case. It has no role, and no runner reads it in this version. The ids V01 and V02 name two groups of vectors of one file.
+
+| Id | Paragraph | File | Content |
+| --- | --- | --- | --- |
+| V01 | 17.3 | `vectors/effect.json` | Inputs that give a canonical JCS text and an effect: the order of members, nested objects, the UTF-16 order of names, escapes, the limits of the integers, empty values, no Unicode normalisation and the form of the resource. |
+| V02 | 17.3 | `vectors/effect.json` | Inputs that a PEP and a PDP refuse with `invalid_op`: floats, the integers 2^53 and -(2^53), an integer of more than 64 bits, the text `-0` and an `op` that is not an object. |
 
 ## Not testable
 

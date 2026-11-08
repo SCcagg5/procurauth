@@ -173,6 +173,7 @@ The directory `schemas/` has a JSON Schema for each document and each file of th
 | [`limit-values`](schemas/limit-values.schema.json) | The limit values that one grant gives. |
 | [`key-format`](schemas/key-format.schema.json) | The format of the text of a key. |
 | [`conformance-case`](schemas/conformance-case.schema.json) | One conformance case. |
+| [`effect-vectors`](schemas/effect-vectors.schema.json) | The test vectors for the effect hash of protocol 17.3. |
 | [`conformance-profile`](schemas/conformance-profile.schema.json) | How the runner reaches a target. |
 | [`conformance-report`](schemas/conformance-report.schema.json) | The result of a run. |
 | [`fake-pdp-data`](schemas/fake-pdp-data.schema.json) | The data of the test PDP. |

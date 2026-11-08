@@ -14,6 +14,7 @@ The tests of this crate check the data of the repository.
 | --- | --- |
 | `tests/schemas.rs` | Each schema is valid. Each example of each schema is valid. |
 | `tests/cases.rs` | Each conformance case is valid. The cited paragraphs exist. Each test name that starts with a paragraph names a real one. The file `COVERAGE.md` has a row for each paragraph that a role must follow, and it agrees with the cases. |
+| `tests/vectors.rs` | The file `conformance/vectors/effect.json` is valid against its schema. Its ids are unique, and each group has vectors. The cited paragraph exists, and `COVERAGE.md` lists each group. |
 | `tests/ste.rs` | The sentences of the documents, of the schemas and of the code follow the rules of Simplified Technical English that a program can check. |
 
 Run them in Docker.

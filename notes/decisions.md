@@ -105,4 +105,13 @@ Each item gives one choice and the reason in one sentence.
 ## Conformance runner
 
 68. The runner and the cases send `Mcp-Method` and `Mcp-Name` on each MCP request, because the MCP server contract (2.5) requires them.
-69. The profile of a PEP gives `use_ceiling` a request whose result does not go past `ceiling_value`, because U37 tests the acceptance of a ceiling, and a PEP that applies the ceiling refuses a result past it.
+69. The profile of a PEP gives `use_ceiling` a request whose result does not go past `ceiling_value`. A PEP that applies the ceiling refuses a result past it, and U37 tests the acceptance of a ceiling.
+
+## Effect of an approval
+
+70. The resource in the effect is the path of 5.2 for `resources`. The service itself has the empty string, so the effect needs no second notation for a resource and no chain.
+71. The number subset of `op` is the integers from -(2^53-1) to 2^53-1. Any other number makes `op` invalid with `invalid_op`, because the number formats of the languages differ.
+72. `op` is a JSON object, because a `view` needs pointers into it and the paper gives an object in each example. The empty object is valid.
+73. Section 17 has only the paragraph 17.3 in this version. The numbers 17.1 to 17.12 stay free for the approval profile, because a paragraph keeps its number.
+74. The ids V01 and V02 name two groups of vectors, not cases of a series, because no runner uses a vector file in this version.
+75. The header of the protocol stays at version 1.0. The changelog shows the changes as unreleased until a release, and the site pages show the version 1.0.
