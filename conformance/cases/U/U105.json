@@ -1,0 +1,151 @@
+{
+  "id": "U105",
+  "title": "After approval_denied or approval_expired, the PEP sends no question with usage. The tool error has a fixed message and no text from the PDP.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "11.1",
+    "17.12",
+    "mcp:5.7a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      },
+      "other": {
+        "subject": "bob"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "subject": "alice"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_denied",
+              "comment": "canary-refusal-text"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "subject": "bob"
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_expired",
+              "comment": "canary-refusal-text"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A refused approval",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "equals": true
+          },
+          "/result/structuredContent/error/code": {
+            "equals": "approval_denied"
+          },
+          "/result/structuredContent/error/retryable": {
+            "equals": false
+          }
+        },
+        "body_text": {
+          "not_regex": "canary-refusal-text"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "An approval that is not valid any more",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "other"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "equals": true
+          },
+          "/result/structuredContent/error/code": {
+            "equals": "approval_expired"
+          },
+          "/result/structuredContent/error/retryable": {
+            "equals": false
+          }
+        },
+        "body_text": {
+          "not_regex": "canary-refusal-text"
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

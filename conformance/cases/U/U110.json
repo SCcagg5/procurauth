@@ -1,0 +1,292 @@
+{
+  "id": "U110",
+  "title": "get_action_status gives only pending, approved, denied or void. A verdict that the PEP does not know gives void.",
+  "role": "pep",
+  "paragraphs": [
+    "17.7",
+    "17.12",
+    "mcp:5.7b"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "approval_script": [
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_s1"
+        },
+        "respond": {
+          "body": {
+            "verdict": "pending"
+          }
+        }
+      },
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_s2"
+        },
+        "respond": {
+          "body": {
+            "verdict": "approved"
+          }
+        }
+      },
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_s3"
+        },
+        "respond": {
+          "body": {
+            "verdict": "denied"
+          }
+        }
+      },
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_s4"
+        },
+        "respond": {
+          "body": {
+            "verdict": "void"
+          }
+        }
+      },
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_s5"
+        },
+        "respond": {
+          "body": {
+            "verdict": "approved_by_alice"
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A verdict of the PDP gives pending",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_s1"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/status": {
+            "equals": "pending"
+          }
+        }
+      }
+    },
+    {
+      "name": "A verdict of the PDP gives approved",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_s2"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/status": {
+            "equals": "approved"
+          }
+        }
+      }
+    },
+    {
+      "name": "A verdict of the PDP gives denied",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_s3"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/status": {
+            "equals": "denied"
+          }
+        }
+      }
+    },
+    {
+      "name": "A verdict of the PDP gives void",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_s4"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/status": {
+            "equals": "void"
+          }
+        }
+      }
+    },
+    {
+      "name": "A verdict of the PDP gives void",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_s5"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/status": {
+            "equals": "void"
+          }
+        }
+      }
+    }
+  ]
+}

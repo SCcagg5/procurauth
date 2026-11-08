@@ -1,0 +1,238 @@
+{
+  "id": "D86",
+  "title": "An approval that is abandoned, cancelled or superseded can never be used. A question with usage gets approval_expired, and a question without usage gets approval_required.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.1",
+    "17.6"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "An abandoned approval",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:6c24912bda4d125580baf4d766aa3e00a80bcc15b20ab48799d38c790e58d856"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_expired"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A cancelled approval",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:dcc100a167488ea115121a1de24a3c532b873d5c14cffeba59b7b0887e8efea6"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_expired"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A superseded approval",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:ecb5d55ba61fe817e8e4b7b5659d3c070ba414f653dcd8ae33d2bb1c1e514cbc"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_expired"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "An abandoned approval, without usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "approval": {
+              "effect": "sha256:6c24912bda4d125580baf4d766aa3e00a80bcc15b20ab48799d38c790e58d856"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_required"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

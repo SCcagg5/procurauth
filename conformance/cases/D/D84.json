@@ -1,0 +1,129 @@
+{
+  "id": "D84",
+  "title": "An approval gives nothing when the key is revoked, or when the grant of the key is gone. The decision for the key comes first.",
+  "role": "pdp",
+  "paragraphs": [
+    "3.5",
+    "11.1",
+    "17.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "A revoked key",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:revoked01"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:c528d3c02afe4071e88043e0d20a996f98070dc696907a9e56f9d8120f4cd697"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "unknown_subject"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key with no grant of the action",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:nogrant01"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:c528d3c02afe4071e88043e0d20a996f98070dc696907a9e56f9d8120f4cd697"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "absent": true
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

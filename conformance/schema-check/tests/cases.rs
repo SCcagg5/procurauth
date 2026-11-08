@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use procurauth_schema_check::{Schemas, repository_root};
 use serde_json::Value;
 
-const VARIABLES: [&str; 16] = [
+const VARIABLES: [&str; 21] = [
     "service",
     "action",
     "resource_type",
@@ -31,6 +31,11 @@ const VARIABLES: [&str; 16] = [
     "tool",
     "ceiling",
     "ceiling_value",
+    "effect",
+    "effect_2",
+    "effect_3",
+    "approval_ref",
+    "confirm_access_key_text",
 ];
 
 /// The cases of the series `U`, `D` and `E` are in `conformance/cases/`.
@@ -375,6 +380,16 @@ fn the_members_of_a_step_fit_the_role() {
             if expect.contains_key("pdp_questions") {
                 assert_eq!(role, "pep", "{id}: pdp_questions is for a PEP");
             }
+            if expect.contains_key("pdp_approvals") {
+                assert_eq!(role, "pep", "{id}: pdp_approvals is for a PEP");
+            }
+            if request.contains_key("variant") {
+                assert_eq!(role, "pep", "{id}: variant is for a PEP");
+                assert_eq!(
+                    request["operation"], "mcp_call_approval",
+                    "{id}: variant is for the operation mcp_call_approval"
+                );
+            }
             if expect.contains_key("upstream") {
                 assert_eq!(role, "edge", "{id}: upstream is for an edge");
             }
@@ -389,6 +404,10 @@ fn the_members_of_a_step_fit_the_role() {
             assert!(
                 case.value["given"].get("pdp_script").is_none(),
                 "{id}: pdp_script is for a PEP"
+            );
+            assert!(
+                case.value["given"].get("approval_script").is_none(),
+                "{id}: approval_script is for a PEP"
             );
         }
     }
@@ -501,6 +520,12 @@ fn needed_conditions(step: &Value) -> Vec<&'static str> {
     let text = step["request"].to_string();
     if text.contains("{{mcp_path}}") {
         needed.push("no_mcp_endpoint");
+    }
+    if step["request"].get("variant").is_some()
+        || step["expect"].get("pdp_approvals").is_some()
+        || step.to_string().contains("{{effect")
+    {
+        needed.push("no_approval_support");
     }
     if text.contains("{{options_type}}") || text.contains("/.well-known/procurauth/resources") {
         needed.push("no_options_route");
@@ -623,6 +648,8 @@ fn required_paragraphs(role: &str) -> BTreeSet<String> {
                     (3 | 4 | 6 | 7 | 8 | 11, Some(_)) => true,
                     (5, Some(n)) => (1..=5).contains(&n),
                     (10, Some(n)) => n == 7,
+                    // Section 17 is optional (protocol 1.3). A PDP that gives approvals follows it, except 17.7.
+                    (17, Some(n)) => n != 7,
                     _ => false,
                 };
                 if keep {
@@ -632,9 +659,11 @@ fn required_paragraphs(role: &str) -> BTreeSet<String> {
         }
         "pep" => {
             let explicit = [
-                "3.3", "3.4", "4.1", "4.4", "4.5", "5.1", "5.2", "5.2a", "5.3c", "5.4", "5.5",
-                "5.5a", "5.6", "5.7", "5.8", "6.1", "6.2", "6.4", "6.11", "6.12", "7.1", "7.3",
-                "7.4", "7.5", "7.6", "8.3", "9.3", "9.4", "9.5", "9.6", "9.7", "15",
+                "3.3", "3.4", "4.1", "4.4", "4.5", "5.1", "5.2", "5.2a", "5.2b", "5.3c", "5.4",
+                "5.5", "5.5a", "5.6", "5.7", "5.8", "6.1", "6.2", "6.4", "6.11", "6.12", "7.1",
+                "7.3", "7.4", "7.5", "7.6", "8.3", "9.3", "9.4", "9.5", "9.6", "9.7", "15",
+                // Section 17 is optional (protocol 1.3). A service with an action that has approval follows these.
+                "17.1", "17.3", "17.4", "17.7", "17.9", "17.9a", "17.12",
             ];
             for p in &protocol {
                 let (section, paragraph) = split_number(p);
@@ -655,7 +684,9 @@ fn required_paragraphs(role: &str) -> BTreeSet<String> {
             }
         }
         _ => {
-            for p in ["1.4", "8.3", "9.1", "9.2", "9.3", "9.4", "9.8", "9.9"] {
+            for p in [
+                "1.4", "8.3", "9.1", "9.2", "9.3", "9.4", "9.8", "9.9", "17.8",
+            ] {
                 out.insert(p.to_owned());
             }
             for p in ["6.1", "6.2", "6.3"] {
@@ -812,6 +843,26 @@ fn coverage_gives_a_reason_for_each_paragraph_with_no_case() {
         assert!(
             !reason[2].is_empty() && !reason[3].is_empty(),
             "COVERAGE.md: a row of the table Not testable has an empty cell"
+        );
+    }
+}
+
+#[test]
+fn a_case_of_the_approval_profile_has_the_condition_no_approval_support() {
+    // Section 17 and the binding paragraphs 5.7 to 5.7b are optional. A target that gives no approval skips these cases.
+    for case in cases() {
+        let id = case.value["id"].as_str().unwrap();
+        let cites_approval = case.value["paragraphs"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p.as_str().unwrap())
+            .any(|p| p.starts_with("17.") || p.starts_with("mcp:5.7") || p == "5.2b");
+        let skip = skip_list(&case.value);
+        assert_eq!(
+            cites_approval,
+            skip.contains("no_approval_support"),
+            "{id}: a case that cites the approval profile has the condition no_approval_support, and only such a case has it"
         );
     }
 }

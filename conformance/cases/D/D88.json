@@ -1,0 +1,186 @@
+{
+  "id": "D88",
+  "title": "A request that is pending or replied gives approval_pending and an evaluation_id, with usage and without it.",
+  "role": "pdp",
+  "paragraphs": [
+    "11.1",
+    "17.1"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "A pending request, without usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "approval": {
+              "effect": "sha256:f3218eb40132c9b450dbe5681299e64e5d5fe73c687f8d3753db8eb31f5f804e"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_pending"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A pending request, with usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:f3218eb40132c9b450dbe5681299e64e5d5fe73c687f8d3753db8eb31f5f804e"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_pending"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A replied request",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "approval": {
+              "effect": "sha256:a3f8640964eaebe76a1be76f0c3f911f83c97e3c2847a993ce8846676c072d18"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_pending"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+{
+  "clock": {
+    "now": 1792569648
+  },
+  "services": [
+    {
+      "id": "datastore",
+      "document": {
+        "server": "datastore",
+        "resource_types": [
+          {
+            "name": "host",
+            "parent": "service",
+            "description": "One database server."
+          },
+          {
+            "name": "database",
+            "parent": "host",
+            "description": "One database."
+          },
+          {
+            "name": "table",
+            "parent": "database",
+            "description": "One table."
+          }
+        ],
+        "actions": [
+          {
+            "name": "data.read",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Read data.",
+            "limits": [
+              "requests",
+              "max_rows",
+              "max_duration"
+            ]
+          },
+          {
+            "name": "data.write",
+            "resource_types": [
+              "service",
+              "host",
+              "database",
+              "table"
+            ],
+            "description": "Change data.",
+            "limits": [
+              "requests",
+              "max_duration"
+            ],
+            "approval": "optional"
+          }
+        ],
+        "resources": [
+          {
+            "path": "host:prod",
+            "label": "Production"
+          }
+        ],
+        "limits": [
+          {
+            "name": "requests",
+            "label": "Requests",
+            "description": "Requests that run.",
+            "unit": "request",
+            "kind": "budget"
+          },
+          {
+            "name": "max_rows",
+            "label": "Most rows",
+            "description": "The most rows that one read gives.",
+            "unit": "row",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "max_duration",
+            "label": "Longest run",
+            "description": "The longest run of one use, in seconds.",
+            "unit": "second",
+            "kind": "ceiling",
+            "min": 1,
+            "max": 600
+          }
+        ]
+      }
+    }
+  ],
+  "subjects": [
+    {
+      "id": "alice",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod"
+        },
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod"
+        }
+      ]
+    },
+    {
+      "id": "carol",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore"
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod",
+          "confirm": true
+        }
+      ]
+    },
+    {
+      "id": "key:conf0001",
+      "owner": "alice",
+      "grants": [
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:analytics",
+          "confirm": true
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:staging",
+          "confirm": true
+        }
+      ]
+    },
+    {
+      "id": "key:conf0002",
+      "owner": "alice",
+      "grants": [
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:analytics",
+          "confirm": true
+        }
+      ]
+    },
+    {
+      "id": "key:budget001",
+      "owner": "alice",
+      "grants": [
+        {
+          "action": "access",
+          "resource": "service:datastore",
+          "limits": {
+            "requests": [
+              {
+                "amount": 1,
+                "window": "minute"
+              }
+            ]
+          }
+        },
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:analytics",
+          "confirm": true
+        }
+      ]
+    },
+    {
+      "id": "key:ownconf01",
+      "owner": "carol",
+      "grants": [
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:analytics"
+        }
+      ]
+    },
+    {
+      "id": "key:revoked01",
+      "owner": "alice",
+      "state": "revoked",
+      "grants": [
+        {
+          "action": "data.write",
+          "resource": "service:datastore/host:prod/database:analytics",
+          "confirm": true
+        }
+      ]
+    },
+    {
+      "id": "key:nogrant01",
+      "owner": "alice",
+      "grants": [
+        {
+          "action": "data.read",
+          "resource": "service:datastore/host:prod/database:analytics"
+        }
+      ]
+    }
+  ],
+  "approvals": [
+    {
+      "id": "apr_d77",
+      "subject": "key:budget001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:8491ccc849e0df3f4360cbec716bbe71c150f00d36d2689e3623c67cc691eb6f",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d78",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:a41c5a8d6cec2f1afb10d7938db7c71b3d57062601ed21250be429bb62babb62",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d79",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:010506ea769c671006d5605a843a79036cb8655d741732daf641b0195afd90c4",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d80a",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:4f9c038a00e5133271249922d29f3a59ead4a6913aa1eec5399c6bea8cc5d489",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569648
+    },
+    {
+      "id": "apr_d80b",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:56760f49c257e113d2ef693157e56dcc96e8e30a19c1433baaf283f561b48dbd",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569647
+    },
+    {
+      "id": "apr_d81",
+      "subject": "key:budget001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:84fa10f48af3225f0bd9fcdb071860f5a3045a9d651acf14d092da809c45178c",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d84a",
+      "subject": "key:revoked01",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:c528d3c02afe4071e88043e0d20a996f98070dc696907a9e56f9d8120f4cd697",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d84b",
+      "subject": "key:nogrant01",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:c528d3c02afe4071e88043e0d20a996f98070dc696907a9e56f9d8120f4cd697",
+      "status": "answered",
+      "decision": "approve",
+      "consume_before": 1792569948
+    },
+    {
+      "id": "apr_d85a",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:586f0b594db38e23e546729534ee726be628a8bc8ddddd934ecb006fc10cf8a0",
+      "status": "answered",
+      "decision": "decline",
+      "deny_until": 1792569948
+    },
+    {
+      "id": "apr_d85c",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:4263007ae516a240ed3b4ec63e6586e1a91c5b384cdc4838eeec932918843bbc",
+      "status": "answered",
+      "decision": "decline",
+      "deny_until": 1792569647
+    },
+    {
+      "id": "apr_d86a",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:6c24912bda4d125580baf4d766aa3e00a80bcc15b20ab48799d38c790e58d856",
+      "status": "abandoned"
+    },
+    {
+      "id": "apr_d86b",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:dcc100a167488ea115121a1de24a3c532b873d5c14cffeba59b7b0887e8efea6",
+      "status": "cancelled"
+    },
+    {
+      "id": "apr_d86c",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:ecb5d55ba61fe817e8e4b7b5659d3c070ba414f653dcd8ae33d2bb1c1e514cbc",
+      "status": "superseded"
+    },
+    {
+      "id": "apr_d87",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:2e6d3b4a715079ab8450e54f3f2a31e5379eca4e6cc8695ed3b177304c07a5a2",
+      "status": "expired"
+    },
+    {
+      "id": "apr_d88a",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:f3218eb40132c9b450dbe5681299e64e5d5fe73c687f8d3753db8eb31f5f804e",
+      "status": "pending"
+    },
+    {
+      "id": "apr_d88b",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:a3f8640964eaebe76a1be76f0c3f911f83c97e3c2847a993ce8846676c072d18",
+      "status": "replied"
+    },
+    {
+      "id": "apr_d89",
+      "subject": "key:conf0001",
+      "action": "data.write",
+      "resource": "service:datastore/host:prod/database:analytics",
+      "effect": "sha256:adde587f7e9d8000ffa1f6da0929bd2a49cb8cdf38a13f21dab2c2f22228a65c",
+      "status": "answered",
+      "decision": "decline",
+      "deny_until": 1792569948,
+      "answered_by": "eliot",
+      "device": "d:7f3a",
+      "answered_at": 1792569628,
+      "comment": {
+        "text": "use the staging database instead",
+        "intent": "change_request"
+      }
+    }
+  ]
+}

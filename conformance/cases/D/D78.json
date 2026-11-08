@@ -1,0 +1,128 @@
+{
+  "id": "D78",
+  "title": "An approval gives one use only. A second question with usage for the same effect gets approval_required.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.1",
+    "17.2"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "The first use",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:a41c5a8d6cec2f1afb10d7938db7c71b3d57062601ed21250be429bb62babb62"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "The second use",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:a41c5a8d6cec2f1afb10d7938db7c71b3d57062601ed21250be429bb62babb62"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_required"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

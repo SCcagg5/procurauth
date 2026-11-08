@@ -1,0 +1,126 @@
+{
+  "id": "D80",
+  "title": "An approval can be used up to its consume_before, and not after it.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.1",
+    "17.6"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "notes": "The PDP chooses the length of the consume window. The case tests the end of the window only.",
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "The time is equal to consume_before",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:4f9c038a00e5133271249922d29f3a59ead4a6913aa1eec5399c6bea8cc5d489"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/usage/units": {
+            "equals": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "The time is one second past consume_before",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:56760f49c257e113d2ef693157e56dcc96e8e30a19c1433baaf283f561b48dbd"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_expired"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

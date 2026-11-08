@@ -1,0 +1,128 @@
+{
+  "id": "D87",
+  "title": "An approval that expired is neutral. It gives approval_expired, never approval_denied.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.1",
+    "17.6"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "With usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:2e6d3b4a715079ab8450e54f3f2a31e5379eca4e6cc8695ed3b177304c07a5a2"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_expired"
+          },
+          "/context/usage": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Without usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "approval": {
+              "effect": "sha256:2e6d3b4a715079ab8450e54f3f2a31e5379eca4e6cc8695ed3b177304c07a5a2"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_required"
+          },
+          "/context/usage": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

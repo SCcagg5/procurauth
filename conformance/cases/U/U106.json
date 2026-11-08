@@ -1,0 +1,171 @@
+{
+  "id": "U106",
+  "title": "The PEP renews the lease only for a call of the agent. The call of the tool sends no renewal. get_action_status sends one, with the subject.",
+  "role": "pep",
+  "paragraphs": [
+    "17.7",
+    "mcp:5.7b"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "notes": "A PEP that renews on a timer would send a request on the route status or keepalive during the first step.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required",
+              "evaluation_id": "ev_conformance_1"
+            }
+          }
+        }
+      }
+    ],
+    "approval_script": [
+      {
+        "when": {
+          "route": "submit"
+        },
+        "respond": {
+          "body": {
+            "request_id": "apr_conf_1",
+            "code": "K7QF",
+            "verdict": "pending"
+          },
+          "status": 201
+        }
+      },
+      {
+        "when": {
+          "route": "status",
+          "request_id": "apr_conf_1"
+        },
+        "respond": {
+          "body": {
+            "verdict": "pending"
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The call of the tool",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/resultType": {
+            "equals": "complete"
+          },
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action/status": {
+            "equals": "awaiting_approval"
+          },
+          "/result/structuredContent/action/executed": {
+            "equals": false
+          },
+          "/error": {
+            "absent": true
+          }
+        },
+        "pdp_approvals": [
+          {
+            "route": "status",
+            "count": {
+              "equals": 0
+            }
+          },
+          {
+            "route": "keepalive",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The call of get_action_status",
+      "request": {
+        "method": "POST",
+        "path": "{{mcp_path}}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2026-07-28",
+          "Mcp-Method": "tools/call",
+          "Mcp-Name": "get_action_status"
+        },
+        "body": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "get_action_status",
+            "arguments": {
+              "request_id": "apr_conf_1"
+            },
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+            }
+          }
+        },
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/structuredContent/status": {
+            "equals": "pending"
+          }
+        },
+        "pdp_approvals": [
+          {
+            "route": "status",
+            "query": {
+              "renew": {
+                "equals": "true"
+              },
+              "subject": {
+                "equals": "alice"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "id": "U104",
+  "title": "The PEP keeps no answer to a question with an effect. This includes a true answer that consumed an approval, also with units equal to 0.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "notes": "The second call must ask both questions again. A PEP that keeps the answer with units 0 sends none.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The first call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action": {
+            "absent": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The second call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action": {
+            "absent": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

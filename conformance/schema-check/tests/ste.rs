@@ -19,7 +19,8 @@ use serde_json::Value;
 /// Words that end in -ing and that are not a verb form: nouns and technical names.
 /// The protocol uses binding, ceiling, meaning, nothing, signing, string and mapping.
 /// The words finding and warning are the technical nouns of the reports of the tools.
-const ALLOWED_ING: [&str; 24] = [
+/// The word pending is the name of a status and of a verdict (protocol 17.6).
+const ALLOWED_ING: [&str; 25] = [
     "string",
     "strings",
     "ceiling",
@@ -44,6 +45,7 @@ const ALLOWED_ING: [&str; 24] = [
     "findings",
     "warning",
     "warnings",
+    "pending",
 ];
 
 /// Words that STE does not approve, with the word to use.

@@ -1,0 +1,39 @@
+{
+  "id": "E19",
+  "title": "An edge ignores confirm. A key whose grant of access has confirm gets the identity token, as any other key does.",
+  "role": "edge",
+  "paragraphs": [
+    "8.3",
+    "17.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "notes": "The configuration of the run gives the key text of the variable confirm_access_key_text. The grant of access of its subject has confirm.",
+  "given": {},
+  "steps": [
+    {
+      "name": "A key whose grant of access has confirm",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{confirm_access_key_text}}"
+        }
+      },
+      "expect": {
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "token_claims": {
+            "/sub": {
+              "present": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}

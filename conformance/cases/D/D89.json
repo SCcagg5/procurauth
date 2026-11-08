@@ -1,0 +1,85 @@
+{
+  "id": "D89",
+  "title": "The PDP answers a refused request with the reason approval_denied only. The answer has no comment, no owner, no device and no time of the answer.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.1",
+    "17.12"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "A question for a refused request",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:conf0001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:adde587f7e9d8000ffa1f6da0929bd2a49cb8cdf38a13f21dab2c2f22228a65c"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_denied"
+          },
+          "/context/comment": {
+            "absent": true
+          },
+          "/context/answered_by": {
+            "absent": true
+          },
+          "/context/device": {
+            "absent": true
+          },
+          "/context/answered_at": {
+            "absent": true
+          }
+        },
+        "body_text": {
+          "not_regex": "staging database|eliot|d:7f3a"
+        }
+      }
+    }
+  ]
+}

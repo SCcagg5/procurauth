@@ -1,0 +1,150 @@
+{
+  "id": "U103",
+  "title": "A change of an argument that decides what the tool does gives another effect. A change of a control argument gives the same effect.",
+  "role": "pep",
+  "paragraphs": [
+    "17.1",
+    "17.3",
+    "17.9a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required",
+              "evaluation_id": "ev_conformance_1"
+            }
+          }
+        }
+      }
+    ],
+    "approval_script": [
+      {
+        "when": {
+          "route": "submit"
+        },
+        "respond": {
+          "body": {
+            "request_id": "apr_conf_1",
+            "code": "K7QF",
+            "verdict": "pending"
+          },
+          "status": 201
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The base call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A call with another effect argument",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person",
+        "variant": "effect_2"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect_2}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A call with a control argument",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person",
+        "variant": "wait"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect_2}}"
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

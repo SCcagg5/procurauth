@@ -1,0 +1,197 @@
+{
+  "id": "U101",
+  "title": "A call while the approval is pending submits the request again, and it gives the same id and code. It sends no question with usage.",
+  "role": "pep",
+  "paragraphs": [
+    "10.1",
+    "17.4",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "notes": "The PDP answers approval_pending to both calls. A PEP that keeps this answer sends no question and no submission at the second call, so it fails.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_pending",
+              "evaluation_id": "ev_conformance_1"
+            }
+          }
+        }
+      }
+    ],
+    "approval_script": [
+      {
+        "when": {
+          "route": "submit"
+        },
+        "respond": {
+          "body": {
+            "request_id": "apr_conf_1",
+            "code": "K7QF",
+            "verdict": "pending"
+          },
+          "status": 200
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The first call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/resultType": {
+            "equals": "complete"
+          },
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action/status": {
+            "equals": "awaiting_approval"
+          },
+          "/result/structuredContent/action/executed": {
+            "equals": false
+          },
+          "/error": {
+            "absent": true
+          },
+          "/result/structuredContent/action/id": {
+            "equals": "apr_conf_1"
+          },
+          "/result/structuredContent/action/code": {
+            "equals": "K7QF"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "json": {
+              "/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The second call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/resultType": {
+            "equals": "complete"
+          },
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action/status": {
+            "equals": "awaiting_approval"
+          },
+          "/result/structuredContent/action/executed": {
+            "equals": false
+          },
+          "/error": {
+            "absent": true
+          },
+          "/result/structuredContent/action/id": {
+            "equals": "apr_conf_1"
+          },
+          "/result/structuredContent/action/code": {
+            "equals": "K7QF"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "json": {
+              "/effect": {
+                "equals": "{{effect}}"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

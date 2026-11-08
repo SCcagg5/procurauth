@@ -5,6 +5,8 @@ A role is a PEP (series U), a PDP (series D) or an edge (series E).
 The paragraphs come from protocol 1.3 and 15 (item 2), and from binding 1.4.
 The second table lists the vectors of files that are not cases. The third table lists the rules that no case tests, with the reason.
 
+Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optional. A target that gives no approval skips the cases that cite them, with the condition `no_approval_support`.
+
 ## How to read the tables
 
 - The paragraph is a number of the protocol, for example `6.4`. The prefix `mcp:` names a paragraph of the MCP binding.
@@ -21,18 +23,19 @@ The second table lists the vectors of files that are not cases. The third table 
 | 3.2 | pdp | D09, D10 |
 | 3.3 | pdp | D07 |
 | 3.4 | pdp | D12, D16 |
-| 3.5 | pdp | D03, D14, D15, D32, D33, D74 |
+| 3.5 | pdp | D03, D14, D15, D32, D33, D74, D84 |
 | 3.7 | pdp | D08, D09 |
 | 3.8 | pdp | D11, D55, D70 |
 | 3.9 | pdp | none |
 | 4.1 | pdp | D17, D18, D19, D21, D22, D23, D24, D36, D75 |
 | 4.2 | pdp | D25 |
 | 4.3 | pdp | D01, D02, D14, D25, D26, D27, D28, D29, D30 |
-| 4.4 | pdp | D04, D31, D32, D33, D34, D35, D60 |
+| 4.4 | pdp | D04, D31, D32, D33, D34, D35, D60, D83 |
 | 4.5 | pdp | none |
 | 5.1 | pdp | none |
 | 5.2 | pdp | D19, D20, D24 |
 | 5.2a | pdp | none |
+| 5.2b | pdp | D76 |
 | 5.3 | pdp | none |
 | 5.3a | pdp | none |
 | 5.3b | pdp | none |
@@ -44,14 +47,14 @@ The second table lists the vectors of files that are not cases. The third table 
 | 6.2 | pdp | D49, D68 |
 | 6.3 | pdp | D41, D42, D43, D44, D47, D48 |
 | 6.4 | pdp | D58 |
-| 6.5 | pdp | D06, D49, D50, D55, D61 |
+| 6.5 | pdp | D06, D49, D50, D55, D61, D81 |
 | 6.6 | pdp | D06, D51, D72 |
 | 6.7 | pdp | D45, D53, D54, D55, D56 |
 | 6.8 | pdp | none |
 | 6.9 | pdp | none |
 | 6.10 | pdp | D52, D57 |
 | 6.11 | pdp | D59, D60, D61, D62 |
-| 6.12 | pdp | D52, D54, D63 |
+| 6.12 | pdp | D52, D54, D63, D77 |
 | 7.1 | pdp | D64 |
 | 7.3 | pdp | D01, D05, D64, D65, D66, D67, D68, D72 |
 | 7.4 | pdp | none |
@@ -63,9 +66,21 @@ The second table lists the vectors of files that are not cases. The third table 
 | 8.4 | pdp | D05, D53, D55, D70, D71 |
 | 10.7 | pdp | none |
 | 10.7a | pdp | none |
-| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75 |
+| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75, D76, D84, D88 |
 | 11.2 | pdp | D02, D30, D73 |
 | 12 | pdp | D16, D40, D53, D55 |
+| 17.1 | pdp | D76, D77, D78, D79, D80, D83, D84, D85, D86, D87, D88, D89 |
+| 17.2 | pdp | D77, D78, D81 |
+| 17.3 | pdp | none |
+| 17.4 | pdp | none |
+| 17.5 | pdp | none |
+| 17.6 | pdp | D80, D85, D86, D87 |
+| 17.8 | pdp | D76, D82, D83 |
+| 17.9 | pdp | none |
+| 17.9a | pdp | none |
+| 17.10 | pdp | none |
+| 17.11 | pdp | none |
+| 17.12 | pdp | D89 |
 | 3.3 | pep | U01, U07, U08 |
 | 3.4 | pep | U09 |
 | 4.1 | pep | U02, U11, U70, U87 |
@@ -74,6 +89,7 @@ The second table lists the vectors of files that are not cases. The third table 
 | 5.1 | pep | U13, U14, U15 |
 | 5.2 | pep | U16 |
 | 5.2a | pep | none |
+| 5.2b | pep | U100 |
 | 5.3c | pep | U17 |
 | 5.4 | pep | none |
 | 5.5 | pep | U34 |
@@ -98,17 +114,24 @@ The second table lists the vectors of files that are not cases. The third table 
 | 9.6 | pep | U01, U09 |
 | 9.7 | pep | U55 |
 | 10.0 | pep | U53, U56, U59 |
-| 10.1 | pep | U15, U21, U22, U57, U58, U59, U83, U84 |
+| 10.1 | pep | U15, U21, U22, U57, U58, U59, U83, U84, U101, U104 |
 | 10.1a | pep | U34, U35 |
 | 10.1b | pep | none |
 | 10.2 | pep | U36, U37 |
-| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90 |
+| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105 |
 | 10.6 | pep | U68 |
 | 10.7 | pep | U69 |
 | 10.7a | pep | none |
-| 11.1 | pep | U04, U08, U61, U62, U63, U67 |
+| 11.1 | pep | U04, U08, U61, U62, U63, U67, U105 |
 | 11.2 | pep | U60 |
 | 15 | pep | U84 |
+| 17.1 | pep | U30, U102, U103, U107 |
+| 17.3 | pep | U103, U108 |
+| 17.4 | pep | U100, U101, U109 |
+| 17.7 | pep | U30, U100, U101, U102, U104, U106, U110 |
+| 17.9 | pep | U107, U108 |
+| 17.9a | pep | U103, U109 |
+| 17.12 | pep | U105, U109, U110 |
 | mcp:1.3 | pep | U25 |
 | mcp:3.1 | pep | none |
 | mcp:3.2 | pep | U87 |
@@ -134,18 +157,22 @@ The second table lists the vectors of files that are not cases. The third table 
 | mcp:5.5 | pep | U28, U91 |
 | mcp:5.6 | pep | U94 |
 | mcp:5.6a | pep | U27, U86 |
+| mcp:5.7 | pep | U30, U100 |
+| mcp:5.7a | pep | U105 |
+| mcp:5.7b | pep | U106, U110 |
 | mcp:7.1 | pep | none |
 | mcp:7.2 | pep | none |
 | mcp:7.3 | pep | U98, U99 |
 | mcp:7.4 | pep | none |
 | 1.4 | edge | E08 |
-| 8.3 | edge | E10 |
+| 8.3 | edge | E10, E19 |
 | 9.1 | edge | E05, E06, E11 |
 | 9.2 | edge | E12 |
 | 9.3 | edge | E07, E14 |
 | 9.4 | edge | E13 |
 | 9.8 | edge | E01, E02, E03, E04, E09, E10, E11, E17 |
 | 9.9 | edge | E15, E16 |
+| 17.8 | edge | E19 |
 | mcp:6.1 | edge | E01, E17 |
 | mcp:6.2 | edge | E01, E18 |
 | mcp:6.3 | edge | E01, E17 |
@@ -187,6 +214,15 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 12 | pdp | The credential of each service SHOULD have at least 128 random bits. The PDP SHOULD keep only its SHA-256 digest. | A case cannot see the credential or the way that the PDP stores it. |
 | 12 | pdp | The PDP is a single point of failure, and the protocol accepts it. | The sentence is a remark. It states no rule for a case. |
 | 12 | pdp | A client that sends a request again makes a new use, and the PDP counts it again. | The PDP cannot tell a request that a client sends again from a new request. |
+| 17.3 | pdp | The PDP computes the effect as 17.3 gives. | The groups V01 and V02 of the vectors test this paragraph. A step of a case has no way to send a bad `op` to the PDP. |
+| 17.4 | pdp | The PDP serves the narrow API with three routes, and only these routes. | A case has no endpoint for the approval API in this version. The tests of a PDP that gives approvals cover the routes. |
+| 17.5 | pdp | The lease, the abandon, the end of a request and the revival of a request. | A case cannot make time pass during a request, and it has no step that answers or renews a request. |
+| 17.6 | pdp | The PDP sets consume_before and the deny time from its own settings. The consume window is not shorter than lease_s. | The settings of the PDP give both times. The cases D80 and D85 test the end of each window. |
+| 17.9 | pdp | The PDP checks each submission before it keeps it. | A case has no endpoint for the approval API in this version. |
+| 17.9a | pdp | The explanation never enters the effect, and the PEP never sees it. | The agent gives the explanation to the PDP by a channel outside this protocol. A case has no step on that channel. |
+| 17.10 | pdp | A PDP SHOULD encrypt the body at rest, delete it after a published time, and never write it in a log. | A case cannot see the storage or the logs of the PDP. The level of the rule is SHOULD. |
+| 17.11 | pdp | The PDP accepts an answer only from the owner, with shown_effect equal to the effect. A refusal can have a text. | The answer of a person is outside the protocol. A case has no step that answers an approval. |
+| 17.12 | pdp | The PDP gives the PEP the verdict, the id and the code only, through the approval API. | A case has no endpoint for the approval API in this version. The case D89 tests the evaluation API. |
 | 4.1 | pep | The PEP does not encode an id. | The runner cannot choose the id of a node. The service decides its nodes. |
 | 4.5 | pep | The PEP builds the chain from its own data and never takes it from a client. | A case cannot know where a service could read a chain from a client. The case U02 shows that the chain is equal to the data of the service. |
 | 5.2 | pep | The service percent-encodes each id of a path. | The core reader checks this rule in the cases that give valid_as. The rule needs a node with a special character in its id. |
@@ -215,11 +251,18 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 10.7 | pep | The PEP closes an idle connection before the PDP does, after half of the idle time or less. | The model gives the test PDP no idle time. |
 | 10.7a | pep | The PEP sends its questions in requests within the maxima of the PDP, and it splits them when necessary. | A case needs a service with more actions than the maximum of the test PDP. |
 | 11.1 | pep | The PEP reads the reason invalid_request only in an item of an Access Evaluations answer. | The service decides when it sends a request with items. A case cannot make it send one. |
+| 17.1 | pep | The PEP never reads the evaluation_id. | A case cannot see what the PEP reads. |
+| 17.4 | pep | The PEP sends the credential of the service to the approval API. | The test PDP of the runner accepts any credential on its approval API. |
+| 17.7 | pep | The PEP never reads an approval_ref or an intent. | A case cannot see what the PEP reads. |
+| 17.7 | pep | The PEP treats a reason of 17.1 for an action that has no member approval as 10.3 says. | The profile of the service gives no action without the member approval that the PDP can ask for an approval. |
+| 17.9 | pep | The PEP sends op, view and effect only in a submission, with the sizes that the PDP allows. | The runner does not know the largest size of the PDP. The cases U107 and U108 test the places and the pointers. |
 | mcp:3.1 | pep | The service does the MCP work: the endpoint, the map of the tools, the list of the tools and the approvals. | The sentence is a summary. Each rule has its own paragraph with cases. |
 | mcp:3.2 | pep | The map of the tools is not in the MCP messages. | A case cannot read the map of the service. |
 | mcp:4.1 | pep | The service sends the questions of a tools/list in one Access Evaluations request. | The model counts questions, not requests. |
 | mcp:4.3 | pep | For one subject, two requests give the same list while the answers of the PDP do not change. | A case cannot compare the answers of two steps. |
 | mcp:4.4 | pep | The paragraph gives an example of the load on the PDP. | The paragraph is informative. It states no rule. |
+| mcp:5.7 | pep | The service waits at most wait_s seconds for a verdict, and it bounds wait_s. | The bound is a setting of the service, and a case cannot wait. |
+| mcp:5.7a | pep | The codes approval_unavailable, approval_rate_limited and invalid_argument, and HTTP 503 for another answer of the approval API. | A case for each one needs a step for each answer of the approval API. This version tests the codes that follow a reason of the PDP (U105). |
 | mcp:7.1 | pep | For a request with a standalone key, the service asks the PDP no question. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.2 | pep | The text of a standalone key is mcp_ and 43 base64url characters. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.4 | pep | For a standalone key, the 401 and the 429 have an empty body, and the 429 has Retry-After. | The profile of the service under test has no standalone key in this version. |

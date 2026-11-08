@@ -1,0 +1,172 @@
+{
+  "id": "U102",
+  "title": "After the approval, the service asks the question with usage and the effect. It runs the action only after the true answer to it.",
+  "role": "pep",
+  "paragraphs": [
+    "17.1",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint",
+    "no_approval_tool",
+    "no_approval_support"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "effect": "{{effect_2}}",
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_expired"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The approval can be used",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action": {
+            "absent": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "equals": {
+                  "units": 1
+                }
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The approval ends between the two questions",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person",
+        "variant": "effect_2"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "equals": true
+          },
+          "/result/structuredContent/error/code": {
+            "equals": "approval_expired"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect_2}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect_2}}"
+              },
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

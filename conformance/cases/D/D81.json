@@ -1,0 +1,127 @@
+{
+  "id": "D81",
+  "title": "When a budget refuses the use, the answer is budget_exceeded, nothing is consumed, and the approval can still be used.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.5",
+    "17.2"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json",
+    "counters": [
+      {
+        "subject": "key:budget001",
+        "limit": "requests",
+        "window": "minute",
+        "used": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The use with a spent budget",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:budget001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            },
+            "approval": {
+              "effect": "sha256:84fa10f48af3225f0bd9fcdb071860f5a3045a9d651acf14d092da809c45178c"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "budget_exceeded"
+          },
+          "/context/retry_after": {
+            "equals": 12
+          }
+        }
+      }
+    },
+    {
+      "name": "The same approval, without usage",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:budget001"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "approval": {
+              "effect": "sha256:84fa10f48af3225f0bd9fcdb071860f5a3045a9d651acf14d092da809c45178c"
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          }
+        }
+      }
+    }
+  ]
+}
