@@ -45,6 +45,20 @@ fn rust_only(label: &'static str, doc: Value) -> Row {
     }
 }
 
+/// A pending approval with the changes of the row.
+fn approval(changes: Value) -> Value {
+    let mut base = json!({
+        "id": "apr_1", "subject": "alice", "action": "data.read",
+        "resource": "service:datastore/host:prod",
+        "effect": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "pending"
+    });
+    for (key, value) in changes.as_object().unwrap() {
+        base[key] = value.clone();
+    }
+    base
+}
+
 fn edit(base: &Value, change: impl FnOnce(&mut Value)) -> Value {
     let mut doc = base.clone();
     change(&mut doc);
@@ -1037,13 +1051,146 @@ fn directory_rows() -> Vec<Row> {
             e(&|d| d["failures"][0]["when"]["endpoint"] = json!("tokens")),
             false,
         ),
-        rust_only(
-            "a grant with confirm: the reader does not know it before the lot S4a",
+        same(
+            "a grant with confirm",
             e(&|d| d["subjects"][0]["grants"][1]["confirm"] = json!(true)),
+            true,
         ),
-        rust_only(
-            "a list of approvals: the reader does not know it before the lot S4a",
+        same(
+            "a grant with confirm false",
+            e(&|d| d["subjects"][0]["grants"][1]["confirm"] = json!(false)),
+            true,
+        ),
+        same(
+            "a grant with confirm that is a text",
+            e(&|d| d["subjects"][0]["grants"][1]["confirm"] = json!("yes")),
+            false,
+        ),
+        same(
+            "a list of approvals",
             e(&|d| d["approvals"] = json!([])),
+            true,
+        ),
+        same(
+            "a pending approval",
+            e(&|d| d["approvals"] = json!([approval(json!({}))])),
+            true,
+        ),
+        same(
+            "an approval that the owner approved",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "approve",
+                    "consume_before": 1792569948_u64, "consumed": true,
+                    "answered_by": "eliot", "device": "d:1", "answered_at": 1792569628_u64
+                }))]);
+            }),
+            true,
+        ),
+        same(
+            "an approval that the owner declined, with a text",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "decline", "deny_until": 1792569948_u64,
+                    "comment": {"text": "no", "intent": "change_request"}
+                }))]);
+            }),
+            true,
+        ),
+        same(
+            "an approval that is answered and has no decision",
+            e(&|d| d["approvals"] = json!([approval(json!({"status": "answered"}))])),
+            false,
+        ),
+        same(
+            "an approval with a decision and a status that is not answered",
+            e(&|d| d["approvals"] = json!([approval(json!({"decision": "decline"}))])),
+            false,
+        ),
+        same(
+            "an approval of the decision approve without consume_before",
+            e(&|d| {
+                d["approvals"] = json!([approval(
+                    json!({"status": "answered", "decision": "approve"})
+                )]);
+            }),
+            false,
+        ),
+        same(
+            "an approval of the decision decline with consume_before",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "decline", "consume_before": 5
+                }))]);
+            }),
+            false,
+        ),
+        same(
+            "an approval of the decision decline that is consumed",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "decline", "consumed": true
+                }))]);
+            }),
+            false,
+        ),
+        same(
+            "an approval of the decision approve with deny_until",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "approve", "consume_before": 5, "deny_until": 5
+                }))]);
+            }),
+            false,
+        ),
+        same(
+            "an approval of the decision approve with a comment",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "approve", "consume_before": 5,
+                    "comment": {"text": "x", "intent": "comment"}
+                }))]);
+            }),
+            false,
+        ),
+        same(
+            "an approval with a comment that has another intent",
+            e(&|d| {
+                d["approvals"] = json!([approval(json!({
+                    "status": "answered", "decision": "decline",
+                    "comment": {"text": "x", "intent": "shout"}
+                }))]);
+            }),
+            false,
+        ),
+        same(
+            "an approval with an unknown status",
+            e(&|d| d["approvals"] = json!([approval(json!({"status": "done"}))])),
+            false,
+        ),
+        same(
+            "an approval with a bad effect",
+            e(&|d| d["approvals"] = json!([approval(json!({"effect": "sha256:00"}))])),
+            false,
+        ),
+        same(
+            "an approval with an unknown member",
+            e(&|d| d["approvals"] = json!([approval(json!({"extra": 1}))])),
+            false,
+        ),
+        same(
+            "an approval without a resource",
+            e(&|d| {
+                let mut a = approval(json!({}));
+                a.as_object_mut().unwrap().remove("resource");
+                d["approvals"] = json!([a]);
+            }),
+            false,
+        ),
+        same(
+            "an approval of an action in upper case",
+            e(&|d| d["approvals"] = json!([approval(json!({"action": "Data.write"}))])),
+            false,
         ),
         rust_only(
             "a grant on a service that the file does not have",

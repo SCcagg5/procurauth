@@ -12,6 +12,7 @@ use serde_json::{Map, Value, json};
 use thiserror::Error;
 
 use crate::action_document::{ActionDocument, NodeError};
+use crate::effect::is_effect;
 use crate::finding::{Finding, JsonPath, Report, show, type_word};
 use crate::names::{IdError, SERVICE, is_type_or_limit_name, validate_id};
 use crate::path::{NodePath, NodeRef, PathError};
@@ -600,6 +601,8 @@ pub struct RequestContext {
     pub usage_units: Option<u64>,
     /// The value of `context.match` (4.4).
     pub match_mode: MatchMode,
+    /// The value of `context.approval.effect`, the effect of the operation (17.1).
+    pub approval_effect: Option<String>,
 }
 
 impl RequestContext {
@@ -659,6 +662,47 @@ impl RequestContext {
                 ),
             }
         }
+        if let Some(approval) = context.get("approval") {
+            let approval_path = path.key("approval");
+            match approval.as_object() {
+                None => report.error(
+                    &approval_path,
+                    "17.1",
+                    "bad_approval",
+                    format!(
+                        "Expected an object with the member `effect`, found {}.",
+                        show(approval)
+                    ),
+                ),
+                Some(map) => {
+                    for name in map.keys().filter(|name| name.as_str() != "effect") {
+                        report.error(
+                            &approval_path.key(name),
+                            "17.1",
+                            "unknown_member",
+                            format!("Member `{name}` is not valid here. `context.approval` has the member `effect` only (17.9)."),
+                        );
+                    }
+                    match map.get("effect") {
+                        Some(Value::String(effect)) if is_effect(effect) => {
+                            out.approval_effect = Some(effect.clone());
+                        }
+                        Some(other) => report.error(
+                            &approval_path.key("effect"),
+                            "17.3",
+                            "bad_effect",
+                            format!("Member `effect`: expected `sha256:` and 64 lower-case hexadecimal digits, found {}.", show(other)),
+                        ),
+                        None => report.error(
+                            &approval_path,
+                            "17.1",
+                            "missing_member",
+                            "Member `effect` is absent.",
+                        ),
+                    }
+                }
+            }
+        }
         if context.contains_key("usage") && out.match_mode == MatchMode::Subtree {
             report.error(
                 &path,
@@ -686,6 +730,14 @@ pub enum Reason {
     InvalidRequest,
     /// A counter of the use has too few units left.
     BudgetExceeded,
+    /// The action needs an approval, and there is none that can be used (17.1).
+    ApprovalRequired,
+    /// A request for the approval waits for the owner (17.1).
+    ApprovalPending,
+    /// The owner declined the request, and the deny time has not ended (17.1).
+    ApprovalDenied,
+    /// The approval ended before the use (17.1).
+    ApprovalExpired,
     /// Another text. A PEP maps it as a `false` answer with no reason (10.3).
     Other(String),
 }
@@ -698,6 +750,10 @@ impl Reason {
             Self::InvalidResource => "invalid_resource",
             Self::InvalidRequest => "invalid_request",
             Self::BudgetExceeded => "budget_exceeded",
+            Self::ApprovalRequired => "approval_required",
+            Self::ApprovalPending => "approval_pending",
+            Self::ApprovalDenied => "approval_denied",
+            Self::ApprovalExpired => "approval_expired",
             Self::Other(text) => text,
         }
     }
@@ -709,6 +765,10 @@ impl Reason {
             "invalid_resource" => Self::InvalidResource,
             "invalid_request" => Self::InvalidRequest,
             "budget_exceeded" => Self::BudgetExceeded,
+            "approval_required" => Self::ApprovalRequired,
+            "approval_pending" => Self::ApprovalPending,
+            "approval_denied" => Self::ApprovalDenied,
+            "approval_expired" => Self::ApprovalExpired,
             other => Self::Other(other.to_owned()),
         }
     }
@@ -725,6 +785,8 @@ pub struct AnswerContext {
     pub reason: Option<Reason>,
     /// The seconds to wait, with `budget_exceeded` (11.1).
     pub retry_after: Option<u64>,
+    /// A text that only the PDP reads, with `approval_required` and `approval_pending` (17.1).
+    pub evaluation_id: Option<String>,
 }
 
 /// One answer: an Access Evaluation response.
@@ -793,6 +855,9 @@ impl Decision {
         if let Some(seconds) = self.context.retry_after {
             context.insert("retry_after".into(), json!(seconds));
         }
+        if let Some(id) = &self.context.evaluation_id {
+            context.insert("evaluation_id".into(), json!(id));
+        }
         let mut out = Map::new();
         out.insert("decision".into(), json!(self.decision));
         if !context.is_empty() {
@@ -860,6 +925,10 @@ fn read_decision(value: &Value, path: &JsonPath, report: &mut Report) -> Option<
                         ),
                     ),
                 }
+            }
+            // The PEP never reads `evaluation_id` (17.1). A value that is not a text is ignored.
+            if let Some(Value::String(id)) = ctx.optional("evaluation_id") {
+                context.evaluation_id = Some(id.clone());
             }
             if context.reason == Some(Reason::BudgetExceeded) && context.retry_after.is_none() {
                 report.error(
@@ -1218,6 +1287,64 @@ mod tests {
     }
 
     #[test]
+    fn p_17_1_the_context_can_have_the_effect_of_the_operation() {
+        let effect = "sha256:0000000000000000000000000000000000000000000000000000000000000000";
+        let ctx = |v: Value| RequestContext::from_context(v.as_object());
+        assert_eq!(
+            ctx(json!({"approval": {"effect": effect}}))
+                .unwrap()
+                .approval_effect
+                .as_deref(),
+            Some(effect)
+        );
+        assert_eq!(ctx(json!({})).unwrap().approval_effect, None);
+        // The effect goes with usage (17.2).
+        let both = ctx(json!({"usage": {"units": 1}, "approval": {"effect": effect}})).unwrap();
+        assert_eq!(both.usage_units, Some(1));
+        assert!(both.approval_effect.is_some());
+    }
+
+    #[test]
+    fn p_17_1_a_bad_effect_is_a_bad_request() {
+        let ctx = |v: Value| RequestContext::from_context(v.as_object());
+        let short = json!({"approval": {"effect": "sha256:00"}});
+        assert_eq!(ctx(short).unwrap_err()[0].code, "bad_effect");
+        let not_text = json!({"approval": {"effect": 5}});
+        assert_eq!(ctx(not_text).unwrap_err()[0].code, "bad_effect");
+        assert_eq!(
+            ctx(json!({"approval": {}})).unwrap_err()[0].code,
+            "missing_member"
+        );
+        assert_eq!(
+            ctx(json!({"approval": "x"})).unwrap_err()[0].code,
+            "bad_approval"
+        );
+        // 17.9: the question has the effect only, never `op` or `view`.
+        let effect = "sha256:0000000000000000000000000000000000000000000000000000000000000000";
+        let with_op = json!({"approval": {"effect": effect, "op": {}}});
+        let error = ctx(with_op).unwrap_err();
+        assert_eq!(error[0].code, "unknown_member");
+        assert_eq!(error[0].path.as_str(), "$.context.approval.op");
+    }
+
+    #[test]
+    fn p_17_1_an_answer_can_have_an_evaluation_id_and_a_pep_never_needs_it() {
+        let value = json!({"decision": false,
+            "context": {"reason": "approval_required", "evaluation_id": "ev_1"}});
+        let decision = Decision::from_value(&value).unwrap();
+        assert_eq!(decision.context.reason, Some(Reason::ApprovalRequired));
+        assert_eq!(decision.context.evaluation_id.as_deref(), Some("ev_1"));
+        assert_eq!(decision.to_value(), value);
+        // A value that is not a text is ignored.
+        let odd = json!({"decision": false,
+            "context": {"reason": "approval_pending", "evaluation_id": 5}});
+        assert_eq!(
+            Decision::from_value(&odd).unwrap().context.evaluation_id,
+            None
+        );
+    }
+
+    #[test]
     fn p_6_4_a_later_member_of_usage_is_ignored() {
         let ctx = json!({"usage": {"units": 1, "remaining": 5}, "other": true});
         assert!(RequestContext::from_context(ctx.as_object()).is_ok());
@@ -1401,6 +1528,10 @@ mod tests {
             ("invalid_resource", Reason::InvalidResource),
             ("invalid_request", Reason::InvalidRequest),
             ("budget_exceeded", Reason::BudgetExceeded),
+            ("approval_required", Reason::ApprovalRequired),
+            ("approval_pending", Reason::ApprovalPending),
+            ("approval_denied", Reason::ApprovalDenied),
+            ("approval_expired", Reason::ApprovalExpired),
             ("other", Reason::Other("other".to_owned())),
         ] {
             assert_eq!(Reason::parse(text), reason);

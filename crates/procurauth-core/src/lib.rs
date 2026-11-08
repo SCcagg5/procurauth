@@ -20,6 +20,8 @@
 //! | [`authzen`] | 4.1, 6.4, 11 | The AuthZEN messages, the chain and the members of the context. |
 //! | [`jws`], [`identity`] | 9 | Keys, signatures, claims and the checks of the identity token. |
 //! | [`key_format`] | 3.8 | The text format of a key, as data. |
+//! | [`effect`] | 17.3, 17.9 | The effect of an operation (JCS and SHA-256) and the check of a view. |
+//! | [`approvals`] | 17.6 | The approvals that the data of the test PDP holds at the start. |
 //! | [`directory`] | | The data of the test PDP. |
 //!
 //! # Rules of the readers
@@ -41,9 +43,11 @@
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 pub mod action_document;
+pub mod approvals;
 pub mod authzen;
 pub mod coverage;
 pub mod directory;
+pub mod effect;
 pub mod finding;
 pub mod grants;
 pub mod identity;

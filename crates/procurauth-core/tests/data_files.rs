@@ -49,20 +49,12 @@ fn every_json_file_is_read_by_the_strict_reader() {
     }
 }
 
-/// The directory files that the reader of the core does not know yet. The reader has no `confirm`
-/// and no `approvals` until the lot S4a. The schema `fake-pdp-data` checks these files.
-const READ_BY_THE_SCHEMA_ONLY: [&str; 1] = ["approvals.json"];
-
 #[test]
 fn every_directory_file_is_good_and_gives_no_warning() {
     let dir = root().join("conformance/directories");
     let mut count = 0;
     for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
-        let name = path.file_name().unwrap().to_string_lossy().into_owned();
-        if READ_BY_THE_SCHEMA_ONLY.contains(&name.as_str()) {
-            continue;
-        }
         let text = fs::read_to_string(&path).unwrap();
         let (directory, report) = analyze_value(&parse_str(&text).unwrap());
         assert!(

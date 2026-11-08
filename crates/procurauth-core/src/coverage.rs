@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use crate::action_document::{ActionDocument, LimitKind};
 use crate::grants::Grant;
 use crate::limits::{LimitValue, combine_sides, lowest};
+use crate::names::ACCESS_ACTION;
 use crate::path::NodePath;
 
 /// True when a grant on `grant` covers `node` (4.3): the node is the grant
@@ -71,6 +72,26 @@ pub fn key_subtree_applies(
                 }
             })
     })
+}
+
+/// True when the action needs an approval on `node` for the grants of one side (17.8):
+/// a grant of `action` that covers `node` has `confirm`. The action `access` never needs one.
+pub fn confirm_required(grants: &[Grant], action: &str, node: &NodePath) -> bool {
+    action != ACCESS_ACTION
+        && grants
+            .iter()
+            .any(|g| g.confirm && g.action == action && covers(&g.resource, node))
+}
+
+/// True when the action needs an approval on `node` for a key (17.8).
+/// The grants of the key and the grants of its owner both count, so the strictest side wins.
+pub fn key_confirm_required(
+    key_grants: &[Grant],
+    owner_grants: &[Grant],
+    action: &str,
+    node: &NodePath,
+) -> bool {
+    confirm_required(key_grants, action, node) || confirm_required(owner_grants, action, node)
 }
 
 /// The ceilings of an answer for one side (7.3).
@@ -383,5 +404,53 @@ mod tests {
             &path("service:datastore/host:dev")
         ));
         assert!(!key_subtree_applies(&key, &owner, "data.write", &service));
+    }
+    #[test]
+    fn p_17_8_a_grant_with_confirm_needs_an_approval_on_the_nodes_that_it_covers() {
+        let doc = document();
+        let side = grants(
+            &json!([
+                {"action": "data.write", "resource": "service:datastore/host:prod/database:a", "confirm": true},
+                {"action": "data.write", "resource": "service:datastore/host:prod/database:b"}
+            ]),
+            &doc,
+        );
+        let a = path("service:datastore/host:prod/database:a/table:t");
+        let b = path("service:datastore/host:prod/database:b");
+        assert!(confirm_required(&side, "data.write", &a));
+        assert!(!confirm_required(&side, "data.write", &b));
+        assert!(!confirm_required(&side, "data.read", &a));
+        // The grant of the action `access` never needs an approval.
+        let access = grants(
+            &json!([{"action": "access", "resource": "service:datastore", "confirm": true}]),
+            &doc,
+        );
+        assert!(!confirm_required(
+            &access,
+            "access",
+            &path("service:datastore")
+        ));
+    }
+
+    #[test]
+    fn p_17_8_for_a_key_the_strictest_side_wins() {
+        let doc = document();
+        let with = grants(
+            &json!([{"action": "data.write", "resource": "service:datastore/host:prod", "confirm": true}]),
+            &doc,
+        );
+        let without = grants(
+            &json!([{"action": "data.write", "resource": "service:datastore/host:prod"}]),
+            &doc,
+        );
+        let node = path("service:datastore/host:prod/database:a");
+        assert!(key_confirm_required(&with, &without, "data.write", &node));
+        assert!(key_confirm_required(&without, &with, "data.write", &node));
+        assert!(!key_confirm_required(
+            &without,
+            &without,
+            "data.write",
+            &node
+        ));
     }
 }

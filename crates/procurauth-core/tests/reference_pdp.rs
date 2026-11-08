@@ -13,12 +13,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use procurauth_core::action_document::{Action, ActionDocument, LimitKind};
+use procurauth_core::approvals::{ApprovalStatus, OwnerDecision, SeedApproval};
 use procurauth_core::authzen::{
     Decision, EvaluationRequest, EvaluationsRequest, MatchMode, Reason, RequestContext,
     check_resource, check_usage_placement, evaluations_answer_to_value,
 };
 use procurauth_core::coverage::{
-    ceilings_of_key, ceilings_of_side, granted, key_granted, key_subtree_applies, subtree_applies,
+    ceilings_of_key, ceilings_of_side, confirm_required, granted, key_confirm_required,
+    key_granted, key_subtree_applies, subtree_applies,
 };
 use procurauth_core::directory::{Directory, KeyState, ServiceEntry, SubjectEntry};
 use procurauth_core::grants::Grant;
@@ -52,6 +54,8 @@ enum Outcome {
 struct ReferencePdp {
     directory: Directory,
     counters: Counters,
+    /// The approvals of the data file. The reference PDP changes only the flag `consumed`.
+    approvals: Vec<SeedApproval>,
     now_millis: u64,
 }
 
@@ -71,9 +75,53 @@ impl ReferencePdp {
             counters.insert(key, c["used"].as_u64().unwrap());
         }
         Self {
+            approvals: directory.approvals.clone(),
             directory,
             counters,
             now_millis: now * 1000,
+        }
+    }
+
+    /// The gate of 17.1 for a question with an effect, read from the text of the protocol.
+    /// It returns the index of the approval that can be used, or the reason of the refusal.
+    fn approval_gate(
+        &self,
+        service: &ServiceEntry,
+        subject: &str,
+        action: &str,
+        node: &NodePath,
+        effect: &str,
+        with_usage: bool,
+    ) -> Result<usize, Reason> {
+        let now = self.now_millis / 1000;
+        let latest = self.approvals.iter().rposition(|a| {
+            a.subject == subject
+                && a.action == action
+                && a.resource == *node
+                && a.resource.service_id() == service.id
+                && a.effect == effect
+        });
+        let Some(index) = latest else {
+            return Err(Reason::ApprovalRequired);
+        };
+        let a = &self.approvals[index];
+        let void = if with_usage {
+            Reason::ApprovalExpired
+        } else {
+            Reason::ApprovalRequired
+        };
+        match (a.status, a.decision) {
+            (ApprovalStatus::Pending | ApprovalStatus::Replied, _) => Err(Reason::ApprovalPending),
+            (ApprovalStatus::Answered, Some(OwnerDecision::Decline)) => match a.deny_until {
+                Some(end) if now < end => Err(Reason::ApprovalDenied),
+                _ => Err(Reason::ApprovalRequired),
+            },
+            (ApprovalStatus::Answered, _) if a.consumed => Err(Reason::ApprovalRequired),
+            (ApprovalStatus::Answered, _) => match a.consume_before {
+                Some(end) if now <= end => Ok(index),
+                _ => Err(void),
+            },
+            _ => Err(void),
         }
     }
 
@@ -239,11 +287,49 @@ impl ReferencePdp {
                 Some(owner) => ceilings_of_key(document, own, &owner.grants, action, node),
             },
         };
+        let needs_approval = match owner {
+            None => confirm_required(own, action, node),
+            Some(owner) => key_confirm_required(own, &owner.grants, action, node),
+        };
+        let mut usable = None;
+        if needs_approval {
+            let gate = context.approval_effect.as_deref().map_or(
+                Err(Reason::ApprovalRequired),
+                |effect| {
+                    self.approval_gate(
+                        service,
+                        &subject.id,
+                        action,
+                        node,
+                        effect,
+                        context.usage_units.is_some(),
+                    )
+                },
+            );
+            match gate {
+                Ok(index) => usable = Some(index),
+                Err(reason) => {
+                    let mut decision = Decision::deny(Some(reason.clone()));
+                    let with_id = context.approval_effect.is_some()
+                        && matches!(reason, Reason::ApprovalRequired | Reason::ApprovalPending);
+                    if with_id {
+                        decision.context.evaluation_id = Some("ev_reference".to_owned());
+                    }
+                    return decision;
+                }
+            }
+        }
         if context.usage_units.is_none() {
             return Decision::allow(limits, None);
         }
         match self.spend(service, subject, owner, action) {
-            Ok(units) => Decision::allow(limits, Some(units)),
+            Ok(units) => {
+                // The units and the approval go together (17.2).
+                if let Some(index) = usable {
+                    self.approvals[index].consumed = true;
+                }
+                Decision::allow(limits, Some(units))
+            }
             Err(seconds) => Decision::budget_exceeded(seconds),
         }
     }
@@ -386,6 +472,14 @@ fn run_case_value(case: &Value) -> Result<(), String> {
                 response.status
             ));
         }
+        if let Some(matcher) = expect.get("body_text")
+            && !matches(matcher, Some(&json!(response.body.to_string())))
+        {
+            return Err(format!(
+                "{id}: step {name:?}: the body {} does not match {matcher}",
+                response.body
+            ));
+        }
         if let Some(pointers) = expect["json"].as_object() {
             for (pointer, matcher) in pointers {
                 if !matches(matcher, response.body.pointer(pointer)) {
@@ -400,19 +494,11 @@ fn run_case_value(case: &Value) -> Result<(), String> {
     Ok(())
 }
 
-/// True for a case of the approval profile. The reference PDP gives no approval until the lot S4a.
-fn needs_approvals(case: &Value) -> bool {
-    case["skip_if"]
-        .as_array()
-        .is_some_and(|list| list.iter().any(|c| c == "no_approval_support"))
-}
-
 fn case_files() -> Vec<PathBuf> {
     let mut paths: Vec<_> = fs::read_dir(conformance_dir().join("cases/D"))
         .unwrap()
         .map(|e| e.unwrap().path())
         .filter(|p: &PathBuf| p.extension().is_some_and(|e| e == "json"))
-        .filter(|p: &PathBuf| !needs_approvals(&read_case(p)))
         .collect();
     paths.sort();
     paths

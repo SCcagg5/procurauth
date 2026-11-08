@@ -21,6 +21,9 @@ pub struct Grant {
     pub action: String,
     /// The node. The grant covers this node and each node below it (4.3).
     pub resource: NodePath,
+    /// The member `confirm` (17.8): when it is true, the action needs the approval of the owner.
+    /// It has no effect on the action `access`. The default is false.
+    pub confirm: bool,
     /// The limit values of the grant.
     pub limits: LimitValues,
 }
@@ -31,6 +34,9 @@ impl Grant {
         let mut m = Map::new();
         m.insert("action".into(), json!(self.action));
         m.insert("resource".into(), json!(self.resource.to_string()));
+        if self.confirm {
+            m.insert("confirm".into(), json!(true));
+        }
         if !self.limits.is_empty() {
             m.insert("limits".into(), limit_values_to_value(&self.limits));
         }
@@ -86,6 +92,7 @@ pub fn read_grant<'a>(
     let action = obj.string("action", report);
     let resource_text = obj.string("resource", report);
     let limits_value = obj.optional("limits");
+    let confirm = obj.boolean_opt("confirm", report);
     obj.finish(report);
 
     if let Some(action) = action
@@ -140,6 +147,7 @@ pub fn read_grant<'a>(
     Some(Grant {
         action: action?.to_owned(),
         resource: resource?,
+        confirm: confirm.unwrap_or(false),
         limits: limits.unwrap_or_default(),
     })
 }
@@ -285,6 +293,29 @@ mod tests {
         let (grant, found) = read_one(&value);
         assert!(found.is_empty(), "{found:?}");
         assert_eq!(grant.unwrap().to_value(), value);
+    }
+
+    #[test]
+    fn p_17_8_a_grant_can_have_confirm_and_the_default_is_false() {
+        let value = json!({"action": "data.write", "resource": "service:datastore/host:prod/database:a",
+                           "confirm": true});
+        let (grant, found) = read_one(&value);
+        assert!(found.is_empty(), "{found:?}");
+        let grant = grant.unwrap();
+        assert!(grant.confirm);
+        assert_eq!(grant.to_value(), value);
+        let value =
+            json!({"action": "data.write", "resource": "service:datastore/host:prod/database:a"});
+        assert!(!read_one(&value).0.unwrap().confirm);
+        let value = json!({"action": "data.write", "resource": "service:datastore/host:prod/database:a",
+                           "confirm": false});
+        let grant = read_one(&value).0.unwrap();
+        assert!(!grant.confirm);
+        let value = json!({"action": "data.write", "resource": "service:datastore/host:prod/database:a",
+                           "confirm": "yes"});
+        let (grant, found) = read_one(&value);
+        assert!(grant.is_none());
+        assert_eq!(found[0].1, "wrong_type");
     }
 
     #[test]

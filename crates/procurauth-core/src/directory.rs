@@ -9,6 +9,7 @@
 use serde_json::{Value, json};
 
 use crate::action_document::{ActionDocument, check_into};
+use crate::approvals::{SeedApproval, read_approvals};
 use crate::finding::{Finding, JsonPath, Report, show};
 use crate::grants::{Grant, ServiceLookup, read_grants};
 use crate::json::parse_str;
@@ -155,6 +156,8 @@ pub struct Directory {
     pub counters: Vec<CounterPreset>,
     /// The failures to make.
     pub failures: Vec<FailureRule>,
+    /// The approvals at the start (17.6). The last entry for one subject, action, resource and effect is the latest.
+    pub approvals: Vec<SeedApproval>,
 }
 
 impl Directory {
@@ -227,6 +230,7 @@ fn read_directory(value: &Value, report: &mut Report) -> Option<Directory> {
     let subjects = obj.array("subjects", report);
     let counters = obj.array_opt("counters", report);
     let failures = obj.array_opt("failures", report);
+    let approvals = obj.array_opt("approvals", report);
     obj.finish(report);
 
     out.services = read_services(services.unwrap_or_default(), &root.key("services"), report);
@@ -243,6 +247,11 @@ fn read_directory(value: &Value, report: &mut Report) -> Option<Directory> {
         report,
     );
     out.failures = read_failures(failures.unwrap_or_default(), &root.key("failures"), report);
+    out.approvals = read_approvals(
+        approvals.unwrap_or_default(),
+        &root.key("approvals"),
+        report,
+    );
     Some(out)
 }
 
