@@ -32,3 +32,12 @@ This file lists the places where the code or the data of this repository differs
 17. `access-lint`: each finding has a severity, a path, a rule, a stable code and a message. The site shows the path, the rule and the message. The core marks some findings as warnings, for example a document above the minimum size of 5.3c. The site does not describe warnings. The tool must decide their effect on the exit code.
 18. `fake-pdp`: the data file has the members `clock`, `metadata`, `services`, `subjects`, `counters` and `failures`. The site says that the clock and the failures are in the data file, and this is the case. The site does not show the file format.
 19. `access-conformance`: the profile of the service under test and the run configuration are not defined yet. The data model names the six operations and the four variables that they need.
+
+## Approval profile
+
+20. The page `specification.html` has no section 17, no paragraph 5.2b, and no change to 1.3, 10.1, 10.3, 11.1 and 12. The repository has them. The header of the protocol stays at version 1.0 (decision 75).
+21. The page `mcp-binding.html` has the old 3.5a and the old case U30. The repository has a new 3.5a, the paragraphs 5.7, 5.7a and 5.7b, and a new U30. Its section 12 has two more items.
+22. The site lists the schemas of the earlier lots. The repository adds `approval-submission`, `approval-verdict` and `approval-view`, and it changes `action-document`, `evaluation-context`, `fake-pdp-data` and `conformance-case`. The folder `docs/schemas` has no copy of them.
+23. The page `conformance.html` and the README show 192 cases. The repository has 218: 110 for a PEP, 89 for a PDP and 19 for an edge. The runner skips 26 of them, with the condition `no_approval_support`. The image `docs/assets/conformance.svg` still shows 192.
+24. The page `conformance.html` lists the skip conditions. The repository has one more: `no_approval_support`. It also has the operation variants, the script of the approval API, `pdp_approvals` and five new variables.
+

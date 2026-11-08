@@ -115,3 +115,34 @@ Each item gives one choice and the reason in one sentence.
 73. Section 17 has only the paragraph 17.3 in this version. The numbers 17.1 to 17.12 stay free for the approval profile, because a paragraph keeps its number.
 74. The ids V01 and V02 name two groups of vectors, not cases of a series, because no runner uses a vector file in this version.
 75. The header of the protocol stays at version 1.0. The changelog shows the changes as unreleased until a release, and the site pages show the version 1.0.
+
+## Approval profile
+
+76. Section 17 is optional (1.3), because a PDP or a service can follow the protocol with no approval. This ends decision 73: the paragraphs 17.1 to 17.12 are written.
+77. The new paragraph of 5.2 has the letter b, not the letter d of the papers. The only paragraph before it is 5.2a, and the letters follow in order.
+78. The PEP asks two questions for an action with an approval: one without usage, then one with usage. The papers split the call from the use, and 10.1 forbids a kept `true` to start a use.
+79. A void approval gives `approval_required` to a question without usage, and `approval_expired` to a question with usage. An agent can then ask again at once, and the PEP keeps no state.
+80. A refusal gives `approval_denied` during a deny time that the PDP publishes. The papers make the time a PDP value, so the test data gives the end of the time as `deny_until`.
+81. The PEP sends `context.usage` for the use of an action with an approval, also when the action lists no budget (17.2). The PDP must know which question consumes the approval.
+82. The answers `approval_required` and `approval_pending` carry `evaluation_id`, so that the PEP can submit again and get the same id and code. The PEP keeps no state.
+83. A question with no effect for a grant with `confirm` gets `approval_required` with no `evaluation_id`. A PEP that does not know approvals then fails closed, and it cannot submit.
+84. The query of each read of a request has `subject`. A request of another subject, of another service and an unknown request get the same 404, so that no verdict leaks.
+85. A submission has exactly one of `approval_ref`, `lease_s` and `until` (17.4). A call to the MCP tool that does not follow this gets `invalid_argument`, because the papers give 422 for it at the PDP.
+86. `confirm` has no effect on `access` and on a question with `context.match` equal to `subtree` (17.8). The edge decides only `access`, and a display must not hide a tool.
+87. The binding has no code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (17.12), so it gives `approval_expired`.
+88. The tool `get_action_status` has no action and sends no question. The approval API checks the subject, and `tools/list` names the tool when it names a tool with an approval.
+89. The API of the PDP uses the error `no_device` for an owner with no device, as the dialogue paper does. The confirmation paper says `no_phone`.
+90. The result for a request that waits is not an error. It has a second content item that starts with `NOT EXECUTED`, as the paper recommends (question 9).
+91. The `view` has the members `title`, `fields`, `body` and `body_label`. The paper shows them in its example, and a schema needs a closed list.
+92. In the data of a PDP, the last entry of `approvals` for one subject, action, resource and effect is the latest approval. A list has an order, so no timestamp is needed.
+
+## Case ids of the approval profile
+
+93. The ids follow the rule of no gap. The paper ids U107 and U109 to U112 become U106 to U110, and the paper D90 becomes D89. The paper U106 is the case U30, which is rewritten.
+94. The paper cases D88 and D89 stay out of the data, because the answer of a person is outside the protocol. A new case D88 tests `approval_pending`, which the paper had no case for.
+95. A case of the approval profile has the condition `no_approval_support`. The runner holds it for each target until the lots S4a and S4b, so that the reference programs stay green.
+96. The runner model reads the new members of a case now: `variant`, `approval_script`, `pdp_approvals` and the matcher `effect`. The runner loads each case, and one case that it cannot read stops the whole run.
+97. The directory `approvals.json` is valid against the schema only. The reader of the core does not know `confirm` and `approvals` until the lot S4a, and the test of the data files skips this file.
+98. The schema `conformance-case` has no endpoint `approval_requests` or `approval_status`. No case sends a request to the approval API of a PDP, because the API series stays with the tests of the PDP.
+99. The variable `approval_ref` has the fixed value `ref_conformance_0001`, and the base call of the runner gives `lease_s` 900. A case then needs no value from the profile for the control arguments.
+100. The reader of the core reads the member `approval` of an action (5.2b) and refuses another value. The schema and the lint examples of 5.2b need it, and the protocol makes it a rule for each reader.

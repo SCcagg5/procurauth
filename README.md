@@ -7,7 +7,7 @@
   <a href="https://github.com/SCcagg5/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/SCcagg5/procurauth?color=4338ca&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/protocol-1.0-4338ca" alt="Protocol 1.0">
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
-  <img src="https://img.shields.io/badge/conformance-192%20cases-34d399" alt="192 conformance cases">
+  <img src="https://img.shields.io/badge/conformance-218%20cases-34d399" alt="218 conformance cases">
   <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
 </p>
 
@@ -26,7 +26,7 @@ ProcurAuth is an open specification for services that let AI agents act for peop
 
 A backend holds the users, their rights and the keys of their agents. A person makes a key for an agent. **A key never has more rights than the person who owns it.** A service does not know the backend. It speaks only [AuthZEN](https://openid.net/specs/authorization-api-1_0.html).
 
-This repository holds the protocol, the MCP binding, the JSON schemas, 192 conformance cases and the programs to test a service.
+This repository holds the protocol, the MCP binding, the JSON schemas, 218 conformance cases and the programs to test a service.
 
 <p align="center">
   <img src="docs/assets/rights.svg" alt="The rights of a key are the rights that its owner has and that the key also holds" width="90%">
@@ -147,7 +147,7 @@ life       ok   life 300 s, max 300 s
 ## Conformance
 
 <p align="center">
-  <img src="docs/assets/conformance.svg" alt="192 conformance cases: 99 for a PEP, 75 for a PDP and 18 for an edge" width="90%">
+  <img src="docs/assets/conformance.svg" alt="218 conformance cases: 110 for a PEP, 89 for a PDP and 19 for an edge" width="90%">
 </p>
 
 The cases are data, in `conformance/`. Each case cites a paragraph of the protocol. `conformance/COVERAGE.md` shows which paragraph has a case. To test your own service, write a profile and run the cases:
@@ -158,7 +158,7 @@ access-conformance --role pdp  --profile my-pdp.json     --url http://127.0.0.1:
 access-conformance --role edge --profile my-edge.json    --url http://127.0.0.1:8002
 ```
 
-The runner prints one line for each case and a summary line, for example `99 cases: 99 passed, 0 failed, 0 skipped`.
+The runner prints one line for each case and a summary line, for example `110 cases: 98 passed, 0 failed, 12 skipped`. It skips the 26 cases of the approval profile (protocol section 17) in this version, because no reference program gives approvals yet.
 
 ## JSON schemas
 
@@ -173,6 +173,7 @@ The directory `schemas/` has a JSON Schema for each document and each file of th
 | [`limit-values`](schemas/limit-values.schema.json) | The limit values that one grant gives. |
 | [`key-format`](schemas/key-format.schema.json) | The format of the text of a key. |
 | [`conformance-case`](schemas/conformance-case.schema.json) | One conformance case. |
+| [`approval-submission`](schemas/approval-submission.schema.json), [`approval-view`](schemas/approval-view.schema.json), [`approval-verdict`](schemas/approval-verdict.schema.json) | The narrow API of a PDP for approvals (protocol 17.4). |
 | [`effect-vectors`](schemas/effect-vectors.schema.json) | The test vectors for the effect hash of protocol 17.3. |
 | [`conformance-profile`](schemas/conformance-profile.schema.json) | How the runner reaches a target. |
 | [`conformance-report`](schemas/conformance-report.schema.json) | The result of a run. |

@@ -39,3 +39,20 @@ This file lists the places where the text of the protocol or of the MCP binding 
 ## Conformance
 
 23. **15, item 2.** The binding gives the ids U18, U23 and U25 to U31, and E01. The page `conformance.html` of the site lists U25 to U28 only. The data model reserves all the ids of the binding.
+
+## Approval of an effect (section 17)
+
+24. **5.2b.** The papers give the letter d to the new paragraph. The repository has no 5.2b and no 5.2c, so the text uses b. Do the other texts that cite 5.2d change, or does the owner want the gap?
+25. **17.1, 17.7, 10.1.** The PEP asks a question without usage and then a question with usage. A single question with usage and the effect needs one call less, but the papers keep the first question. Which one does the owner want?
+26. **17.1.** A void approval gives `approval_required` to a question without usage. The agent then gets a new request, and the tool call gives no `approval_expired`. Is this right? The reason `approval_expired` shows only when the approval ends between the two questions.
+27. **17.6.** The deny time makes the same effect get `approval_denied`. After it, the agent can ask again. The agent learns the text of the refusal only at the PDP. Does the PEP need a count of refusals?
+28. **10.3, 17.7.** The protocol gives no HTTP form for a request that waits. An HTTP route that follows section 17 submits the request and answers 403. Does the owner want an HTTP form, for example 202 with a body?
+29. **17.1.** A question with no effect for a grant with `confirm` gets `approval_required`. This includes the questions of 5.5a that ask a second permission without usage. An operation that needs a second permission on an action with `confirm` cannot run. Does the owner accept this?
+30. **17.4.** The names of the errors of the narrow API are new: `invalid_evaluation`, `lease_required`, `invalid_lease` and `cannot_supersede`. The papers also differ for the owner with no device: `no_phone` and `no_device`. The text takes `no_device`.
+31. **Binding 5.7.** A call must give exactly one of `approval_ref`, `lease_s` and `until`. A service can give a default lease from its own configuration instead. The papers say that the PDP refuses a call with none.
+32. **Binding 5.7a.** The papers list `approval_cancelled`, but the PEP learns only `void` (17.12). The text defines no such code. Does the owner want a ninth verdict, or does the code leave the list?
+33. **Binding 5.7.** The result for a request that waits has a second item `NOT EXECUTED` and no `isError`. The paper asks to read this choice again after two weeks of use. Is the contract of the MCP servers changed to hold it?
+34. **17.4.** Each read of a request has the parameter `subject`, also without `renew=true`. The papers show it only with `renew=true`. The text makes it mandatory, so that no verdict leaks to another subject.
+35. **17.9.** The effect and the pointers are checked by the PDP only. A case cannot check that a pointer of the `view` names a value of the `op` that the PEP sent. A new matcher could do it.
+36. **15, item 2.** The series A of the papers (API of the PDP) is not in the data. Does the owner want it as conformance cases for a PDP, with the endpoints `approval_requests` and `approval_status`?
+
