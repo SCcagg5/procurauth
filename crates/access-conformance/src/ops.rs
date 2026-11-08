@@ -7,8 +7,11 @@
 
 use serde_json::{Value, json};
 
+use procurauth_core::effect::{effect_hash, resource_text};
+use procurauth_core::path::{NodePath, NodeRef};
+
 use crate::http::Headers;
-use crate::model::Operation;
+use crate::model::{Operation, Variant};
 use crate::profile::OpDef;
 use crate::vars::Vars;
 
@@ -16,6 +19,12 @@ use crate::vars::Vars;
 pub(crate) const MCP_REVISION: &str = "2026-07-28";
 /// The JSON-RPC id of an MCP request.
 const MCP_ID: u64 = 7;
+/// The value of the control argument `lease_s` in the base call of `mcp_call_approval`.
+pub(crate) const BASE_LEASE_SECONDS: u64 = 900;
+/// The value of the variable `approval_ref`, and of the control argument of the variant `approval_ref`.
+pub(crate) const APPROVAL_REF: &str = "ref_conformance_0001";
+/// The value of the control argument `wait_s` in the variant `wait`.
+pub(crate) const WAIT_SECONDS: u64 = 1;
 
 /// The parts of a request, before the runner adds the step headers and the token.
 #[derive(Clone, Debug)]
@@ -28,6 +37,58 @@ pub(crate) struct Parts {
     pub(crate) headers: Headers,
     /// The body.
     pub(crate) body: Option<Vec<u8>>,
+}
+
+/// The effects of the three calls of `mcp_call_approval`: the base call, `effect_2` and `effect_3` (protocol 17.3).
+///
+/// # Errors
+/// Returns a message when the operation has no `approval` member, or when the node or an `op`
+/// is not valid.
+pub(crate) fn effects(def: &OpDef, service: &str) -> Result<[String; 3], String> {
+    let approval = def
+        .approval
+        .as_ref()
+        .ok_or_else(|| "the operation has no member `approval`".to_owned())?;
+    let action = def
+        .action
+        .as_deref()
+        .ok_or_else(|| "the operation has no member `action`".to_owned())?;
+    let (Some(kind), Some(id), Some(Value::Array(ancestors))) = (
+        def.resource_type.as_deref(),
+        def.resource_id.as_deref(),
+        def.ancestors.as_ref(),
+    ) else {
+        return Err(
+            "the operation has no `resource_type`, `resource_id` or `ancestors`".to_owned(),
+        );
+    };
+    let mut nodes: Vec<NodeRef> = Vec::new();
+    for item in ancestors {
+        let (Some(t), Some(i)) = (
+            item.get("type").and_then(Value::as_str),
+            item.get("id").and_then(Value::as_str),
+        ) else {
+            return Err("an ancestor has no `type` or `id`".to_owned());
+        };
+        nodes.push(NodeRef::new(t, i));
+    }
+    nodes.push(NodeRef::new(kind, id));
+    let node = NodePath::from_nodes(nodes).map_err(|e| format!("the node is not valid: {e}"))?;
+    if node.service_id() != service {
+        return Err(format!(
+            "the chain starts with the service `{}`, and the profile has the service `{service}`",
+            node.service_id()
+        ));
+    }
+    let resource = resource_text(&node);
+    let one = |op: &Value| {
+        effect_hash(service, action, &resource, op).map_err(|e| format!("`op` is not valid: {e}"))
+    };
+    Ok([
+        one(&approval.op)?,
+        one(&approval.effect_2.op)?,
+        one(&approval.effect_3.op)?,
+    ])
 }
 
 /// The variables that an operation gives.
@@ -48,6 +109,13 @@ pub(crate) fn op_vars(operation: Operation, def: &OpDef, service: &str) -> Vars 
     }
     if let Some(value) = def.ceiling_value {
         vars.set("ceiling_value", json!(value));
+    }
+    if operation == Operation::McpCallApproval
+        && let Ok([base, second, third]) = effects(def, service)
+    {
+        vars.set("effect", json!(base));
+        vars.set("effect_2", json!(second));
+        vars.set("effect_3", json!(third));
     }
     if operation == Operation::UseService {
         vars.set_default("resource_type", json!("service"));
@@ -87,11 +155,44 @@ fn add_mcp_headers(headers: &mut Headers, body: &Value) {
     }
 }
 
-/// Build the request of an operation.
+/// The arguments of a call of `mcp_call_approval`: the arguments of the base call or of the variant
+/// `effect_2` or `effect_3`, and the control arguments. The base call has `lease_s`. The variant
+/// `approval_ref` gives `approval_ref` in place of it. The variant `wait` adds `wait_s`.
+fn approval_arguments(def: &OpDef, vars: &Vars, variant: Option<Variant>) -> Result<Value, String> {
+    let unknown = |name: String| format!("the variable `{name}` has no value");
+    let template = match (variant, &def.approval) {
+        (Some(Variant::Effect2), Some(a)) => Some(&a.effect_2.arguments),
+        (Some(Variant::Effect3), Some(a)) => Some(&a.effect_3.arguments),
+        _ => def.arguments.as_ref(),
+    };
+    let mut arguments = match template {
+        Some(t) => vars.value(t).map_err(unknown)?,
+        None => json!({}),
+    };
+    let Some(map) = arguments.as_object_mut() else {
+        return Err("the arguments of the call are not a JSON object".to_owned());
+    };
+    if variant == Some(Variant::ApprovalRef) {
+        map.insert("approval_ref".to_owned(), json!(APPROVAL_REF));
+    } else {
+        map.insert("lease_s".to_owned(), json!(BASE_LEASE_SECONDS));
+    }
+    if variant == Some(Variant::Wait) {
+        map.insert("wait_s".to_owned(), json!(WAIT_SECONDS));
+    }
+    Ok(arguments)
+}
+
+/// Build the request of an operation. The `variant` changes the base call of `mcp_call_approval`.
 ///
 /// # Errors
 /// Returns a message when a variable has no value.
-pub(crate) fn build(operation: Operation, def: &OpDef, vars: &Vars) -> Result<Parts, String> {
+pub(crate) fn build(
+    operation: Operation,
+    def: &OpDef,
+    vars: &Vars,
+    variant: Option<Variant>,
+) -> Result<Parts, String> {
     let unknown = |name: String| format!("the variable `{name}` has no value");
     let default_method = match operation {
         Operation::ReadActions | Operation::ListOptions => "GET",
@@ -142,9 +243,13 @@ pub(crate) fn build(operation: Operation, def: &OpDef, vars: &Vars) -> Result<Pa
             | Operation::McpCallMulti
             | Operation::McpCallApproval
     ) {
-        let arguments = match &def.arguments {
-            Some(arguments) => vars.value(arguments).map_err(unknown)?,
-            None => json!({}),
+        let arguments = if operation == Operation::McpCallApproval {
+            approval_arguments(def, vars, variant)?
+        } else {
+            match &def.arguments {
+                Some(arguments) => vars.value(arguments).map_err(unknown)?,
+                None => json!({}),
+            }
         };
         Some(json!({
             "jsonrpc": "2.0",
@@ -197,7 +302,7 @@ mod tests {
 
     #[test]
     fn the_read_of_the_action_document_has_a_default() {
-        let parts = build(Operation::ReadActions, &OpDef::default(), &vars()).unwrap();
+        let parts = build(Operation::ReadActions, &OpDef::default(), &vars(), None).unwrap();
         assert_eq!(parts.method, "GET");
         assert_eq!(parts.target, "/.well-known/procurauth/actions");
         assert!(parts.body.is_none());
@@ -205,7 +310,7 @@ mod tests {
 
     #[test]
     fn the_read_of_the_options_route_uses_the_type() {
-        let parts = build(Operation::ListOptions, &OpDef::default(), &vars()).unwrap();
+        let parts = build(Operation::ListOptions, &OpDef::default(), &vars(), None).unwrap();
         assert_eq!(
             parts.target,
             "/.well-known/procurauth/resources?type=database"
@@ -220,7 +325,7 @@ mod tests {
             body: Some(json!({"id": "{{resource_id}}"})),
             ..OpDef::default()
         };
-        let parts = build(Operation::UsePlain, &def, &vars()).unwrap();
+        let parts = build(Operation::UsePlain, &def, &vars(), None).unwrap();
         assert_eq!(parts.method, "POST");
         assert_eq!(parts.target, "/t/orders");
         assert_eq!(parts.body.unwrap(), br#"{"id":"orders"}"#);
@@ -233,7 +338,7 @@ mod tests {
             arguments: Some(json!({"table": "{{resource_id}}"})),
             ..OpDef::default()
         };
-        let parts = build(Operation::McpCallPlain, &def, &vars()).unwrap();
+        let parts = build(Operation::McpCallPlain, &def, &vars(), None).unwrap();
         assert_eq!(parts.method, "POST");
         assert_eq!(parts.target, "/mcp");
         let body: Value = serde_json::from_slice(&parts.body.unwrap()).unwrap();
@@ -268,7 +373,7 @@ mod tests {
             body: Some(json!({"custom": true})),
             ..OpDef::default()
         };
-        let parts = build(Operation::McpApprove, &def, &vars()).unwrap();
+        let parts = build(Operation::McpApprove, &def, &vars(), None).unwrap();
         let accepts: Vec<_> = parts
             .headers
             .iter()
@@ -285,7 +390,7 @@ mod tests {
             headers: [("mcp-method".to_owned(), "ping".to_owned())].into(),
             ..OpDef::default()
         };
-        let parts = build(Operation::McpCallPlain, &def, &vars()).unwrap();
+        let parts = build(Operation::McpCallPlain, &def, &vars(), None).unwrap();
         let methods: Vec<_> = parts
             .headers
             .iter()
@@ -301,7 +406,7 @@ mod tests {
             body: Some(json!({"custom": true})),
             ..OpDef::default()
         };
-        let parts = build(Operation::McpApprove, &def, &vars()).unwrap();
+        let parts = build(Operation::McpApprove, &def, &vars(), None).unwrap();
         assert!(!has_header(&parts.headers, "mcp-method"));
         assert!(!has_header(&parts.headers, "mcp-name"));
     }
@@ -325,6 +430,94 @@ mod tests {
             path: Some("/x/{{nothing}}".into()),
             ..OpDef::default()
         };
-        assert!(build(Operation::UsePlain, &def, &vars()).is_err());
+        assert!(build(Operation::UsePlain, &def, &vars(), None).is_err());
+    }
+
+    fn approval_def() -> OpDef {
+        let op = |n: u64| json!({"tool": "append_rows", "table": "orders", "rows": format!("[{{\"id\":{n}}}]")});
+        let args = |n: u64| json!({"table": "orders", "rows": [{"id": n}]});
+        OpDef {
+            tool: Some("append_rows".into()),
+            action: Some("data.append".into()),
+            resource_type: Some("table".into()),
+            resource_id: Some("orders".into()),
+            ancestors: Some(json!([
+                {"type": "service", "id": "datastore"},
+                {"type": "host", "id": "prod"},
+                {"type": "database", "id": "test2"}
+            ])),
+            arguments: Some(args(1)),
+            approval: Some(crate::profile::ApprovalDef {
+                op: op(1),
+                effect_2: crate::profile::ApprovalVariant {
+                    arguments: args(2),
+                    op: op(2),
+                },
+                effect_3: crate::profile::ApprovalVariant {
+                    arguments: args(3),
+                    op: op(3),
+                },
+            }),
+            ..OpDef::default()
+        }
+    }
+
+    #[test]
+    fn the_effects_of_the_three_calls_follow_protocol_17_3_and_differ() {
+        let def = approval_def();
+        let [base, second, third] = effects(&def, "datastore").unwrap();
+        let direct = effect_hash(
+            "datastore",
+            "data.append",
+            "host:prod/database:test2/table:orders",
+            &def.approval.as_ref().unwrap().op,
+        )
+        .unwrap();
+        assert_eq!(base, direct);
+        assert!(base != second && second != third && base != third);
+        assert!(effects(&def, "other").is_err());
+        let vars = op_vars(Operation::McpCallApproval, &def, "datastore");
+        assert_eq!(vars.get("effect"), Some(&json!(base)));
+        assert_eq!(vars.get("effect_2"), Some(&json!(second)));
+        assert_eq!(vars.get("effect_3"), Some(&json!(third)));
+        // The other operations give no effect.
+        assert!(
+            op_vars(Operation::McpCallPlain, &def, "datastore")
+                .get("effect")
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn the_variants_of_the_approval_call_change_the_control_arguments() {
+        let def = approval_def();
+        let mut v = vars();
+        v.set("tool", json!("append_rows"));
+        let arguments = |variant: Option<Variant>| -> Value {
+            let parts = build(Operation::McpCallApproval, &def, &v, variant).unwrap();
+            let body: Value = serde_json::from_slice(&parts.body.unwrap()).unwrap();
+            body["params"]["arguments"].clone()
+        };
+        let base = arguments(None);
+        assert_eq!(base["lease_s"], 900);
+        assert_eq!(base["rows"], json!([{"id": 1}]));
+        assert!(base.get("approval_ref").is_none() && base.get("wait_s").is_none());
+        assert_eq!(
+            arguments(Some(Variant::Effect2))["rows"],
+            json!([{"id": 2}])
+        );
+        assert_eq!(
+            arguments(Some(Variant::Effect3))["rows"],
+            json!([{"id": 3}])
+        );
+        let by_ref = arguments(Some(Variant::ApprovalRef));
+        assert_eq!(by_ref["approval_ref"], APPROVAL_REF);
+        assert!(by_ref.get("lease_s").is_none());
+        let wait = arguments(Some(Variant::Wait));
+        assert_eq!(
+            (wait["lease_s"].clone(), wait["wait_s"].clone()),
+            (json!(900), json!(1))
+        );
+        assert_eq!(wait["rows"], base["rows"]);
     }
 }

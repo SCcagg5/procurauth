@@ -20,6 +20,7 @@ use serde_json::{Value, json};
 use crate::http::{
     Authority, ClientRequest, Handler, Headers, HttpServer, Outcome, Request, Response, send,
 };
+use crate::model::ApprovalRoute;
 
 /// The path of the metadata of the PDP.
 const METADATA_PATH: &str = "/.well-known/authzen-configuration";
@@ -41,6 +42,8 @@ struct WhenSpec {
     usage: Option<bool>,
     #[serde(default, rename = "match")]
     match_mode: Option<String>,
+    #[serde(default)]
+    effect: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +95,7 @@ pub(crate) struct Rule {
     resource: Option<NodePath>,
     usage: Option<bool>,
     match_mode: Option<String>,
+    effect: Option<String>,
     reaction: Reaction,
 }
 
@@ -136,6 +140,7 @@ impl Rule {
             resource,
             usage: spec.when.usage,
             match_mode: spec.when.match_mode,
+            effect: spec.when.effect,
             reaction,
         })
     }
@@ -166,8 +171,156 @@ impl Rule {
         {
             return false;
         }
+        if let Some(effect) = &self.effect
+            && question
+                .pointer("/context/approval/effect")
+                .and_then(Value::as_str)
+                != Some(effect)
+        {
+            return false;
+        }
         true
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ApprovalWhen {
+    #[serde(default)]
+    route: Option<ApprovalRoute>,
+    #[serde(default)]
+    request_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ApprovalRuleSpec {
+    #[serde(default)]
+    when: ApprovalWhen,
+    respond: RespondSpec,
+}
+
+/// One rule of `approval_script`.
+#[derive(Clone, Debug)]
+pub(crate) struct ApprovalRule {
+    route: Option<ApprovalRoute>,
+    request_id: Option<String>,
+    reaction: Reaction,
+}
+
+fn reaction_of(spec: RespondSpec) -> Result<Reaction, String> {
+    match spec {
+        RespondSpec::Body(body) => {
+            let status = body.status.unwrap_or(200);
+            if !(100..=599).contains(&status) {
+                return Err(format!(
+                    "the status of a rule must be from 100 to 599, found {status}"
+                ));
+            }
+            Ok(Reaction::Body {
+                status,
+                body: body.body,
+                delay: Duration::from_millis(body.delay_ms.unwrap_or(0)),
+            })
+        }
+        RespondSpec::NoAnswer(no) => {
+            if no.no_answer {
+                Ok(Reaction::NoAnswer)
+            } else {
+                Err("no_answer must be true".to_owned())
+            }
+        }
+    }
+}
+
+impl ApprovalRule {
+    /// Read a rule of the approval script from JSON, after the runner replaced the variables.
+    ///
+    /// # Errors
+    /// Returns a message when the rule is not valid.
+    pub(crate) fn parse(value: &Value) -> Result<Self, String> {
+        let spec: ApprovalRuleSpec =
+            serde_json::from_value(value.clone()).map_err(|e| e.to_string())?;
+        Ok(Self {
+            route: spec.when.route,
+            request_id: spec.when.request_id,
+            reaction: reaction_of(spec.respond)?,
+        })
+    }
+
+    fn matches(&self, route: ApprovalRoute, request_id: Option<&str>) -> bool {
+        self.route.is_none_or(|r| r == route)
+            && self
+                .request_id
+                .as_deref()
+                .is_none_or(|id| request_id == Some(id))
+    }
+}
+
+/// A request that the test PDP received on its approval API.
+#[derive(Clone, Debug)]
+pub(crate) struct ApprovalRequest {
+    /// The route.
+    pub(crate) route: ApprovalRoute,
+    /// The body as JSON. `Null` when the request has no body.
+    pub(crate) json: Value,
+    /// The query parameters, decoded.
+    pub(crate) query: std::collections::BTreeMap<String, String>,
+}
+
+/// Decode `%XX` in a text. A bad escape keeps its characters.
+fn percent_decode(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        let hex = |b: u8| char::from(b).to_digit(16);
+        if bytes[i] == b'%'
+            && i + 2 < bytes.len()
+            && let (Some(high), Some(low)) = (hex(bytes[i + 1]), hex(bytes[i + 2]))
+            && let Ok(byte) = u8::try_from(high * 16 + low)
+        {
+            out.push(byte);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+/// The path of the routes of the approval API.
+const APPROVAL_PATH: &str = "/approval/v1/requests";
+
+/// The route and the id of a request to the approval API, or `None` for another path.
+fn approval_route(method: &str, path: &str) -> Option<(ApprovalRoute, Option<String>)> {
+    if path == APPROVAL_PATH {
+        return (method == "POST").then_some((ApprovalRoute::Submit, None));
+    }
+    let tail = path.strip_prefix(APPROVAL_PATH)?.strip_prefix('/')?;
+    match tail.split_once('/') {
+        None if method == "GET" && !tail.is_empty() => {
+            Some((ApprovalRoute::Status, Some(percent_decode(tail))))
+        }
+        Some((id, "keepalive")) if method == "POST" && !id.is_empty() => {
+            Some((ApprovalRoute::Keepalive, Some(percent_decode(id))))
+        }
+        _ => None,
+    }
+}
+
+/// The parameters of the query of a target.
+fn query_of(target: &str) -> std::collections::BTreeMap<String, String> {
+    let mut out = std::collections::BTreeMap::new();
+    if let Some((_, query)) = target.split_once('?') {
+        for pair in query.split('&').filter(|p| !p.is_empty()) {
+            let (name, value) = pair.split_once('=').unwrap_or((pair, ""));
+            out.entry(percent_decode(name))
+                .or_insert_with(|| percent_decode(value));
+        }
+    }
+    out
 }
 
 /// The node path of the resource of a question, when the chain is good.
@@ -197,6 +350,8 @@ pub(crate) struct Question {
 #[derive(Default)]
 struct Inner {
     rules: Vec<Rule>,
+    approval_rules: Vec<ApprovalRule>,
+    approvals: Vec<ApprovalRequest>,
     fallback: Option<Authority>,
     questions: Vec<Question>,
     faults: Vec<String>,
@@ -423,7 +578,57 @@ impl Handler for Core {
                     self.evaluations(request, &body)
                 }
             }
-            _ => Outcome::Respond(Response::error(404, "Not Found")),
+            _ => match approval_route(&request.method, &request.path) {
+                Some((route, id)) => {
+                    if !self.authorized(request) {
+                        return Outcome::Respond(Response::error(401, "Unauthorized"));
+                    }
+                    self.approval(request, route, id)
+                }
+                None => Outcome::Respond(Response::error(404, "Not Found")),
+            },
+        }
+    }
+}
+
+impl Core {
+    /// Answer a request of the approval API with the first rule of `approval_script` that matches.
+    /// A request that no rule matches gets HTTP 404 with the error `not_found`.
+    fn approval(
+        &self,
+        request: &Request,
+        route: ApprovalRoute,
+        request_id: Option<String>,
+    ) -> Outcome {
+        let json = if request.body.is_empty() {
+            Value::Null
+        } else {
+            parse_slice(&request.body).unwrap_or(Value::Null)
+        };
+        let reaction = {
+            let mut inner = self.lock();
+            inner.approvals.push(ApprovalRequest {
+                route,
+                json,
+                query: query_of(&request.target),
+            });
+            inner
+                .approval_rules
+                .iter()
+                .find(|rule| rule.matches(route, request_id.as_deref()))
+                .map(|rule| rule.reaction.clone())
+        };
+        match reaction {
+            Some(Reaction::Body {
+                status,
+                body,
+                delay,
+            }) => {
+                sleep(delay);
+                Outcome::Respond(Response::json(status, &body))
+            }
+            Some(Reaction::NoAnswer) => Outcome::Hold,
+            None => Outcome::Respond(Response::json(404, &json!({"error": "not_found"}))),
         }
     }
 }
@@ -462,11 +667,29 @@ impl TestPdp {
         {
             let mut inner = self.core.lock();
             inner.rules = rules;
+            inner.approval_rules.clear();
+            inner.approvals.clear();
             inner.fallback = fallback;
             inner.questions.clear();
             inner.faults.clear();
             inner.connections.clear();
         }
+    }
+
+    /// Set the script of the approval API for the case. Call it after [`TestPdp::begin_case`].
+    pub(crate) fn set_approval_rules(&self, rules: Vec<ApprovalRule>) {
+        self.core.lock().approval_rules = rules;
+    }
+
+    /// The number of requests on the approval API so far. A step uses it as a mark.
+    pub(crate) fn approval_mark(&self) -> usize {
+        self.core.lock().approvals.len()
+    }
+
+    /// The requests on the approval API that came after a mark.
+    pub(crate) fn approvals_since(&self, mark: usize) -> Vec<ApprovalRequest> {
+        let inner = self.core.lock();
+        inner.approvals.iter().skip(mark).cloned().collect()
     }
 
     /// End a case: close the connections that the PDP holds with no answer.
@@ -761,5 +984,128 @@ mod tests {
             Rule::parse(&json!({"when": {"resource": "nope"}, "respond": {"body": {}}})).is_err()
         );
         assert!(Rule::parse(&json!({"when": {}, "respond": {"no_answer": false}})).is_err());
+    }
+
+    fn api(pdp: &TestPdp, method: &str, target: &str, body: Option<&Value>) -> crate::http::Reply {
+        let authority = Authority {
+            host: "127.0.0.1".to_owned(),
+            port: pdp.local_addr().port(),
+        };
+        send(
+            &authority,
+            &ClientRequest {
+                method: method.to_owned(),
+                target: target.to_owned(),
+                headers: vec![],
+                body: body.map(|b| b.to_string().into_bytes()),
+            },
+            Instant::now() + Duration::from_secs(5),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn a_rule_can_match_the_effect_of_the_question() {
+        let pdp = start();
+        pdp.begin_case(
+            vec![
+                rule(json!({"when": {"effect": "sha256:aa"}, "respond": {"body": {"decision": true}}})),
+                rule(json!({"when": {}, "respond": {"body": {"decision": false}}})),
+            ],
+            None,
+        );
+        let mut q = question("alice", false);
+        q["context"] = json!({"approval": {"effect": "sha256:aa"}});
+        assert_eq!(
+            post(&pdp, EVALUATION_PATH, &q, vec![]).text(),
+            "{\"decision\":true}"
+        );
+        let other = question("alice", false);
+        assert_eq!(
+            post(&pdp, EVALUATION_PATH, &other, vec![]).text(),
+            "{\"decision\":false}"
+        );
+        pdp.shutdown();
+    }
+
+    #[test]
+    fn the_approval_api_follows_the_script_and_records_each_request() {
+        let pdp = start();
+        pdp.begin_case(vec![], None);
+        pdp.set_approval_rules(vec![
+            ApprovalRule::parse(&json!({"when": {"route": "submit"}, "respond": {"status": 201, "body": {"request_id": "apr_1"}}})).unwrap(),
+            ApprovalRule::parse(&json!({"when": {"route": "status", "request_id": "apr_1"}, "respond": {"body": {"verdict": "pending"}}})).unwrap(),
+        ]);
+        let submit = api(
+            &pdp,
+            "POST",
+            "/approval/v1/requests",
+            Some(&json!({"effect": "e"})),
+        );
+        assert_eq!(submit.status, 201);
+        let status = api(
+            &pdp,
+            "GET",
+            "/approval/v1/requests/apr_1?subject=key%3Aa&renew=true",
+            None,
+        );
+        assert_eq!(status.text(), "{\"verdict\":\"pending\"}");
+        // A request that no rule matches gets 404 with the error not_found.
+        let unknown = api(&pdp, "GET", "/approval/v1/requests/apr_2?subject=a", None);
+        assert_eq!(
+            (unknown.status, unknown.text().as_str()),
+            (404, "{\"error\":\"not_found\"}")
+        );
+        let keepalive = api(
+            &pdp,
+            "POST",
+            "/approval/v1/requests/apr_1/keepalive",
+            Some(&json!({"subject": "a"})),
+        );
+        assert_eq!(keepalive.status, 404);
+        let seen = pdp.approvals_since(0);
+        assert_eq!(seen.len(), 4);
+        assert_eq!(seen[0].route, ApprovalRoute::Submit);
+        assert_eq!(seen[0].json["effect"], "e");
+        assert_eq!(seen[1].route, ApprovalRoute::Status);
+        assert_eq!(seen[1].query["subject"], "key:a");
+        assert_eq!(seen[1].query["renew"], "true");
+        assert_eq!(seen[3].route, ApprovalRoute::Keepalive);
+        assert_eq!(pdp.approvals_since(3).len(), 1);
+        // A request of the approval API is not a question.
+        assert!(pdp.questions_since(0).is_empty());
+        assert!(pdp.faults().is_empty());
+        pdp.shutdown();
+    }
+
+    #[test]
+    fn the_approval_api_has_no_other_route_and_asks_for_the_credential() {
+        let pdp =
+            TestPdp::start("127.0.0.1:0".parse().unwrap(), Some("s3cret".to_owned())).unwrap();
+        pdp.begin_case(vec![], None);
+        assert_eq!(
+            api(&pdp, "POST", "/approval/v1/requests", Some(&json!({}))).status,
+            401
+        );
+        assert_eq!(
+            api(&pdp, "DELETE", "/approval/v1/requests/a", None).status,
+            404
+        );
+        assert_eq!(api(&pdp, "GET", "/approval/v1/other", None).status, 404);
+        assert!(pdp.approvals_since(0).is_empty());
+        pdp.shutdown();
+    }
+
+    #[test]
+    fn a_bad_rule_of_the_approval_script_is_an_error() {
+        assert!(
+            ApprovalRule::parse(&json!({"when": {"route": "other"}, "respond": {"body": {}}}))
+                .is_err()
+        );
+        assert!(ApprovalRule::parse(&json!({"when": {"x": 1}, "respond": {"body": {}}})).is_err());
+        assert!(
+            ApprovalRule::parse(&json!({"when": {}, "respond": {"status": 99, "body": {}}}))
+                .is_err()
+        );
     }
 }

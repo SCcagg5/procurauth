@@ -79,6 +79,24 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9-]+$"
     },
+    "approval_variant": {
+      "description": "A call whose arguments change the effect.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arguments",
+        "op"
+      ],
+      "properties": {
+        "arguments": {
+          "description": "The arguments of the tool for this call, with no control argument."
+        },
+        "op": {
+          "description": "The op that the service builds from these arguments. A JSON object that protocol 17.3 accepts.",
+          "type": "object"
+        }
+      }
+    },
     "operation": {
       "description": "One operation of the data model. It gives the method, the path, the headers and the body of the request, and the variables that the cases use.",
       "type": "object",
@@ -165,6 +183,38 @@
         },
         "arguments": {
           "description": "The arguments of the tool of an MCP call. The default is an empty object."
+        },
+        "approval": {
+          "description": "Only for mcp_call_approval. What the runner needs to compute the effects of the calls (protocol 17.3). The effect binds the service, the action, the resource of the operation and the op. The op is what the service builds from the arguments of the call.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "variants"
+          ],
+          "properties": {
+            "op": {
+              "description": "The op of the base call. A JSON object that protocol 17.3 accepts.",
+              "type": "object"
+            },
+            "variants": {
+              "description": "The two changes of the arguments that change the effect. Each one gives the arguments of the call and the op that the service builds from them.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "effect_2",
+                "effect_3"
+              ],
+              "properties": {
+                "effect_2": {
+                  "$ref": "#/$defs/approval_variant"
+                },
+                "effect_3": {
+                  "$ref": "#/$defs/approval_variant"
+                }
+              }
+            }
+          }
         },
         "capture": {
           "description": "Names for members of the JSON answer to the step before. Each value is a JSON Pointer. The templates of the operation read each name as a variable.",
@@ -308,6 +358,10 @@
           "description": "The type of the nodes at the first level of the options route. The member says that the service has the route.",
           "type": "string",
           "minLength": 1
+        },
+        "approvals": {
+          "description": "True when the service gives approvals (protocol section 17). The runner then runs the cases of this section. The operation mcp_call_approval then has the member approval. The default is false.",
+          "type": "boolean"
         },
         "mcp": {
           "description": "The MCP endpoint of the service.",

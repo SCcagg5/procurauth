@@ -100,6 +100,26 @@ pub(crate) struct McpProfile {
     pub(crate) session_budget: bool,
 }
 
+/// A change of the arguments of the call that decides the effect (variant `effect_2` or `effect_3`).
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ApprovalVariant {
+    /// The arguments of the tool for this variant.
+    pub(crate) arguments: Value,
+    /// The `op` that the service builds from these arguments (protocol 17.3).
+    pub(crate) op: Value,
+}
+
+/// What the runner needs to compute the effects of the calls of a tool with an approval.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ApprovalDef {
+    /// The `op` that the service builds from the base call.
+    pub(crate) op: Value,
+    /// The variant `effect_2`.
+    pub(crate) effect_2: ApprovalVariant,
+    /// The variant `effect_3`.
+    pub(crate) effect_3: ApprovalVariant,
+}
+
 /// The definition of one operation.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct OpDef {
@@ -131,6 +151,8 @@ pub(crate) struct OpDef {
     pub(crate) arguments: Option<Value>,
     /// Names for members of the JSON body of the answer to the step before, by JSON Pointer.
     pub(crate) capture: BTreeMap<String, String>,
+    /// The `op` of the calls, for `mcp_call_approval`.
+    pub(crate) approval: Option<ApprovalDef>,
 }
 
 /// The profile of a PEP.
@@ -148,6 +170,8 @@ pub(crate) struct PepProfile {
     pub(crate) reset: Option<ResetRequest>,
     /// The type of the nodes at the first level of the options route.
     pub(crate) options_type: Option<String>,
+    /// True when the service gives approvals (protocol section 17).
+    pub(crate) approvals: bool,
     /// The MCP endpoint.
     pub(crate) mcp: Option<McpProfile>,
     /// The operations.
@@ -694,10 +718,71 @@ fn read_operation(
         ceiling_value: r.range(&mut o, "ceiling_value", 0, u64::MAX, false),
         arguments: o.optional("arguments").cloned(),
         capture: read_pointer_map(r, &mut o),
+        approval: read_approval(r, &mut o, operation),
     };
     o.finish(&mut r.report);
     check_operation(r, operation, &def, path);
     Some(def)
+}
+
+/// An `op`: a JSON object. The runner checks it with the rules of protocol 17.3.
+fn read_op(r: &mut Reader, obj: &mut Obj<'_>, key: &'static str) -> Option<Value> {
+    let path = obj.member_path(key);
+    let value = obj.required(key, &mut r.report)?;
+    if let Err(why) = procurauth_core::effect::check_op(value) {
+        r.error(
+            &path,
+            format!(
+                "Member `{key}`: expected an object that protocol 17.3 accepts as `op`, found {}: {why}.",
+                show(value)
+            ),
+        );
+        return None;
+    }
+    Some(value.clone())
+}
+
+fn read_variant(r: &mut Reader, obj: &mut Obj<'_>, key: &'static str) -> Option<ApprovalVariant> {
+    let mut v = obj.object(key, RULE, Unknown::Error, &mut r.report)?;
+    let arguments = v.required("arguments", &mut r.report).cloned();
+    let op = read_op(r, &mut v, "op");
+    v.finish(&mut r.report);
+    Some(ApprovalVariant {
+        arguments: arguments?,
+        op: op?,
+    })
+}
+
+/// The member `approval` of the operation `mcp_call_approval`.
+fn read_approval(r: &mut Reader, obj: &mut Obj<'_>, operation: Operation) -> Option<ApprovalDef> {
+    let path = obj.member_path("approval");
+    if operation != Operation::McpCallApproval {
+        if obj.has("approval") {
+            r.error(
+                &path,
+                format!(
+                    "Operation `{}` has the member `approval`, and only `mcp_call_approval` can have it.",
+                    operation.name()
+                ),
+            );
+        }
+        return None;
+    }
+    let mut a = obj.object_opt("approval", RULE, Unknown::Error, &mut r.report)?;
+    let op = read_op(r, &mut a, "op");
+    let mut effect_2 = None;
+    let mut effect_3 = None;
+    if let Some(mut variants) = a.object("variants", RULE, Unknown::Error, &mut r.report) {
+        effect_2 = read_variant(r, &mut variants, "effect_2");
+        effect_3 = read_variant(r, &mut variants, "effect_3");
+        variants.finish(&mut r.report);
+    }
+    a.finish(&mut r.report);
+    Some(ApprovalDef {
+        op: op?,
+        effect_2: effect_2?,
+        effect_3: effect_3?,
+    })
 }
 
 /// The members that an operation needs.
@@ -741,6 +826,12 @@ fn check_operation(r: &mut Reader, operation: Operation, def: &OpDef, path: &Jso
         McpCallPlain | McpCallBudget | McpCallInput | McpCallMulti | McpCallApproval => {
             need(def.tool.is_some(), "tool");
             need(def.action.is_some(), "action");
+            if def.approval.is_some() {
+                // The runner needs the node to compute the effect (protocol 17.3).
+                need(def.resource_type.is_some(), "resource_type");
+                need(def.resource_id.is_some(), "resource_id");
+                need(def.ancestors.is_some(), "ancestors");
+            }
         }
         McpApprove | McpRefuse => {
             need(def.body.is_some() || def.body_text.is_some(), "body");
@@ -757,6 +848,7 @@ fn read_pep(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PepProfile
     let answer_cache = r.boolean(&mut obj, "answer_cache").unwrap_or(false);
     let reset = read_reset(r, &mut obj);
     let options_type = r.string_opt(&mut obj, "options_type");
+    let approvals = r.boolean(&mut obj, "approvals").unwrap_or(false);
     let mcp = read_mcp(r, &mut obj);
     let mut operations = BTreeMap::new();
     let ops_path = obj.member_path("operations");
@@ -799,6 +891,32 @@ fn read_pep(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PepProfile
             ),
         );
     }
+    let approval_op = operations
+        .get(&Operation::McpCallApproval)
+        .and_then(|def| def.approval.as_ref());
+    if approvals && approval_op.is_none() {
+        r.error(
+            &ops_path,
+            "Member `approvals` is true, and the operation `mcp_call_approval` has no member `approval`: the runner cannot compute the effects.".to_owned(),
+        );
+    }
+    if !approvals && approval_op.is_some() {
+        r.error(
+            &ops_path.key("mcp_call_approval"),
+            "The operation `mcp_call_approval` has the member `approval`, and `approvals` is not true: the two contradict each other.".to_owned(),
+        );
+    }
+    if let (Some(def), Some(service)) = (operations.get(&Operation::McpCallApproval), &service)
+        && def.approval.is_some()
+        && let Err(why) = crate::ops::effects(def, service)
+    {
+        r.error(
+            &ops_path.key("mcp_call_approval"),
+            format!(
+                "The runner cannot compute the effects of the operation `mcp_call_approval`: {why}."
+            ),
+        );
+    }
     if options_type.is_none() && operations.contains_key(&Operation::ListOptions) {
         r.error(
             &ops_path.key("list_options"),
@@ -813,6 +931,7 @@ fn read_pep(r: &mut Reader, value: &Value, path: &JsonPath) -> Option<PepProfile
         answer_cache,
         reset,
         options_type,
+        approvals,
         mcp,
         operations,
     })
@@ -1185,6 +1304,81 @@ mod tests {
         assert_eq!(errors.len(), 1);
         assert!(errors[0].contains("$.pep"), "{errors:?}");
         assert!(errors[0].contains("`extra`"), "{errors:?}");
+    }
+
+    fn approval_pep() -> Value {
+        let mut pep = pep_value();
+        pep["approvals"] = json!(true);
+        pep["mcp"] = json!({"path": "/mcp"});
+        let op = |n: u64| json!({"tool": "append_rows", "rows": format!("[{n}]")});
+        pep["operations"]["mcp_call_approval"] = json!({
+            "tool": "append_rows", "action": "data.write", "resource_type": "table",
+            "resource_id": "orders", "arguments": {"rows": [1]},
+            "ancestors": [{"type": "service", "id": "datastore"}],
+            "approval": {"op": op(1), "variants": {
+                "effect_2": {"arguments": {"rows": [2]}, "op": op(2)},
+                "effect_3": {"arguments": {"rows": [3]}, "op": op(3)}}}
+        });
+        pep
+    }
+
+    #[test]
+    fn a_profile_with_approvals_has_the_ops_that_give_the_effects() {
+        let profile = parse(&json!({"pep": approval_pep()})).unwrap();
+        let pep = profile.pep.unwrap();
+        assert!(pep.approvals);
+        let def = pep.operations[&Operation::McpCallApproval]
+            .approval
+            .clone()
+            .unwrap();
+        assert_eq!(def.effect_3.op["rows"], "[3]");
+        // The default is false.
+        let plain = parse(&json!({"pep": pep_value()})).unwrap().pep.unwrap();
+        assert!(!plain.approvals);
+    }
+
+    #[test]
+    fn the_key_approvals_and_the_member_approval_need_each_other() {
+        let mut pep = approval_pep();
+        pep["approvals"] = json!(false);
+        let errors = parse(&json!({"pep": pep})).unwrap_err();
+        assert!(errors[0].contains("contradict"), "{errors:?}");
+        let mut pep = approval_pep();
+        pep["operations"]["mcp_call_approval"]
+            .as_object_mut()
+            .unwrap()
+            .remove("approval");
+        let errors = parse(&json!({"pep": pep})).unwrap_err();
+        assert!(errors[0].contains("`approvals` is true"), "{errors:?}");
+        let mut pep = approval_pep();
+        pep["operations"]["mcp_call_plain"] = json!({
+            "tool": "t", "action": "a", "approval": {"op": {}, "variants": {}}});
+        let errors = parse(&json!({"pep": pep})).unwrap_err();
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("only `mcp_call_approval`")),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn an_op_with_a_float_or_another_service_is_an_error_of_the_profile() {
+        let mut pep = approval_pep();
+        pep["operations"]["mcp_call_approval"]["approval"]["op"]["n"] = json!(1.5);
+        let errors = parse(&json!({"pep": pep})).unwrap_err();
+        assert!(
+            errors[0].contains("$.pep.operations.mcp_call_approval.approval.op"),
+            "{errors:?}"
+        );
+        let mut pep = approval_pep();
+        pep["operations"]["mcp_call_approval"]["ancestors"] =
+            json!([{"type": "service", "id": "other"}]);
+        let errors = parse(&json!({"pep": pep})).unwrap_err();
+        assert!(
+            errors[0].contains("cannot compute the effects"),
+            "{errors:?}"
+        );
     }
 
     #[test]

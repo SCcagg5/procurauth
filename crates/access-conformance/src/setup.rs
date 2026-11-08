@@ -51,6 +51,7 @@ pub(crate) fn pep_runner<'a>(
     let mut global = Vars::new();
     global.set("service", json!(pep.service));
     global.set("token_header", json!(pep.token.header));
+    global.set("approval_ref", json!(crate::ops::APPROVAL_REF));
     if let Some(mcp) = &pep.mcp {
         global.set("mcp_path", json!(mcp.path));
     }

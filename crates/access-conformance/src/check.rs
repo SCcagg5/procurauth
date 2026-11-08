@@ -10,8 +10,8 @@ use procurauth_core::options::analyze_str as analyze_options;
 use serde_json::{Map, Value, json};
 
 use crate::http::{Headers, Reply, header_value};
-use crate::model::{Expect, HeaderMatchers, Matcher, PointerMatchers, ValidAs};
-use crate::testpdp::Question;
+use crate::model::{ApprovalExpect, Expect, HeaderMatchers, Matcher, PointerMatchers, ValidAs};
+use crate::testpdp::{ApprovalRequest, Question};
 use crate::tokens::{Decoded, Verifier};
 use crate::upstream::Received;
 
@@ -23,6 +23,8 @@ pub(crate) struct Observed<'a> {
     pub(crate) questions: Option<&'a [Question]>,
     /// The connections that the test PDP accepted since the start of the case.
     pub(crate) connections: Option<usize>,
+    /// The requests that the test PDP received on its approval API during the step. `None` outside a PEP run.
+    pub(crate) approvals: Option<&'a [ApprovalRequest]>,
     /// The requests that reached the service behind the edge. `None` outside an edge run.
     pub(crate) upstream: Option<&'a [Received]>,
     /// The checks of the identity token that the edge makes.
@@ -245,16 +247,54 @@ pub(crate) fn check(expect: &Expect, observed: &Observed<'_>) -> Vec<String> {
             }
         }
     }
+    if !expect.pdp_approvals.is_empty() {
+        match observed.approvals {
+            Some(requests) => {
+                for entry in &expect.pdp_approvals {
+                    let count = requests
+                        .iter()
+                        .filter(|r| approval_matches(entry, r))
+                        .count();
+                    let matcher = entry.count.clone().unwrap_or(Matcher::Equals(json!(1)));
+                    let mut label = format!("{:?} requests of the approval API", entry.route);
+                    if !entry.json.is_empty() {
+                        label.push_str(&format!(" that match {}", pointer_json(&entry.json)));
+                    }
+                    if !entry.query.is_empty() {
+                        label.push_str(&format!(" with the query {}", pointer_json(&entry.query)));
+                    }
+                    if let Some(message) = matcher.verdict(&label, Some(&json!(count))) {
+                        out.push(message);
+                    }
+                }
+            }
+            None => {
+                out.push("the step expects pdp_approvals, and this run has no test PDP".to_owned())
+            }
+        }
+    }
     if let Some(upstream) = &expect.upstream {
         check_upstream(upstream, observed, &mut out);
     }
     out
 }
 
+fn approval_matches(entry: &ApprovalExpect, request: &ApprovalRequest) -> bool {
+    request.route == entry.route
+        && entry
+            .json
+            .iter()
+            .all(|(pointer, m)| m.check(request.json.pointer(pointer)))
+        && entry
+            .query
+            .iter()
+            .all(|(name, m)| m.check(request.query.get(name).cloned().map(Value::String).as_ref()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Expect, QuestionExpect, UpstreamExpect};
+    use crate::model::{ApprovalRoute, Expect, QuestionExpect, UpstreamExpect};
     use std::collections::BTreeMap;
 
     fn expect() -> Expect {
@@ -286,6 +326,7 @@ mod tests {
         Observed {
             reply,
             questions: None,
+            approvals: None,
             connections: None,
             upstream: None,
             verifier: None,
@@ -472,5 +513,61 @@ mod tests {
         let nothing: Vec<Received> = Vec::new();
         o.upstream = Some(&nothing);
         assert!(check(&e, &o)[0].contains("no request reached"));
+    }
+
+    fn approval(route: ApprovalRoute, json: Value, query: &[(&str, &str)]) -> ApprovalRequest {
+        ApprovalRequest {
+            route,
+            json,
+            query: query
+                .iter()
+                .map(|(n, v)| ((*n).to_owned(), (*v).to_owned()))
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn the_requests_of_the_approval_api_are_counted_for_each_entry() {
+        let mut e = expect();
+        e.pdp_approvals = vec![
+            ApprovalExpect {
+                route: ApprovalRoute::Submit,
+                json: [("/lease_s".to_owned(), Matcher::Equals(json!(900)))].into(),
+                query: BTreeMap::new(),
+                count: None,
+            },
+            ApprovalExpect {
+                route: ApprovalRoute::Status,
+                json: BTreeMap::new(),
+                query: [
+                    ("renew".to_owned(), Matcher::Equals(json!("true"))),
+                    ("subject".to_owned(), Matcher::Equals(json!("alice"))),
+                ]
+                .into(),
+                count: Some(Matcher::Equals(json!(0))),
+            },
+        ];
+        let seen = vec![approval(
+            ApprovalRoute::Submit,
+            json!({"lease_s": 900}),
+            &[],
+        )];
+        let mut o = observed(None);
+        o.approvals = Some(&seen);
+        assert!(check(&e, &o).is_empty());
+        let seen = vec![
+            approval(ApprovalRoute::Submit, json!({"lease_s": 60}), &[]),
+            approval(
+                ApprovalRoute::Status,
+                Value::Null,
+                &[("renew", "true"), ("subject", "alice")],
+            ),
+        ];
+        o.approvals = Some(&seen);
+        let out = check(&e, &o);
+        assert_eq!(out.len(), 2, "{out:?}");
+        // A run with no test PDP cannot check them.
+        o.approvals = None;
+        assert_eq!(check(&e, &o).len(), 1);
     }
 }

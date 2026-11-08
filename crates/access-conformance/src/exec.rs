@@ -20,7 +20,7 @@ use crate::ops::{self, has_header, put_header};
 use crate::pdpcheck::{controls, same_answer};
 use crate::profile::{EdgeProfile, PdpProfile, PepProfile, Timeouts};
 use crate::report::{CaseResult, Failure};
-use crate::testpdp::{Rule, TestPdp};
+use crate::testpdp::{ApprovalRule, Rule, TestPdp};
 use crate::tokens::{MintError, Signer, Verifier};
 use crate::upstream::Upstream;
 use crate::vars::Vars;
@@ -65,8 +65,8 @@ impl Capabilities {
             !has(Operation::UseMulti) && !has(Operation::McpCallMulti),
         );
         add(Condition::SingleKeySet, false);
-        // The reference programs give no approval until lots S4a and S4b.
-        add(Condition::NoApprovalSupport, true);
+        // The profile key `pep.approvals` tells that the service gives approvals (protocol section 17).
+        add(Condition::NoApprovalSupport, !profile.approvals);
         Self { held }
     }
 
@@ -413,6 +413,18 @@ impl Runner<'_> {
                 })
             })
             .collect::<Result<Vec<_>, String>>()?;
+        out.pdp_approvals = expect
+            .pdp_approvals
+            .iter()
+            .map(|entry| {
+                Ok(crate::model::ApprovalExpect {
+                    route: entry.route,
+                    json: matchers(&entry.json)?,
+                    query: matchers(&entry.query)?,
+                    count: one(&entry.count)?,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
         out.upstream = expect
             .upstream
             .as_ref()
@@ -464,7 +476,7 @@ impl Runner<'_> {
                     }
                 }
             }
-            let mut parts = ops::build(operation, def, &vars).map_err(Prep::Error)?;
+            let mut parts = ops::build(operation, def, &vars, spec.variant).map_err(Prep::Error)?;
             for (name, value) in &spec.headers {
                 let name = vars.text(name, false).map_err(unknown)?;
                 let value = vars.text(value, false).map_err(unknown)?;
@@ -611,9 +623,12 @@ impl Runner<'_> {
                     Ok(_) => {}
                     Err(why) => problems.push(format!("Case {}: pdp_script: {why}.", case.id)),
                 }
-            } else if !case.given.pdp_script.is_empty() {
+                if let Err(why) = approval_rules(case, &vars) {
+                    problems.push(format!("Case {}: approval_script: {why}.", case.id));
+                }
+            } else if !case.given.pdp_script.is_empty() || !case.given.approval_script.is_empty() {
                 problems.push(format!(
-                    "Case {}: the case has a pdp_script, and the role {} has no scripted PDP.",
+                    "Case {}: the case has a pdp_script or an approval_script, and the role {} has no scripted PDP.",
                     case.id,
                     self.role().name()
                 ));
@@ -767,6 +782,15 @@ impl Runner<'_> {
                 return CaseResult::failed(case, vec![failure(None, format!("pdp_script: {why}"))]);
             }
         };
+        let approval = match approval_rules(case, vars) {
+            Ok(rules) => rules,
+            Err(why) => {
+                return CaseResult::failed(
+                    case,
+                    vec![failure(None, format!("approval_script: {why}"))],
+                );
+            }
+        };
         // A case with a directory lets a fake PDP answer the questions that no rule matches.
         let mut fake: Option<RunningServer> = None;
         let mut fallback = None;
@@ -793,6 +817,7 @@ impl Runner<'_> {
             }
         }
         env.pdp.begin_case(rules, fallback);
+        env.pdp.set_approval_rules(approval);
         let mut failures = Vec::new();
         let mut skip = None;
         if let Some(reset) = &env.profile.reset
@@ -826,6 +851,7 @@ impl Runner<'_> {
             let mut hooks = PepHooks {
                 pdp: &env.pdp,
                 mark: 0,
+                approval_mark: 0,
                 now: self.now,
             };
             let outcome = self.steps(case, vars, None, deadline, &mut hooks);
@@ -1193,21 +1219,25 @@ trait Hooks {
 struct PepHooks<'a> {
     pdp: &'a TestPdp,
     mark: usize,
+    approval_mark: usize,
     now: &'a dyn Fn() -> u64,
 }
 
 impl Hooks for PepHooks<'_> {
     fn before(&mut self) {
         self.mark = self.pdp.mark();
+        self.approval_mark = self.pdp.approval_mark();
     }
 
     fn after(&mut self, prepared: &Prepared, reply: Option<&Reply>) -> Vec<String> {
         let questions = self.pdp.questions_since(self.mark);
+        let approvals = self.pdp.approvals_since(self.approval_mark);
         check(
             &prepared.expect,
             &Observed {
                 reply,
                 questions: Some(&questions),
+                approvals: Some(&approvals),
                 connections: Some(self.pdp.connections()),
                 upstream: None,
                 verifier: None,
@@ -1236,6 +1266,7 @@ impl Hooks for EdgeHooks<'_> {
             &Observed {
                 reply,
                 questions: None,
+                approvals: None,
                 connections: None,
                 upstream: Some(&received),
                 verifier: Some(&self.env.verifier),
@@ -1257,6 +1288,7 @@ impl Hooks for PdpHooks {
             &Observed {
                 reply,
                 questions: None,
+                approvals: None,
                 connections: None,
                 upstream: None,
                 verifier: None,
@@ -1282,6 +1314,19 @@ fn script_rules(case: &Case, vars: &Vars) -> Result<Vec<Rule>, String> {
             .value(raw)
             .map_err(|name| format!("rule {}: the variable `{name}` has no value", index + 1))?;
         rules.push(Rule::parse(&value).map_err(|why| format!("rule {}: {why}", index + 1))?);
+    }
+    Ok(rules)
+}
+
+/// The rules of the approval script of a case, after the replacement of the variables.
+fn approval_rules(case: &Case, vars: &Vars) -> Result<Vec<ApprovalRule>, String> {
+    let mut rules = Vec::new();
+    for (index, raw) in case.given.approval_script.iter().enumerate() {
+        let value = vars
+            .value(raw)
+            .map_err(|name| format!("rule {}: the variable `{name}` has no value", index + 1))?;
+        rules
+            .push(ApprovalRule::parse(&value).map_err(|why| format!("rule {}: {why}", index + 1))?);
     }
     Ok(rules)
 }
