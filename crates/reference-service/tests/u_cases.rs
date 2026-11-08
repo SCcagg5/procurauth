@@ -683,7 +683,8 @@ fn skipped(conditions: Option<&Value>) -> bool {
         return false;
     };
     list.iter().any(|c| match c.as_str().unwrap() {
-        "no_answer_cache" | "no_budget_session" => true,
+        // The reference service gives no approval until the lot S4b.
+        "no_answer_cache" | "no_budget_session" | "no_approval_support" => true,
         "no_mcp_endpoint" => !cfg!(feature = "mcp"),
         "no_budget_action" | "no_ceiling_action" | "no_options_route" | "no_input_tool"
         | "no_approval_tool" | "no_multi_action" | "no_token_cache" | "single_key_set" => false,
@@ -1014,8 +1015,13 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
         failures.join("\n")
     );
     if cfg!(feature = "mcp") {
-        assert_eq!(ran, 98, "the number of cases that ran");
+        assert_eq!(ran, 97, "the number of cases that ran");
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
-        assert_eq!(skipped_ids, ["U95"]);
+        // The cases of the approval profile (U30 and U100 to U110) wait for the lot S4b.
+        skipped_ids.sort();
+        let mut expected = vec!["U95".to_owned(), "U30".to_owned()];
+        expected.extend((100..=110).map(|n| format!("U{n}")));
+        expected.sort();
+        assert_eq!(skipped_ids, expected);
     }
 }

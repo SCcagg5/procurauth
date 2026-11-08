@@ -88,6 +88,8 @@ pub(crate) enum Condition {
     NoMultiAction,
     /// The key set of the edge holds one key only.
     SingleKeySet,
+    /// The target does not give approvals (protocol section 17).
+    NoApprovalSupport,
 }
 
 impl Condition {
@@ -105,6 +107,9 @@ impl Condition {
             Self::NoApprovalTool => "the service has no tool that waits for an approval",
             Self::NoMultiAction => "the service has no use that needs two permissions",
             Self::SingleKeySet => "the key set of the edge holds one key",
+            Self::NoApprovalSupport => {
+                "the target does not give approvals yet (protocol section 17)"
+            }
         }
     }
 }
@@ -268,6 +273,22 @@ pub(crate) enum Endpoint {
     Metadata,
 }
 
+/// A change of the base call of the operation `mcp_call_approval`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum Variant {
+    /// An argument that decides the effect changes: the effect is `effect_2`.
+    #[serde(rename = "effect_2")]
+    Effect2,
+    /// An argument that decides the effect changes: the effect is `effect_3`.
+    #[serde(rename = "effect_3")]
+    Effect3,
+    /// The call gives the control argument `approval_ref` in place of `lease_s`.
+    ApprovalRef,
+    /// The call adds the control argument `wait_s`.
+    Wait,
+}
+
 /// The request of a step.
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -296,6 +317,9 @@ pub(crate) struct RequestSpec {
     /// The name of a token of `given.tokens`.
     #[serde(default)]
     pub(crate) token: Option<String>,
+    /// A change of the base call of `mcp_call_approval`.
+    #[serde(default)]
+    pub(crate) variant: Option<Variant>,
 }
 
 /// The kind of document that `valid_as` names.
@@ -322,6 +346,35 @@ pub(crate) struct QuestionExpect {
     #[serde(default)]
     pub(crate) headers: HeaderMatchers,
     /// The expected count. Without it, the entry expects one question.
+    #[serde(default)]
+    pub(crate) count: Option<Matcher>,
+}
+
+/// A route of the approval API of the test PDP.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum ApprovalRoute {
+    /// `POST /approval/v1/requests`.
+    Submit,
+    /// A read of a request.
+    Status,
+    /// `POST .../keepalive`.
+    Keepalive,
+}
+
+/// One entry of `pdp_approvals`.
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ApprovalExpect {
+    /// The route of the requests to count.
+    pub(crate) route: ApprovalRoute,
+    /// The matchers of the body of the request.
+    #[serde(default)]
+    pub(crate) json: PointerMatchers,
+    /// The matchers of the query parameters of a status.
+    #[serde(default)]
+    pub(crate) query: BTreeMap<String, Matcher>,
+    /// The expected count. Without it, the entry expects one request.
     #[serde(default)]
     pub(crate) count: Option<Matcher>,
 }
@@ -369,6 +422,9 @@ pub(crate) struct Expect {
     /// The questions that the test PDP received.
     #[serde(default)]
     pub(crate) pdp_questions: Vec<QuestionExpect>,
+    /// The requests that the test PDP received on its approval API.
+    #[serde(default)]
+    pub(crate) pdp_approvals: Vec<ApprovalExpect>,
     /// The request that reached the service behind the edge.
     #[serde(default)]
     pub(crate) upstream: Option<UpstreamExpect>,
@@ -499,6 +555,9 @@ pub(crate) struct Given {
     /// The script of the test PDP, as JSON. A later step reads it into rules.
     #[serde(default)]
     pub(crate) pdp_script: Vec<Value>,
+    /// The script of the approval API of the test PDP, as JSON.
+    #[serde(default)]
+    pub(crate) approval_script: Vec<Value>,
 }
 
 /// One conformance case.
@@ -639,6 +698,7 @@ mod tests {
             body: None,
             body_text: None,
             token: None,
+            variant: None,
         };
         assert!(both.check_shape().is_err());
     }

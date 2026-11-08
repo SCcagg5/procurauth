@@ -137,6 +137,7 @@ An operation that the profile does not define makes the runner skip the steps th
 | `no_multi_action` | The profile has no `use_multi` and no `mcp_call_multi`. |
 | `no_token_cache` | `edge.token_cache` is false. |
 | `single_key_set` | The key set of `edge.trust` holds one key. |
+| `no_approval_support` | Always true in this version. No reference program gives approvals yet, so the runner skips the cases of protocol section 17. The lots that give approvals make it depend on the profile. |
 
 A token of a case can use a key of the algorithm `ES256`. When the profile has no such key, the runner skips the case and gives the reason.
 
@@ -233,6 +234,6 @@ A test checks that this table is the table of the code. The function `access_con
 
 ## Tests
 
-The tests start the runner in the process. The role pdp runs the 75 cases of the series D against `fake-pdp`: all pass. A copy of a case with a changed expectation fails.
+The tests start the runner in the process. The role pdp runs 75 of the 89 cases of the series D against `fake-pdp`, and all pass. It skips the 14 cases of the approval profile. A copy of a case with a changed expectation fails.
 
 The roles pep and edge run against scripted mock servers in `tests/common/`. A mock that behaves like a correct implementation passes. A mock with one defect fails the cases of that defect, and only those. The tests also check the goldens of the output, the schemas and the rules of the source.

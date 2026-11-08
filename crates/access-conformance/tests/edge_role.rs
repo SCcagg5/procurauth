@@ -37,8 +37,9 @@ fn two_keys(name: &str, defects: EdgeDefects) -> Out {
 fn a_correct_edge_passes_every_case_that_the_runner_can_run() {
     let out = two_keys("edge_correct", EdgeDefects::default());
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "18 cases: 16 passed, 0 failed, 2 skipped");
-    assert_eq!(out.ids_with("skip"), vec!["E15", "E16"]);
+    assert_eq!(out.summary(), "19 cases: 16 passed, 0 failed, 3 skipped");
+    // The case E19 waits for the lot that gives approvals to the reference edge.
+    assert_eq!(out.ids_with("skip"), vec!["E15", "E16", "E19"]);
     assert!(
         out.line("E15")
             .ends_with("the edge keeps no identity token")
@@ -57,7 +58,7 @@ fn a_profile_with_no_mcp_path_skips_the_cases_of_the_mcp_endpoint() {
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
     assert_eq!(
         out.ids_with("skip"),
-        vec!["E01", "E15", "E16", "E17", "E18"]
+        vec!["E01", "E15", "E16", "E17", "E18", "E19"]
     );
     assert!(out.line("E01").ends_with("the service has no MCP endpoint"));
 }
@@ -88,7 +89,7 @@ fn p_9_9_an_edge_that_keeps_tokens_passes_the_cases_of_the_cache() {
         },
     );
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "18 cases: 18 passed, 0 failed, 0 skipped");
+    assert_eq!(out.summary(), "19 cases: 18 passed, 0 failed, 1 skipped");
 }
 
 #[test]

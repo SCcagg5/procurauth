@@ -65,6 +65,8 @@ impl Capabilities {
             !has(Operation::UseMulti) && !has(Operation::McpCallMulti),
         );
         add(Condition::SingleKeySet, false);
+        // The reference programs give no approval until lots S4a and S4b.
+        add(Condition::NoApprovalSupport, true);
         Self { held }
     }
 
@@ -80,6 +82,7 @@ impl Capabilities {
             Condition::NoInputTool,
             Condition::NoApprovalTool,
             Condition::NoMultiAction,
+            Condition::NoApprovalSupport,
         ] {
             held.insert(condition);
         }
@@ -95,9 +98,11 @@ impl Capabilities {
         Self { held }
     }
 
-    /// The conditions of a PDP: none holds.
+    /// The conditions of a PDP. The reference PDP gives no approval until lot S4a.
     pub(crate) fn for_pdp() -> Self {
-        Self::default()
+        Self {
+            held: BTreeSet::from([Condition::NoApprovalSupport]),
+        }
     }
 
     /// True when the condition holds.

@@ -400,11 +400,19 @@ fn run_case_value(case: &Value) -> Result<(), String> {
     Ok(())
 }
 
+/// True for a case of the approval profile. The reference PDP gives no approval until the lot S4a.
+fn needs_approvals(case: &Value) -> bool {
+    case["skip_if"]
+        .as_array()
+        .is_some_and(|list| list.iter().any(|c| c == "no_approval_support"))
+}
+
 fn case_files() -> Vec<PathBuf> {
     let mut paths: Vec<_> = fs::read_dir(conformance_dir().join("cases/D"))
         .unwrap()
         .map(|e| e.unwrap().path())
         .filter(|p: &PathBuf| p.extension().is_some_and(|e| e == "json"))
+        .filter(|p: &PathBuf| !needs_approvals(&read_case(p)))
         .collect();
     paths.sort();
     paths

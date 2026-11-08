@@ -155,6 +155,12 @@ fn the_server_passes_every_case_of_the_series_d() {
     let mut paths: Vec<_> = fs::read_dir(conformance_dir().join("cases/D"))
         .unwrap()
         .map(|e| e.unwrap().path())
+        // The cases of the approval profile wait for the lot S4a: fake-pdp gives no approval yet.
+        .filter(|p| {
+            !parse_str(&fs::read_to_string(p).unwrap()).unwrap()["skip_if"]
+                .as_array()
+                .is_some_and(|list| list.iter().any(|c| c == "no_approval_support"))
+        })
         .collect();
     paths.sort();
     assert!(paths.len() >= 6, "the cases of the series D are missing");

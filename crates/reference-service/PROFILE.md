@@ -134,6 +134,7 @@ The form of the request for input follows the draft of the MCP revision 2026-07-
 | `no_multi_action` | false |
 | `no_token_cache` | Not for a service. This condition is for an edge. |
 | `single_key_set` | false. The configuration trusts two keys. |
+| `no_approval_support` | true. The service gives no approval yet, so the runner skips the cases of protocol section 17. |
 
 ## Other requests that the cases write in full
 

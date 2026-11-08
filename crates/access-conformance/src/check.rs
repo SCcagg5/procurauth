@@ -266,6 +266,7 @@ mod tests {
             valid_as: None,
             pdp_connections: None,
             pdp_questions: Vec::new(),
+            pdp_approvals: Vec::new(),
             upstream: None,
         }
     }
