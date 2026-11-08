@@ -11,7 +11,8 @@
 //! | --- | --- |
 //! | [`server`] | [`Server`] and [`RunningServer`]: build, bind, serve and stop. |
 //! | [`config`] | The options, the defaults and the table of keys. |
-//! | [`pdp`] | The decisions, from the directory and the counters. |
+//! | [`pdp`] | The decisions, from the directory, the counters and the approvals. |
+//! | [`approvals`] | The approvals: the requests, the lease, the gate of 17.1 and the checks of 17.9. |
 //! | [`counters`] | The counters with fixed windows. |
 //! | [`clock`] | A clock that a test can move. |
 //! | [`faults`] | The failures that the server makes on purpose. |
@@ -33,6 +34,8 @@
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 mod admin;
+mod approval_api;
+pub mod approvals;
 pub mod clock;
 pub mod config;
 pub mod counters;

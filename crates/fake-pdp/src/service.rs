@@ -21,6 +21,8 @@ use procurauth_core::json::parse_slice;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+use crate::approval_api::APPROVAL_PREFIX;
+use crate::approvals;
 use crate::clock::Clock;
 use crate::config::{ADMIN_PREFIX, EVALUATION_PATH, EVALUATIONS_PATH, METADATA_PATH, Settings};
 use crate::counters::CounterView;
@@ -141,6 +143,11 @@ impl Shared {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    /// True after the stop flag is set.
+    pub(crate) fn stopping(&self) -> bool {
+        self.stop.load(Ordering::SeqCst)
+    }
+
     pub(crate) fn now_seconds(&self) -> u64 {
         self.clock.now_seconds()
     }
@@ -187,6 +194,9 @@ impl Shared {
         let path = request.path.as_str();
         if path.starts_with(ADMIN_PREFIX) && self.settings.admin {
             return self.admin(request);
+        }
+        if path.starts_with(APPROVAL_PREFIX) {
+            return self.approval_route(request);
         }
         let allowed = match path {
             METADATA_PATH => "GET",
@@ -273,6 +283,18 @@ impl Shared {
                 "procurauth_idle_max_seconds": s.idle_max_seconds,
                 "procurauth_evaluations_max_bytes": s.evaluations_max_bytes,
                 "procurauth_evaluations_max_items": s.evaluations_max_items,
+                "procurauth_approval_lease_min_seconds": approvals::LEASE_MIN_SECONDS,
+                "procurauth_approval_lease_max_seconds": approvals::LEASE_MAX_SECONDS,
+                "procurauth_approval_grace_seconds": approvals::GRACE_SECONDS,
+                "procurauth_approval_revive_seconds": approvals::REVIVE_SECONDS,
+                "procurauth_approval_max_revivals": approvals::MAX_REVIVALS,
+                "procurauth_approval_max_life_seconds": approvals::MAX_LIFE_SECONDS,
+                "procurauth_approval_wait_max_seconds": approvals::WAIT_MAX_SECONDS,
+                "procurauth_approval_consume_seconds": approvals::CONSUME_SECONDS,
+                "procurauth_approval_deny_seconds": approvals::DENY_SECONDS,
+                "procurauth_approval_evaluation_ttl_seconds": approvals::EVALUATION_TTL_SECONDS,
+                "procurauth_approval_ref_ttl_seconds": approvals::REF_TTL_SECONDS,
+                "procurauth_approval_max_command_bytes": approvals::MAX_COMMAND_BYTES,
             }),
         ))
     }

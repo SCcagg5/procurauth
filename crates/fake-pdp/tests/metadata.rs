@@ -24,7 +24,19 @@ fn p_10_7a_the_metadata_gives_the_endpoints_and_the_defaults() {
             "procurauth_usage_max_seconds": 5,
             "procurauth_idle_max_seconds": 30,
             "procurauth_evaluations_max_bytes": 1_048_576,
-            "procurauth_evaluations_max_items": 100
+            "procurauth_evaluations_max_items": 100,
+            "procurauth_approval_lease_min_seconds": 30,
+            "procurauth_approval_lease_max_seconds": 604_800,
+            "procurauth_approval_grace_seconds": 120,
+            "procurauth_approval_revive_seconds": 604_800,
+            "procurauth_approval_max_revivals": 3,
+            "procurauth_approval_max_life_seconds": 7_776_000,
+            "procurauth_approval_wait_max_seconds": 25,
+            "procurauth_approval_consume_seconds": 300,
+            "procurauth_approval_deny_seconds": 300,
+            "procurauth_approval_evaluation_ttl_seconds": 300,
+            "procurauth_approval_ref_ttl_seconds": 900,
+            "procurauth_approval_max_command_bytes": 65_536
         })
     );
 }

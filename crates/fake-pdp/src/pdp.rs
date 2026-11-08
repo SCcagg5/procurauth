@@ -18,7 +18,8 @@ use procurauth_core::authzen::{
     Decision, EvaluationRequest, MatchMode, Reason, RequestContext, SUBJECT_TYPE, check_resource,
 };
 use procurauth_core::coverage::{
-    ceilings_of_key, ceilings_of_side, granted, key_granted, key_subtree_applies, subtree_applies,
+    ceilings_of_key, ceilings_of_side, confirm_required, granted, key_confirm_required,
+    key_granted, key_subtree_applies, subtree_applies,
 };
 use procurauth_core::directory::{Directory, KeyState, SubjectEntry};
 use procurauth_core::grants::Grant;
@@ -27,6 +28,7 @@ use procurauth_core::names::ACCESS_ACTION;
 use procurauth_core::path::NodePath;
 use procurauth_core::subject::{SubjectKind, classify};
 
+use crate::approvals::{Approvals, Gate};
 use crate::counters::{CounterKey, CounterView, Counters};
 
 /// Who asks. The PDP answers each PEP only for its own service (12).
@@ -57,11 +59,12 @@ impl Outcome {
     }
 }
 
-/// The directory and the counters.
+/// The directory, the counters and the approvals.
 #[derive(Clone, Debug)]
 pub struct Pdp {
     directory: Directory,
     counters: Counters,
+    approvals: Approvals,
 }
 
 impl Pdp {
@@ -83,10 +86,30 @@ impl Pdp {
             }
         }
         let counters = Counters::new(presets, now_seconds);
+        let approvals = Approvals::from_seed(&directory.approvals);
         Self {
             directory,
             counters,
+            approvals,
         }
+    }
+
+    /// The approvals (17).
+    pub fn approvals(&self) -> &Approvals {
+        &self.approvals
+    }
+
+    /// The approvals, to change them.
+    pub fn approvals_mut(&mut self) -> &mut Approvals {
+        &mut self.approvals
+    }
+
+    /// True when the service has an action with the member `approval` (5.2b): it can use the approval API.
+    pub fn serves_approvals(&self, service: &str) -> bool {
+        self.directory
+            .service(service)
+            .and_then(|s| s.document.as_ref())
+            .is_some_and(|d| d.actions.iter().any(|a| a.approval))
     }
 
     /// The data.
@@ -99,9 +122,10 @@ impl Pdp {
         self.counters.view(now_seconds)
     }
 
-    /// Put the counters back to the first values of the data.
+    /// Put the counters back to the first values of the data. The approvals go back to the data too.
     pub fn reset_counters(&mut self, now_seconds: u64) {
         self.counters.reset(now_seconds);
+        self.approvals.reset();
     }
 
     /// Decide one question. The function counts units only when the answer is
@@ -115,6 +139,7 @@ impl Pdp {
     ) -> Outcome {
         let directory = &self.directory;
         let counters = &mut self.counters;
+        let approvals = &mut self.approvals;
 
         // The subject (3.3, 3.7, 11.1).
         if request.subject.subject_type != SUBJECT_TYPE {
@@ -184,6 +209,45 @@ impl Pdp {
             Some(og) => ceilings_of_key(document, own_grants, og, action, &node),
         };
 
+        // The approval (17.1, 17.8). The grants decided first: only an allowed question gets here.
+        let now_seconds = now_millis / 1000;
+        let needs_approval = match owner_grants {
+            None => confirm_required(own_grants, action, &node),
+            Some(og) => key_confirm_required(own_grants, og, action, &node),
+        };
+        let mut approval_to_consume = None;
+        if needs_approval {
+            let Some(effect) = context.approval_effect.as_deref() else {
+                return Outcome::plain(Decision::deny(Some(Reason::ApprovalRequired)));
+            };
+            let key = (
+                service.id.as_str(),
+                request.subject.id.as_str(),
+                action,
+                &node,
+                effect,
+            );
+            let with_usage = context.usage_units.is_some();
+            let (reason, with_id) = match approvals.gate(now_seconds, key, with_usage) {
+                Gate::Usable(index) => {
+                    approval_to_consume = Some(index);
+                    (None, false)
+                }
+                Gate::Required => (Some(Reason::ApprovalRequired), true),
+                Gate::Pending => (Some(Reason::ApprovalPending), true),
+                Gate::Denied => (Some(Reason::ApprovalDenied), false),
+                Gate::Expired => (Some(Reason::ApprovalExpired), false),
+            };
+            if let Some(reason) = reason {
+                let mut decision = Decision::deny(Some(reason));
+                if with_id {
+                    decision.context.evaluation_id =
+                        Some(approvals.issue_evaluation(now_seconds, key));
+                }
+                return Outcome::plain(decision);
+            }
+        }
+
         // The budgets (6.2, 6.5, 6.7, 8.3).
         let budgets: Vec<&str> = document
             .action(action)
@@ -217,7 +281,6 @@ impl Pdp {
                 }
             }
         }
-        let now_seconds = now_millis / 1000;
         let view_of = |counters: &Counters, needed: &[(CounterKey, u64)]| -> Vec<CounterView> {
             needed
                 .iter()
@@ -252,6 +315,10 @@ impl Pdp {
         }
         for (key, _) in &needed {
             counters.take(key, now_seconds);
+        }
+        // The units and the approval go together: both, or none (17.2).
+        if let Some(index) = approval_to_consume {
+            approvals.consume(index);
         }
         let views = view_of(counters, &needed);
         Outcome {

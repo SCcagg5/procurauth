@@ -148,11 +148,11 @@ pub const KEYS: [Key; 14] = [
         meaning: "The member `procurauth_evaluations_max_items`. More items get HTTP 400 (10.7a).",
     },
     Key {
-        name: "counters, failures, services, subjects",
+        name: "counters, failures, services, subjects, approvals",
         source: "data file",
         value: "see the schema `fake-pdp-data`",
         default: "none",
-        meaning: "The directory, the first counter values and the failures.",
+        meaning: "The directory, the first counter values, the failures and the approvals.",
     },
 ];
 

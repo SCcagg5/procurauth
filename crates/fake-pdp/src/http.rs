@@ -38,6 +38,8 @@ pub(crate) struct Request {
     pub method: String,
     /// The path, with no query.
     pub path: String,
+    /// The query, without the `?`. It is empty when the target has none.
+    pub query: String,
     pub headers: Vec<(String, String)>,
     pub body: Vec<u8>,
     pub keep_alive: bool,
@@ -109,8 +111,10 @@ pub(crate) fn reason(status: u16) -> &'static str {
     match status {
         100 => "Continue",
         200 => "OK",
+        201 => "Created",
         400 => "Bad Request",
         401 => "Unauthorized",
+        403 => "Forbidden",
         404 => "Not Found",
         405 => "Method Not Allowed",
         408 => "Request Timeout",
@@ -118,6 +122,8 @@ pub(crate) fn reason(status: u16) -> &'static str {
         413 => "Content Too Large",
         414 => "URI Too Long",
         415 => "Unsupported Media Type",
+        422 => "Unprocessable Content",
+        429 => "Too Many Requests",
         431 => "Request Header Fields Too Large",
         501 => "Not Implemented",
         503 => "Service Unavailable",
@@ -248,6 +254,7 @@ impl Connection {
         ReadResult::Request(Request {
             method: head.method,
             path: head.path,
+            query: head.query,
             headers: head.headers,
             body,
             keep_alive: head.keep_alive,
@@ -311,6 +318,7 @@ impl Connection {
 struct Head {
     method: String,
     path: String,
+    query: String,
     headers: Vec<(String, String)>,
     content_length: u64,
     keep_alive: bool,
@@ -354,6 +362,11 @@ fn parse_head(bytes: &[u8]) -> Result<Head, u16> {
         _ => return Err(400),
     };
     let path = target.split(['?', '#']).next().unwrap_or("/").to_owned();
+    let query = target
+        .split('#')
+        .next()
+        .and_then(|t| t.split_once('?'))
+        .map_or_else(String::new, |(_, q)| q.to_owned());
 
     let mut headers: Vec<(String, String)> = Vec::new();
     for line in lines {
@@ -401,6 +414,7 @@ fn parse_head(bytes: &[u8]) -> Result<Head, u16> {
     Ok(Head {
         method: method.to_owned(),
         path,
+        query,
         headers,
         content_length: content_length.unwrap_or(0),
         keep_alive,
@@ -421,6 +435,7 @@ mod tests {
         let h = head("POST /access/v1/evaluation?x=1 HTTP/1.1\r\nHost: a\r\nContent-Length: 12\r\nX-Request-ID: abc").unwrap();
         assert_eq!(h.method, "POST");
         assert_eq!(h.path, "/access/v1/evaluation");
+        assert_eq!(h.query, "x=1");
         assert_eq!(h.content_length, 12);
         assert!(h.keep_alive);
         assert!(

@@ -69,7 +69,7 @@ The command `--print-config` checks all the files, prints each key with its valu
 | `metadata.idle_max_seconds` | data file | whole number from 1 | 30 | The member `procurauth_idle_max_seconds`. The PDP closes an idle connection after this time (10.7). |
 | `metadata.evaluations_max_bytes` | data file | whole number from 1 | 1048576 | The member `procurauth_evaluations_max_bytes`. A larger body gets HTTP 413 (10.7a). |
 | `metadata.evaluations_max_items` | data file | whole number from 1 | 100 | The member `procurauth_evaluations_max_items`. More items get HTTP 400 (10.7a). |
-| `counters, failures, services, subjects` | data file | see the schema `fake-pdp-data` | none | The directory, the first counter values and the failures. |
+| `counters, failures, services, subjects, approvals` | data file | see the schema `fake-pdp-data` | none | The directory, the first counter values, the failures and the approvals. |
 
 A test checks that this table is the table of the code. The function `fake_pdp::config::reference_table()` makes it.
 
@@ -81,6 +81,7 @@ The data file is a JSON object. The schema is `schemas/fake-pdp-data.schema.json
 - `subjects`: the persons and the keys. Each has grants. A key has an `owner` and can have a `state`.
 - `counters`: the first values of the counters. They apply to the window of the clock at start.
 - `failures`: the failures to make. The kinds are `error_503`, `delay` and `no_answer`.
+- `approvals`: the approval requests that exist at the start (protocol 17.6). The last entry for one subject, action, resource and effect is the latest. See "Approvals".
 - `clock` and `metadata`: see the table of keys.
 
 The example `examples/datastore.json` is the data of protocol section 13. It has Alice, her key, Bob and his key. The example `examples/datastore-with-counters.json` also has first counter values, metadata and a failure.
@@ -94,8 +95,11 @@ The failure file of the flag `--failures` has the member `failures` only. It use
 | `POST /access/v1/evaluation` | One decision. |
 | `POST /access/v1/evaluations` | A list of decisions in the member `evaluations`. A request without items gets one decision. |
 | `GET /.well-known/authzen-configuration` | The metadata. |
+| `POST /approval/v1/requests` | Submit an approval request (17.4). |
+| `GET /approval/v1/requests/{id}?subject=&wait=&renew=` | The verdict of a request (17.4). |
+| `POST /approval/v1/requests/{id}/keepalive` | Renew the lease and read the verdict (17.5). |
 
-The metadata has `policy_decision_point`, `access_evaluation_endpoint` and `access_evaluations_endpoint`. It also has the four members `procurauth_usage_max_seconds`, `procurauth_idle_max_seconds`, `procurauth_evaluations_max_bytes` and `procurauth_evaluations_max_items`. The program always publishes all four, with the defaults of the table.
+The metadata has `policy_decision_point`, `access_evaluation_endpoint` and `access_evaluations_endpoint`. It also has the four members `procurauth_usage_max_seconds`, `procurauth_idle_max_seconds`, `procurauth_evaluations_max_bytes` and `procurauth_evaluations_max_items`. The program always publishes all four, with the defaults of the table. It also publishes the twelve members `procurauth_approval_*` that give the values of the approval API. See "Approvals".
 
 The server keeps connections open. It sends `Content-Type: application/json` and a `Content-Length`. It copies the request header `X-Request-ID` to the response. The header `Keep-Alive` gives the idle time of the metadata.
 
@@ -127,10 +131,43 @@ The PDP decides as the protocol says. The rules in short:
 - A grant covers its node and each node below it. A grant on a database does not cover its host (4.3).
 - A key gets `true` only when a grant of the key and a grant of its owner both cover the node (3.5). For `subtree`, one node must exist that both sides cover (4.4).
 - `context.limits` has the lowest value among the grants of the asked action. A key never goes above its owner (7.3, 8.1, 8.4).
-- A `false` answer has a reason only for the four reasons of 11.1. HTTP 200 stays the status.
+- A `false` answer has a reason only for the reasons of 11.1: the four of the first version and the four of the approval (17.1). HTTP 200 stays the status.
+- A grant with `confirm` makes the action need an approval, on the grant of the key and on the grant of its owner (17.8). See "Approvals".
 - A service without a good action document answers `false` with no reason, except for `access` on the service (11.1).
 
 When a credential belongs to one service, the PDP answers `invalid_resource` for a question about another service (12).
+
+## Approvals
+
+The PDP gives the approvals of protocol section 17. It does this for each action whose grant has `confirm`. No flag turns it on.
+
+A question for such an action needs an approval. The PDP first decides as for a question without an effect. Only a `true` decision goes on to the approval.
+
+- A question with no `context.approval.effect` gets `approval_required`, with no `evaluation_id`.
+- A question with an effect gets `approval_required` or `approval_pending`, with an `evaluation_id`. It gets `approval_denied` during the deny time. It gets `approval_expired` when it has usage and the approval is void (17.1).
+- An approval that can be used gives `true`. With usage, the PDP consumes the approval and takes the units in one atomic step (17.2). When a budget refuses, nothing is consumed.
+- A question with `context.match` equal to `subtree` and a question for `access` never need an approval (17.8).
+
+The API for a PEP is in the endpoints table. The credential of a service decides the access. A service with no action that has the member `approval` gets HTTP 403. A request of another service or of another subject gets HTTP 404.
+
+The values that the PDP publishes are fixed. The metadata members `procurauth_approval_*` give them.
+
+| Value | Seconds, or number |
+| --- | --- |
+| `lease_s`, shortest and longest | 30 and 604800 |
+| Grace time after a lease | 120 |
+| Time to revive a request, and number of revivals | 604800 and 3 |
+| Longest life of a request | 7776000 |
+| Longest `wait` of a read. A larger value waits this long. | 25 |
+| Consume time after `approve`, and deny time after `decline` | 300 and 300 |
+| Life of an `evaluation_id`, and of an `approval_ref` | 300 and 900 |
+| Largest `op` and `view` together, in bytes | 65536 |
+
+A subject can have 20 requests that wait. The next submission gets HTTP 429 with `retry_after` 60. The PDP never answers `no_device`, because it knows no device.
+
+The routes below `/__fake/approvals` stand in for the session of the owner. They need the flag `--admin`. The body of an answer can have `shown_effect`, which defaults to the effect of the request. It can also have `text` with `intent`, `answered_by` and `device`. A text goes only to the admin view, and the PDP accepts it only with a decline and an `approval_ref` that was registered with `allow_custom`. The route `/__fake/approval-refs` registers a reference with `ref`, `subject`, `lease_s` or `until`, and optional `allow_custom`.
+
+The PDP never gives the PEP the text of a refusal, the owner, a device or the explanation (17.12). The PDP keeps `op` and `view` in memory. It never writes them in a log.
 
 ## Budgets and the clock
 
@@ -200,6 +237,11 @@ The flag `--admin` enables the admin endpoints. They share the listener of the P
 | `DELETE /__fake/log` | Remove the entries of the log. |
 | `GET /__fake/failures` | The failure rules, with the uses that each one has left. |
 | `POST /__fake/failures` | Body `{"failures": [...]}`. It replaces all the rules. |
+| `GET /__fake/approvals` | All the approval requests, with all their members. |
+| `POST /__fake/approvals/{id}/answer` | The answer of the owner. Body `{"decision": "approve"}` or `{"decision": "decline"}`. |
+| `POST /__fake/approvals/{id}/reply` | The owner asks the agent a question. |
+| `POST /__fake/approvals/{id}/cancel` | Cancel a request that waits, or an approval that nobody consumed. |
+| `POST /__fake/approval-refs` | Register an `approval_ref` of an agent. |
 
 The admin endpoints need the same credential as the PDP endpoints, when the server has one. A system clock becomes a fixed clock when a request moves it. A bad body gets HTTP 400 with the JSON path of each finding.
 

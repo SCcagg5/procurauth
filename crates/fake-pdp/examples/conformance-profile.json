@@ -1,5 +1,6 @@
 {
   "pdp": {
+    "approvals": true,
     "credential_file": "../../access-conformance/examples/pdp-credential.txt",
     "directory_check": {
       "mode": "control_questions",

@@ -261,6 +261,11 @@ impl Server {
             ),
             "data file",
         ));
+        out.push(ConfigLine::new(
+            "approvals",
+            format!("{} from the data file", self.directory.approvals.len()),
+            "data file",
+        ));
         out
     }
 
