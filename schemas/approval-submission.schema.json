@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-submission.schema.json",
+  "title": "Approval submission",
+  "description": "The body of POST /approval/v1/requests (protocol 17.4). The PEP sends op, view and effect only here (protocol 17.9). It sends exactly one of approval_ref, lease_s and until. It sends no explanation, no allow_custom, no allow_ask_back and no hint (protocol 17.9a). A schema cannot check that effect is the hash of op, or that a pointer of view names a value of op. The PDP checks both.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluation_id", "effect", "op", "view"],
+  "properties": {
+    "evaluation_id": {
+      "description": "The evaluation_id of the false answer of the PDP (protocol 17.1). The PEP never reads it.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "effect": {
+      "description": "The effect of the operation (protocol 17.3).",
+      "$ref": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect"
+    },
+    "op": {
+      "description": "The values that decide what the operation does (protocol 17.3). The numbers are integers from -(2^53-1) to 2^53-1.",
+      "type": "object"
+    },
+    "view": { "$ref": "https://sccagg5.github.io/procurauth/schemas/approval-view.schema.json" },
+    "approval_ref": {
+      "description": "An opaque text that the agent gave to the service. The PEP never reads it (protocol 17.7).",
+      "type": "string",
+      "minLength": 1
+    },
+    "lease_s": {
+      "description": "The seconds of the lease, in the mode of the lease (protocol 17.5). The PDP bounds the value and never changes it.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "until": {
+      "description": "The time up to which the agent waits, as RFC 3339 text (protocol 17.5).",
+      "type": "string",
+      "format": "date-time"
+    },
+    "supersedes": {
+      "description": "The id of a request of the same subject that this request replaces.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "oneOf": [
+    { "required": ["approval_ref"], "not": { "anyOf": [ { "required": ["lease_s"] }, { "required": ["until"] } ] } },
+    { "required": ["lease_s"], "not": { "anyOf": [ { "required": ["approval_ref"] }, { "required": ["until"] } ] } },
+    { "required": ["until"], "not": { "anyOf": [ { "required": ["approval_ref"] }, { "required": ["lease_s"] } ] } }
+  ],
+  "examples": [
+    {
+      "evaluation_id": "ev_3f9a",
+      "effect": "sha256:cc49e74a9d636899b6e28a39415ae2553ebbcf0d10a6fea617ca1b55cb0b65dd",
+      "op": { "tool": "run_write_query", "host": "prod", "database": "analytics", "sql": "DELETE FROM analytics.events WHERE day < '2026-01-01'" },
+      "view": { "title": "Write to ClickHouse", "fields": [ ["Host", "/host"], ["Database", "/database"] ], "body": "/sql", "body_label": "SQL" },
+      "approval_ref": "ref_00a1"
+    },
+    {
+      "evaluation_id": "ev_3f9b",
+      "effect": "sha256:0bd26173848b858d600ad07b16e59f965175fd970805189b557f6edd8092c1b2",
+      "op": {},
+      "view": {},
+      "lease_s": 900,
+      "supersedes": "apr_0001"
+    }
+  ]
+}

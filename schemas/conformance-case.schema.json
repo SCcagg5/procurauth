@@ -79,7 +79,8 @@
           "no_input_tool",
           "no_approval_tool",
           "no_multi_action",
-          "single_key_set"
+          "single_key_set",
+          "no_approval_support"
         ]
       }
     },
@@ -170,7 +171,33 @@
           "description": "For a PEP case: answers of the test PDP that replace the answer from the directory. The runner reads the rules in order, and the first rule that matches a question gives the answer. A question that no rule matches gets the answer from the directory. Without a directory, such a question is a fault of the case.",
           "type": "array",
           "items": { "$ref": "#/$defs/script_rule" }
+        },
+        "approval_script": {
+          "description": "For a PEP case: answers of the test PDP on its approval API (protocol 17.4). The runner reads the rules in order, and the first rule that matches a request gives the answer. A request that no rule matches gets HTTP 404 with the error not_found.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/approval_rule" }
         }
+      }
+    },
+    "approval_rule": {
+      "description": "One rule of the script of the approval API of the test PDP.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "respond"],
+      "properties": {
+        "when": {
+          "description": "The rule matches a request when each member that it gives is equal to the request. An empty object matches each request.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "route": {
+              "description": "submit is POST /approval/v1/requests. status is a read of a request. keepalive is a POST to the keepalive route.",
+              "enum": ["submit", "status", "keepalive"]
+            },
+            "request_id": { "description": "The id in the path of a status or a keepalive.", "type": "string", "minLength": 1 }
+          }
+        },
+        "respond": { "$ref": "#/$defs/script_rule/properties/respond" }
       }
     },
     "token": {
@@ -208,7 +235,12 @@
             "action": { "type": "string" },
             "resource": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/node_path" },
             "usage": { "description": "True for a question with context.usage. False for a question without it.", "type": "boolean" },
-            "match": { "enum": ["node", "subtree"] }
+            "match": { "enum": ["node", "subtree"] },
+            "effect": {
+              "description": "The member context.approval.effect of the question. It is the text sha256: and 64 digits, or a variable such as {{effect}}.",
+              "type": "string",
+              "pattern": "^(sha256:[0-9a-f]{64}|\\{\\{effect(_[0-9]+)?\\}\\})$"
+            }
           }
         },
         "respond": {
@@ -280,7 +312,14 @@
         "token": {
           "description": "The name of a token of given.tokens. The runner sends it in the way that suits the role: in the header of the identity token to a PEP.",
           "type": "string"
+        },
+        "variant": {
+          "description": "For the operation mcp_call_approval only. It changes the base call. The values effect_2 and effect_3 change an argument that decides what the tool does, so the effect is the variable effect_2 or effect_3. The value approval_ref gives the control argument approval_ref in place of lease_s. The value wait adds the control argument wait_s. A control argument does not change the effect (protocol 17.9a).",
+          "enum": ["effect_2", "effect_3", "approval_ref", "wait"]
         }
+      },
+      "dependentSchemas": {
+        "variant": { "properties": { "operation": { "const": "mcp_call_approval" } }, "required": ["operation"] }
       },
       "oneOf": [
         { "required": ["operation"], "not": { "anyOf": [ { "required": ["endpoint"] }, { "required": ["method"] }, { "required": ["path"] } ] } },
@@ -317,6 +356,25 @@
             "properties": {
               "json": { "$ref": "#/$defs/pointer_matchers" },
               "headers": { "description": "Matchers for the headers of the question. A question matches when its body matches json and its headers match headers.", "$ref": "#/$defs/header_matchers" },
+              "count": { "$ref": "#/$defs/matcher" }
+            }
+          }
+        },
+        "pdp_approvals": {
+          "description": "For a PEP. The requests that the test PDP received on its approval API during the step. Each entry counts the requests of its route that match each matcher of json and of query. Without count, the entry expects exactly one request.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["route"],
+            "properties": {
+              "route": { "enum": ["submit", "status", "keepalive"] },
+              "json": { "description": "Matchers for the body of the request. A status has no body.", "$ref": "#/$defs/pointer_matchers" },
+              "query": {
+                "description": "Matchers for the query parameters of a status. The member name is the name of the parameter.",
+                "type": "object",
+                "additionalProperties": { "$ref": "#/$defs/matcher" }
+              },
               "count": { "$ref": "#/$defs/matcher" }
             }
           }

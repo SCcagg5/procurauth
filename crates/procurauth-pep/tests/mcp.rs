@@ -314,6 +314,7 @@ fn mcp_5_3_a_spent_budget_on_a_tool_call_is_a_tool_error_with_retry_after() {
         resource_types: vec!["service".into()],
         description: "Use the MCP endpoint.".into(),
         limits: vec![],
+        approval: false,
     });
     let pep = Pep::with_clock(cfg, doc, transport, Arc::new(ManualClock::at_seconds(NOW))).unwrap();
     let who = pep

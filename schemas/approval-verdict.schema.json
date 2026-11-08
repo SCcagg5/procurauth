@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-verdict.schema.json",
+  "title": "Approval verdict",
+  "description": "The answer of the narrow API of a PDP to a PEP (protocol 17.4): a read of a request and a keepalive. The root schema is the answer of those two routes. It has the verdict only. The members of $defs give the answer to a submission, the body of a keepalive and an error. No answer has the text of a refusal, the owner, a device, the explanation or the time of an answer (protocol 17.12).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict"],
+  "properties": {
+    "verdict": { "$ref": "#/$defs/verdict" }
+  },
+  "$defs": {
+    "verdict": {
+      "description": "What a PEP learns about a request (protocol 17.6). A PEP treats a value that it does not know as void (protocol 17.7).",
+      "enum": ["pending", "approved", "denied", "void"]
+    },
+    "submission_answer": {
+      "description": "The answer to a submission: HTTP 201 for a new request, and HTTP 200 for a request that is still pending (protocol 17.4).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_id", "code", "verdict"],
+      "properties": {
+        "request_id": { "type": "string", "minLength": 1 },
+        "code": { "description": "A short text that the owner sees. The PEP gives it to the agent.", "type": "string", "minLength": 1, "maxLength": 16 },
+        "verdict": { "const": "pending" }
+      }
+    },
+    "keepalive_body": {
+      "description": "The body of POST /approval/v1/requests/{request_id}/keepalive (protocol 17.4).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject"],
+      "properties": {
+        "subject": { "description": "The subject of the request, from the identity token of the call.", "type": "string", "minLength": 1 }
+      }
+    },
+    "error": {
+      "description": "The body of an error of the narrow API (protocol 17.4). The code rate_limited has retry_after.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "enum": [
+            "command_too_large", "effect_mismatch", "invalid_view", "invalid_op", "invalid_evaluation",
+            "invalid_argument", "lease_required", "invalid_lease", "no_device", "cannot_supersede",
+            "rate_limited", "not_found"
+          ]
+        },
+        "retry_after": { "type": "integer", "minimum": 1 }
+      },
+      "if": { "required": ["retry_after"] },
+      "then": { "properties": { "error": { "const": "rate_limited" } } }
+    }
+  },
+  "examples": [
+    { "verdict": "pending" },
+    { "verdict": "void" }
+  ]
+}

@@ -84,6 +84,7 @@ impl ActionDocumentBuilder {
             resource_types: resource_types.iter().map(|s| (*s).to_owned()).collect(),
             description: description.to_owned(),
             limits: limits.iter().map(|s| (*s).to_owned()).collect(),
+            approval: false,
         });
         self
     }

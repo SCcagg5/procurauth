@@ -24,6 +24,11 @@
         { "action": "data.read", "resource": "service:datastore/host:prod/database:test1", "limits": { "max_rows": 1000 } }
       ]
     },
+    {
+      "grants": [
+        { "action": "data.write", "resource": "service:datastore/host:prod/database:analytics", "confirm": true }
+      ]
+    },
     { "grants": [] }
   ]
 }

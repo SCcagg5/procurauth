@@ -23,8 +23,23 @@
       "description": "In a request: node, the default, or subtree (protocol 4.4).",
       "enum": ["node", "subtree"]
     },
+    "approval": {
+      "description": "In a request: the effect of the operation, for the use of an action that has the member approval (protocol 17.1). The question never has op or view.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect"],
+      "properties": {
+        "effect": { "$ref": "#/$defs/effect" }
+      }
+    },
+    "evaluation_id": {
+      "description": "In a false answer with the reason approval_required or approval_pending, for a question with an effect: a text that only the PDP reads (protocol 17.1). The PEP sends it back in the submission of a request (protocol 17.4).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
     "reason": {
-      "description": "In a false answer: the reason (protocol 11.1). The values that the protocol gives are unknown_subject, invalid_resource, invalid_request and budget_exceeded. A PEP maps another text as a false answer with no reason (protocol 10.3).",
+      "description": "In a false answer: the reason (protocol 11.1). The values that the protocol gives are unknown_subject, invalid_resource, invalid_request, approval_required, approval_pending, approval_denied, approval_expired and budget_exceeded. A PEP maps another text as a false answer with no reason (protocol 10.3).",
       "type": "string"
     },
     "retry_after": {
@@ -34,6 +49,11 @@
     }
   },
   "$defs": {
+    "effect": {
+      "description": "The effect of an operation: the text sha256: and 64 lower-case hexadecimal digits (protocol 17.3).",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
     "request_context": {
       "description": "The context of a question. The units are 1 (protocol 6.4). A question with usage has no match equal to subtree (protocol 6.11).",
       "type": "object",
@@ -43,7 +63,8 @@
           "required": ["units"],
           "properties": { "units": { "const": 1 } }
         },
-        "match": { "enum": ["node", "subtree"] }
+        "match": { "enum": ["node", "subtree"] },
+        "approval": { "$ref": "#/properties/approval" }
       },
       "if": { "required": ["usage"] },
       "then": {
@@ -64,7 +85,8 @@
         },
         "limits": { "$ref": "#/properties/limits" },
         "reason": { "type": "string" },
-        "retry_after": { "type": "integer", "minimum": 1 }
+        "retry_after": { "type": "integer", "minimum": 1 },
+        "evaluation_id": { "$ref": "#/properties/evaluation_id" }
       },
       "if": {
         "required": ["reason"],
@@ -78,6 +100,8 @@
     { "match": "subtree" },
     { "limits": { "max_rows": 100, "max_duration": 30 }, "usage": { "units": 1 } },
     { "reason": "budget_exceeded", "retry_after": 12 },
-    { "reason": "unknown_subject" }
+    { "reason": "unknown_subject" },
+    { "approval": { "effect": "sha256:0000000000000000000000000000000000000000000000000000000000000000" } },
+    { "reason": "approval_required", "evaluation_id": "ev_3f9a" }
   ]
 }

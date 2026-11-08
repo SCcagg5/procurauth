@@ -72,6 +72,8 @@ pub struct Action {
     pub description: String,
     /// The names of the limits of the action (6.2).
     pub limits: Vec<String>,
+    /// True when the action has the member `approval` (5.2b): a grant can have `confirm`.
+    pub approval: bool,
 }
 
 /// A node that the service names (5.2).
@@ -288,6 +290,9 @@ impl ActionDocument {
                 m.insert("description".into(), json!(a.description));
                 if !a.limits.is_empty() {
                     m.insert("limits".into(), json!(a.limits));
+                }
+                if a.approval {
+                    m.insert("approval".into(), json!("optional"));
                 }
                 Value::Object(m)
             })
@@ -669,7 +674,21 @@ fn read_actions(items: &[Value], base: &JsonPath, scan: &Scan, report: &mut Repo
         let types = obj.strings("resource_types", report);
         let description = obj.string("description", report).unwrap_or_default();
         let limits = obj.strings_opt("limits", report);
+        let approval = obj.string_opt("approval", report);
         obj.finish(report);
+        if let Some(value) = approval
+            && value != "optional"
+        {
+            report.error(
+                &path.key("approval"),
+                "5.2b",
+                "bad_approval",
+                format!(
+                    "Member `approval`: expected the text `optional`, found {}.",
+                    show(&json!(value))
+                ),
+            );
+        }
         warn_length(
             report,
             &path.key("description"),
@@ -750,6 +769,7 @@ fn read_actions(items: &[Value], base: &JsonPath, scan: &Scan, report: &mut Repo
             resource_types: types.iter().map(|t| (*t).to_owned()).collect(),
             description: description.to_owned(),
             limits: limits.iter().map(|l| (*l).to_owned()).collect(),
+            approval: approval == Some("optional"),
         });
     }
     out
@@ -1129,6 +1149,26 @@ mod tests {
         one_error(&doc, "$.server", "bad_server");
         doc["server"] = json!(5);
         one_error(&doc, "$.server", "wrong_type");
+    }
+
+    #[test]
+    fn p_5_2b_the_member_approval_has_the_value_optional() {
+        let mut doc = section_13();
+        doc["actions"][1]["approval"] = json!("optional");
+        assert!(findings_of(&doc).is_empty());
+        let parsed = analyze_value(&doc).document.unwrap();
+        assert!(parsed.actions[1].approval);
+        assert!(!parsed.actions[0].approval);
+        assert_eq!(parsed.to_value()["actions"][1]["approval"], "optional");
+    }
+
+    #[test]
+    fn p_5_2b_another_value_is_a_bad_member() {
+        let mut doc = section_13();
+        doc["actions"][1]["approval"] = json!("required");
+        one_error(&doc, "$.actions[1].approval", "bad_approval");
+        doc["actions"][1]["approval"] = json!(true);
+        one_error(&doc, "$.actions[1].approval", "wrong_type");
     }
 
     #[test]

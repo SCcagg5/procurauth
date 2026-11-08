@@ -87,6 +87,10 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/type_name" }
+        },
+        "approval": {
+          "description": "Optional. The only value is optional. It tells that a grant of the action can have confirm. It also tells that the service follows protocol section 17 for the use of this action (protocol 5.2b). Another value makes the document bad.",
+          "const": "optional"
         }
       }
     },
@@ -177,6 +181,18 @@
         { "name": "requests", "label": "Requests", "description": "Requests that run.", "unit": "request", "kind": "budget" },
         { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000 },
         { "name": "max_duration", "label": "Longest run", "description": "The longest run of one use, in seconds.", "unit": "second", "kind": "ceiling", "min": 1, "max": 600 }
+      ]
+    },
+    {
+      "server": "approvals",
+      "resource_types": [ { "name": "host", "parent": "service", "description": "One database server." } ],
+      "actions": [
+        {
+          "name": "data.write",
+          "resource_types": ["service", "host"],
+          "description": "Change data.",
+          "approval": "optional"
+        }
       ]
     },
     {

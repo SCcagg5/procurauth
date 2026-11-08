@@ -138,6 +138,21 @@ fn action_rows() -> Vec<Row> {
             e(&|d| d["actions"][0]["extra"] = json!(1)),
             true,
         ),
+        same(
+            "approval optional in an action",
+            e(&|d| d["actions"][1]["approval"] = json!("optional")),
+            true,
+        ),
+        same(
+            "approval with another value",
+            e(&|d| d["actions"][1]["approval"] = json!("required")),
+            false,
+        ),
+        same(
+            "approval that is not a text",
+            e(&|d| d["actions"][1]["approval"] = json!(true)),
+            false,
+        ),
         same("missing server", e(&|d| remove(d, "server")), false),
         same(
             "missing resource_types",
@@ -1021,6 +1036,14 @@ fn directory_rows() -> Vec<Row> {
             "a failure with an unknown endpoint",
             e(&|d| d["failures"][0]["when"]["endpoint"] = json!("tokens")),
             false,
+        ),
+        rust_only(
+            "a grant with confirm: the reader does not know it before the lot S4a",
+            e(&|d| d["subjects"][0]["grants"][1]["confirm"] = json!(true)),
+        ),
+        rust_only(
+            "a list of approvals: the reader does not know it before the lot S4a",
+            e(&|d| d["approvals"] = json!([])),
         ),
         rust_only(
             "a grant on a service that the file does not have",

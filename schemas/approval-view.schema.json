@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-view.schema.json",
+  "title": "View of an approval",
+  "description": "The member view of a submission (protocol 17.9). It is a template over op, and it is not part of the effect. Each value that it shows is a JSON Pointer to a value of op. A schema cannot check that a pointer names a value of op. The PDP checks it and answers invalid_view when it does not.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "description": "The title that the owner reads. It is a text of the service.",
+      "type": "string"
+    },
+    "fields": {
+      "description": "The fields that the owner reads. Each field is a pair: a label, which is a text of the service, and a JSON Pointer to a value of op.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "type": "string" },
+          { "$ref": "#/$defs/pointer" }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "body": {
+      "description": "A JSON Pointer to a text of op. The owner reads this text in full, as the command.",
+      "$ref": "#/$defs/pointer"
+    },
+    "body_label": {
+      "description": "The label of the body. It is a text of the service.",
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "pointer": {
+      "description": "A JSON Pointer [RFC 6901]. The empty pointer names the whole of op.",
+      "type": "string",
+      "pattern": "^(/([^/~]|~[01])*)*$"
+    }
+  },
+  "examples": [
+    {
+      "title": "Write to ClickHouse",
+      "fields": [ ["Host", "/host"], ["Database", "/database"], ["Runs as", "/ch_user"] ],
+      "body": "/sql",
+      "body_label": "SQL"
+    },
+    {}
+  ]
+}
