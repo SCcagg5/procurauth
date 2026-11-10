@@ -149,6 +149,9 @@ fn rule_matches(when: &Value, question: &Value) -> bool {
                 == expected.as_str().unwrap()
         }
         "effect" => question.pointer("/context/approval/effect") == Some(expected),
+        "no_effect" => {
+            question.pointer("/context/approval").is_none() == expected.as_bool().unwrap()
+        }
         other => panic!("the runner does not know the member `when.{other}`"),
     })
 }
@@ -603,12 +606,22 @@ fn table_chain() -> Value {
     ])
 }
 
-/// The operation `mcp_call_approval` of the profile of the service. The profile gives the tool,
-/// the arguments, the node and the `op` of each call, as `PROFILE.md` says.
-fn approval_profile() -> Value {
+/// The calls of the profile of the service, one for each action (`pep.approval_calls`). The profile
+/// gives the tool, the arguments, the node and the `op` of each call, as `PROFILE.md` says.
+/// Each entry has its action as the member `action`.
+fn approval_calls() -> Vec<Value> {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/conformance-profile.json");
     let profile: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    profile["pep"]["operations"]["mcp_call_approval"].clone()
+    profile["pep"]["approval_calls"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(action, entry)| {
+            let mut entry = entry.clone();
+            entry["action"] = json!(action);
+            entry
+        })
+        .collect()
 }
 
 /// The effects of the base call and of the two variants (protocol 17.3).
@@ -635,7 +648,8 @@ fn approval_effects(def: &Value) -> [String; 3] {
     ]
 }
 
-fn operation_vars(op: &str) -> Vars {
+/// The variables of an operation. `call` is the entry of `pep.approval_calls` for `mcp_call_approval`.
+fn operation_vars(op: &str, call: Option<&Value>) -> Vars {
     let mut v = Vars::new();
     let mut set = |k: &str, val: Value| {
         v.insert(k.to_owned(), val);
@@ -700,7 +714,11 @@ fn operation_vars(op: &str) -> Vars {
             );
         }
         "mcp_call_approval" => {
-            let def = approval_profile();
+            let def = call.expect("a case that uses mcp_call_approval runs for each call");
+            set(
+                "other_action",
+                def.get("other_action").cloned().unwrap_or(json!("-")),
+            );
             for name in [
                 "tool",
                 "action",
@@ -710,7 +728,7 @@ fn operation_vars(op: &str) -> Vars {
             ] {
                 set(name, def[name].clone());
             }
-            let [base, second, third] = approval_effects(&def);
+            let [base, second, third] = approval_effects(def);
             set("effect", json!(base));
             set("effect_2", json!(second));
             set("effect_3", json!(third));
@@ -752,18 +770,17 @@ fn tools_call(name: &str, arguments: Value, extra: Value) -> Vec<u8> {
 }
 
 /// The call of `mcp_call_approval`, with the control arguments of the base call and a variant.
-fn approval_call(variant: Option<&str>) -> Vec<u8> {
-    let def = approval_profile();
+fn approval_call(variant: Option<&str>, def: &Value) -> Vec<u8> {
     let mut arguments = match variant {
         Some("effect_2" | "effect_3") => {
             def["approval"]["variants"][variant.unwrap()]["arguments"].clone()
         }
         _ => def["arguments"].clone(),
     };
-    if variant == Some("approval_ref") {
-        arguments["approval_ref"] = json!("ref_conformance_0001");
-    } else {
-        arguments["lease_s"] = json!(900);
+    match variant {
+        Some("approval_ref") => arguments["approval_ref"] = json!("ref_conformance_0001"),
+        Some("no_control") => {}
+        _ => arguments["lease_s"] = json!(900),
     }
     if variant == Some("wait") {
         arguments["wait_s"] = json!(1);
@@ -771,7 +788,7 @@ fn approval_call(variant: Option<&str>) -> Vec<u8> {
     tools_call(def["tool"].as_str().unwrap(), arguments, json!({}))
 }
 
-fn build_operation(op: &str, variant: Option<&str>) -> Built {
+fn build_operation(op: &str, variant: Option<&str>, call: Option<&Value>) -> Built {
     let table = "/hosts/prod/databases/test2/tables/orders";
     let get = |path: String| Built {
         method: "GET".into(),
@@ -819,7 +836,10 @@ fn build_operation(op: &str, variant: Option<&str>) -> Built {
             json!({}),
         )),
         "mcp_call_multi" => mcp(tools_call("copy_table", copy, json!({}))),
-        "mcp_call_approval" => mcp(approval_call(variant)),
+        "mcp_call_approval" => mcp(approval_call(
+            variant,
+            call.expect("a case that uses mcp_call_approval runs for each call"),
+        )),
         other => panic!("the profile has no operation {other}"),
     }
 }
@@ -831,15 +851,12 @@ fn skipped(conditions: Option<&Value>) -> bool {
     list.iter().any(|c| match c.as_str().unwrap() {
         "no_answer_cache" | "no_budget_session" => true,
         "no_mcp_endpoint" => !cfg!(feature = "mcp"),
-        "no_budget_action"
-        | "no_ceiling_action"
-        | "no_options_route"
-        | "no_input_tool"
-        | "no_approval_tool"
-        | "no_multi_action"
-        | "no_token_cache"
-        | "single_key_set"
-        | "no_approval_support" => false,
+        "no_budget_action" | "no_ceiling_action" | "no_options_route" | "no_input_tool"
+        | "no_multi_action" | "no_token_cache" | "single_key_set" => false,
+        // Section 17 is mandatory for a service: a PEP never skips these cases (protocol 5.2b).
+        "no_approval_support" => {
+            panic!("a case of the series U has the condition no_approval_support")
+        }
         other => panic!("unknown condition {other}"),
     })
 }
@@ -952,7 +969,40 @@ fn check_step(
             }
         }
     }
-    if let Some(kind) = expect.get("valid_as").and_then(Value::as_str) {
+    if let Some(kind) = expect.get("valid_as").and_then(Value::as_str)
+        && kind == "action_document_no_approval_member"
+    {
+        let document: Value = serde_json::from_slice(&reply.body).unwrap_or(Value::Null);
+        let with_member: Vec<&Value> = document["actions"]
+            .as_array()
+            .map(|a| a.iter().filter(|x| x.get("approval").is_some()).collect())
+            .unwrap_or_default();
+        if !with_member.is_empty() {
+            fail(&format!(
+                "an action has the member approval: {with_member:?}"
+            ));
+        }
+    } else if let Some(kind) = expect.get("valid_as").and_then(Value::as_str)
+        && kind == "action_document_called_for_each_action"
+    {
+        let document: Value = serde_json::from_slice(&reply.body).unwrap_or(Value::Null);
+        let mut names: Vec<String> = document["actions"]
+            .as_array()
+            .map(|a| a.iter().map(|x| text_of(&x["name"])).collect())
+            .unwrap_or_default();
+        names.retain(|n| n != "mcp.session");
+        let mut called: Vec<String> = approval_calls()
+            .iter()
+            .map(|c| text_of(&c["action"]))
+            .collect();
+        names.sort();
+        called.sort();
+        if names != called {
+            fail(&format!(
+                "the actions of the document {names:?} and the calls of the profile {called:?} differ"
+            ));
+        }
+    } else if let Some(kind) = expect.get("valid_as").and_then(Value::as_str) {
         let text = reply.text();
         let no_warning = kind.ends_with("_no_warning");
         let report = if kind.starts_with("action_document") {
@@ -1056,19 +1106,42 @@ fn check_step(
     failures
 }
 
-/// Run one case. It returns the failures, or `None` when the case is skipped.
+/// True when a step of the case uses the operation `mcp_call_approval`.
+fn uses_approval_call(case: &Value) -> bool {
+    case["steps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|s| s["request"].get("operation").and_then(Value::as_str) == Some("mcp_call_approval"))
+}
+
+/// Run one case. A case that uses `mcp_call_approval` runs once for each action of the service
+/// (protocol 5.2b). It returns the failures, or `None` when the case is skipped.
 fn run_case(suite: &Suite, case: &Value) -> Option<Vec<String>> {
-    let id = case["id"].as_str().unwrap();
     if skipped(case.get("skip_if")) {
         return None;
     }
+    if uses_approval_call(case) {
+        let mut failures = Vec::new();
+        for call in approval_calls() {
+            let action = text_of(&call["action"]);
+            let found = run_case_for(suite, case, Some(&call))?;
+            failures.extend(found.into_iter().map(|f| format!("[{action}] {f}")));
+        }
+        return Some(failures);
+    }
+    run_case_for(suite, case, None)
+}
+
+fn run_case_for(suite: &Suite, case: &Value, call: Option<&Value>) -> Option<Vec<String>> {
+    let id = case["id"].as_str().unwrap();
     let given = case.get("given").cloned().unwrap_or(json!({}));
     let steps = case["steps"].as_array().unwrap();
     // The variables: the operation of the step, or of the first step that has one.
     let mut default_vars: Vars = BTreeMap::new();
     for step in steps {
         if let Some(op) = step["request"].get("operation").and_then(Value::as_str) {
-            for (k, v) in operation_vars(op) {
+            for (k, v) in operation_vars(op, call) {
                 default_vars.entry(k).or_insert(v);
             }
         }
@@ -1121,8 +1194,9 @@ fn run_case(suite: &Suite, case: &Value) -> Option<Vec<String>> {
         let request = &step["request"];
         let mut vars = default_vars.clone();
         let built = if let Some(op) = request.get("operation").and_then(Value::as_str) {
-            vars.extend(operation_vars(op));
-            let mut built = build_operation(op, request.get("variant").and_then(Value::as_str));
+            vars.extend(operation_vars(op, call));
+            let mut built =
+                build_operation(op, request.get("variant").and_then(Value::as_str), call);
             if let Some(extra) = request.get("headers").and_then(Value::as_object) {
                 for (k, v) in extra {
                     built
@@ -1211,8 +1285,8 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
     );
     if cfg!(feature = "mcp") {
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
-        // U30 and U100 to U110 are the cases of the approval profile: they run.
-        assert_eq!(ran, 109, "the number of cases that ran");
+        // U30 and U100 to U117 are the cases of the approval profile: they run, for each action.
+        assert_eq!(ran, 116, "the number of cases that ran");
         skipped_ids.sort();
         assert_eq!(skipped_ids, ["U95"]);
     }

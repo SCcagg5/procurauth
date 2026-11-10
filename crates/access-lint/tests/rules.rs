@@ -96,6 +96,7 @@ rule_tests! {
     p_5_2_document_missing_member: Document, "5.2", "missing_member";
     p_5_2_document_unknown_member: Document, "5.2", "unknown_member";
     p_5_3_document_unknown_member: Document, "5.3", "unknown_member";
+    p_5_2b_document_removed_member: Document, "5.2b", "removed_member";
     p_6_1_document_wrong_type: Document, "6.1", "wrong_type";
     p_6_1_document_missing_member: Document, "6.1", "missing_member";
     p_5_2_document_bad_server: Document, "5.2", "bad_server";

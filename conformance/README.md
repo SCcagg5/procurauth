@@ -22,7 +22,7 @@ An id has the letter of the series and a number of two or three digits. The seri
 
 The numbers of a series have no gap. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9. These cases are in this directory, and they have exactly these ids. Each of them cites a paragraph of the binding and has the condition `no_mcp_endpoint`.
 
-The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U110, the series D with D76 to D89, and the series E with E19. Each one cites a paragraph of section 17, or a paragraph that only this profile adds, and it has the condition `no_approval_support`.
+The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U117, the series D with D76 to D89, and the series E with E19. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
 
 The ids V01 and V02 are not case ids. They name two groups of vectors in `vectors/effect.json`. The schema `schemas/effect-vectors.schema.json` defines the format of this file. `COVERAGE.md` lists the groups.
 
@@ -76,7 +76,7 @@ Each file validates against the schema `fake-pdp-data`. The reader of the core g
 | `services.json` | Three services with a credential each: two with a document and one with no good document. |
 | `access.json` | Persons and keys with and without a grant of `access`. |
 | `maxdoc.json` | A service with the largest document that a reader must accept (protocol 5.3c). |
-| `approvals.json` | The service `datastore` with an action that has the member `approval`. Keys with a grant that has `confirm`, on the side of the key and on the side of the owner. Approvals in each status, with the times of `consume_before` and of the deny time (protocol 17.6). The test PDP reads the members `confirm` and `approvals` when it gives approvals. |
+| `approvals.json` | The service `datastore`. Keys with a grant that has `confirm`, on the side of the key and on the side of the owner. Approvals in each status, with the times of `consume_before` and of the deny time (protocol 17.6). The test PDP reads the members `confirm` and `approvals` when it gives approvals. |
 
 ### Tokens
 
@@ -90,7 +90,9 @@ A step sends a token with the member `token`. The variable `{{token_<name>}}` gi
 
 A PEP case does not need to know the data of the service under test. It gives a script. Each rule has `when` and `respond`. The runner reads the rules in order. The first rule whose `when` matches the question gives the answer.
 
-A `when` matches when each member that it has is equal to the question. The members are `subject`, `action`, `resource`, `usage`, `match` and `effect`. The member `effect` is `context.approval.effect`, and a variable such as `{{effect_2}}` can give it. The value `true` of `usage` matches a question with `context.usage`. The value `false` matches a question without it.
+A `when` matches when each member that it has is equal to the question. The members are `subject`, `action`, `resource`, `usage`, `match`, `effect` and `no_effect`. The member `effect` is `context.approval.effect`, and a variable such as `{{effect_2}}` can give it.
+
+The value `true` of `no_effect` matches a question with no `context.approval`. This is the first question of the flow of protocol 17.7. The value `true` of `usage` matches a question with `context.usage`. The value `false` matches a question without it.
 
 An empty `when` matches each question. A question that no rule matches gets the answer from the directory. Without a directory, this is a fault of the case.
 
@@ -135,7 +137,7 @@ These are the operations. The list is closed. A new operation needs a change of 
 | `mcp_call_budget` | A `tools/call` of a tool whose action lists a budget. |
 | `mcp_call_input` | A `tools/call` that ends with `InputRequiredResult`. |
 | `mcp_call_multi` | A `tools/call` of a tool that needs two permissions. |
-| `mcp_call_approval` | A `tools/call` of a tool whose action waits for an approval. |
+| `mcp_call_approval` | A `tools/call` of the tool of one action. The runner runs each case that uses it once for each entry of `pep.approval_calls`: one for each action of the service (protocol 5.2b). |
 | `mcp_approve` | The approval of the call of the step before, and the run of the tool. |
 | `mcp_refuse` | The refusal of the approval of the call of the step before. |
 
@@ -149,8 +151,9 @@ The member `variant` changes the base call of the operation `mcp_call_approval`.
 | `effect_3` | Another change of that argument. The effect is the variable `effect_3`. |
 | `approval_ref` | The control argument `approval_ref` has the value of the variable `approval_ref`, in place of `lease_s`. |
 | `wait` | The control argument `wait_s` is added. The effect does not change (protocol 17.9a). |
+| `no_control` | The call has no control argument: no `lease_s`, no `approval_ref` and no `until`. |
 
-The profile of the service under test gives the base call and the two changes of the arguments. It gives the `op` that the service builds for each of the three calls, in the member `approval` of the operation. The runner computes the variables `effect`, `effect_2` and `effect_3` from them with protocol 17.3. The runner adds the control arguments: `lease_s` equal to 900, or `approval_ref`, and `wait_s` equal to 1 for the variant `wait`.
+The profile of the service under test gives, for each action, the base call and the two changes of the arguments in the member `approval_calls`. It gives the `op` that the service builds for each of the three calls, in the member `approval` of the entry. The runner computes the variables `effect`, `effect_2` and `effect_3` from them with protocol 17.3. The runner adds the control arguments: `lease_s` equal to 900, or `approval_ref`, and `wait_s` equal to 1 for the variant `wait`.
 
 ### Expect
 
@@ -162,7 +165,7 @@ A step expects the members that it gives. The runner checks each one.
 | `headers` | The headers of the answer. The names have no case. |
 | `body_text` | The body as text. An empty body is the empty text. |
 | `json` | Members of a JSON body. Each name is a JSON Pointer. |
-| `valid_as` | The body is a good document of a kind: `action_document` or `options_answer`. The value with the suffix `_no_warning` also needs a report with no warning. |
+| `valid_as` | The body is a good document of a kind: `action_document` or `options_answer`. The value with the suffix `_no_warning` also needs a report with no warning. The value `action_document_no_approval_member` needs a good action document in which no action has the member `approval` (protocol 5.2b). The value `action_document_called_for_each_action` needs a good action document in which each action except `mcp.session` is the key of an entry of `pep.approval_calls`. |
 | `pdp_questions` | For a PEP. The questions that the test PDP received during the step. |
 | `pdp_connections` | For a PEP. The number of connections that the test PDP accepted since the start of the case. |
 | `pdp_approvals` | For a PEP. The requests that the test PDP received on its approval API during the step. |
@@ -213,6 +216,7 @@ A case can write a variable as `{{name}}` in a string or in the name of a member
 | `valid_key_subject` | The subject id of that key. |
 | `valid_key_owner` | The owner of that key. |
 | `no_access_key_text` | The text of a key that the edge knows, whose subject has no true decision for `access`. |
+| `other_action` | The action of the other permission of the call of `mcp_call_approval` (protocol 5.5a), or a hyphen when the call has none. |
 | `effect` | The effect of the base call of `mcp_call_approval` (protocol 17.3). |
 | `effect_2` | The effect of the call with the variant `effect_2`. |
 | `effect_3` | The effect of the call with the variant `effect_3`. |
@@ -240,14 +244,15 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `no_mcp_endpoint` | The service has no MCP endpoint. |
 | `no_budget_session` | The action `mcp.session` lists no budget (binding 3.6a). |
 | `no_input_tool` | The service has no tool that asks the client for input. |
-| `no_approval_tool` | The service has no tool whose action waits for an approval. |
 | `no_multi_action` | The service has no use that needs two permissions. |
 | `single_key_set` | The key set of the edge holds one key only. |
-| `no_approval_support` | The target does not give approvals (protocol section 17). |
+| `no_approval_support` | The PDP or the edge gives no approval (protocol section 17). |
 
-The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. For an edge, it holds it unless the profile has `edge.keys.confirm_access`. For a PEP, it holds it unless the profile has `pep.approvals`. 
+The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. A PDP MAY give no approval: it then gates no action and never answers a reason of protocol 17.1. For an edge, the runner holds it unless the profile has `edge.keys.confirm_access`. An edge asks only the action `access`, so it never asks for an approval.
 
-A target for which it holds skips the cases that cite section 17 and the paragraphs 5.2b, 5.7, 5.7a and 5.7b. These cases are U30, U100 to U110, D76 to D89 and E19. A target of the approval profile runs them.
+The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
+
+The profile of a PEP with an MCP endpoint has the member `approval_calls`: one entry for each action of the action document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The case U111 fails when the document has an action with no entry.
 
 The checks enforce these rules. A step that uses `use_budget`, `use_ceiling`, `use_multi`, `list_options`, an MCP operation, or the variables `mcp_path` and `options_type`, has the condition that goes with it. The condition is in the step or in the case.
 
@@ -277,8 +282,7 @@ The crate `schema-check` checks each file. A failed check names the case. These 
 - each directory file that a case names exists and is valid;
 - each series has at least six cases;
 - `COVERAGE.md` has a row for each paragraph that a role must follow, and it agrees with the cases;
-- a case that cites the approval profile has the condition `no_approval_support`, and only such a case has it;
-- a step that has `variant` or `pdp_approvals`, or that uses a variable `effect`, has the condition `no_approval_support`;
+- a case of the series D or E that cites the approval profile has the condition `no_approval_support`, and only such a case has it. A case of the series U never has it;
 - `vectors/effect.json` is valid against the schema `effect-vectors`, and its ids are unique;
 - the file has at least 12 vectors in the groups V01 and V02. It cites a paragraph that exists. `COVERAGE.md` has a row for each group;
 - the test `effect_vectors` in `crates/procurauth-core` computes the hash of each vector again.

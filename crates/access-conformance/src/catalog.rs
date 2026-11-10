@@ -217,9 +217,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_binary_holds_the_218_cases() {
+    fn the_binary_holds_the_225_cases() {
         let catalog = Catalog::embedded().unwrap();
-        assert_eq!(catalog.cases_of(Role::Pep).len(), 110);
+        assert_eq!(catalog.cases_of(Role::Pep).len(), 117);
         assert_eq!(catalog.cases_of(Role::Pdp).len(), 89);
         assert_eq!(catalog.cases_of(Role::Edge).len(), 19);
         assert!(catalog.directory("datastore.json").is_some());

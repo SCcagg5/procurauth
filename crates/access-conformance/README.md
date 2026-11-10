@@ -122,7 +122,7 @@ The cases use abstract operations. The profile of a PEP maps each one to a reque
 | `use_ceiling` | The same as `use_plain`, with `ceiling` and `ceiling_value`. Choose a request whose result does not go past `ceiling_value`. A PEP applies the ceiling (protocol 7.5, 10.2), and the case U37 expects a status 2xx. |
 | `use_service` | `method`, `path`, `action`. The node is the service. |
 | `read_actions`, `list_options` | Nothing. The runner uses the default routes of the protocol. `list_options` needs `options_type`. |
-| `mcp_call_plain`, `mcp_call_budget`, `mcp_call_input`, `mcp_call_multi`, `mcp_call_approval` | `tool` and `action`. The runner makes the JSON-RPC `tools/call` with the `arguments` of the operation. For `mcp_call_approval`, the runner adds the control arguments, and the profile has the member `approval`. |
+| `mcp_call_plain`, `mcp_call_budget`, `mcp_call_input`, `mcp_call_multi`, `mcp_call_approval` | `tool` and `action`. The runner makes the JSON-RPC `tools/call` with the `arguments` of the operation. The operation `mcp_call_approval` is not in `operations`. The member `approval_calls` gives one call for each action of the service. For `mcp_call_approval`, the runner adds the control arguments, and each entry has the member `approval`. |
 | `mcp_approve`, `mcp_refuse` | A `body`. Use `capture` to read a value of the answer to the step before. |
 
 An operation that the profile does not define makes the runner skip the steps that use it. The conditions to skip a case come from the profile:
@@ -135,11 +135,11 @@ An operation that the profile does not define makes the runner skip the steps th
 | `no_answer_cache` | `pep.answer_cache` is false. |
 | `no_mcp_endpoint` | The profile has no `mcp` or no `mcp_path`. |
 | `no_budget_session` | `pep.mcp.session_budget` is false. |
-| `no_input_tool`, `no_approval_tool` | The profile has no `mcp_call_input`, or no `mcp_call_approval`. |
+| `no_input_tool` | The profile has no `mcp_call_input`. |
 | `no_multi_action` | The profile has no `use_multi` and no `mcp_call_multi`. |
 | `no_token_cache` | `edge.token_cache` is false. |
 | `single_key_set` | The key set of `edge.trust` holds one key. |
-| `no_approval_support` | For a PDP: `pdp.approvals` is false and `pdp.spawn_fake_pdp` is not true. For an edge: `edge.keys.confirm_access` is absent. For a PEP: `pep.approvals` is false. The runner skips the cases of protocol section 17 when it holds. |
+| `no_approval_support` | For a PDP: `pdp.approvals` is false and `pdp.spawn_fake_pdp` is not true. For an edge: `edge.keys.confirm_access` is absent. The condition never holds for a PEP: section 17 is mandatory for a service (protocol 1.3, 5.2b). The runner skips the cases of protocol section 17 for a PDP or an edge when it holds. |
 
 A token of a case can use a key of the algorithm `ES256`. When the profile has no such key, the runner skips the case and gives the reason.
 
@@ -181,7 +181,6 @@ The option `--print-config` checks the profile and the files, prints each key wi
 | `pep.reset.path` | profile | path | none, mandatory | The path of that request. |
 | `pep.reset.headers.<name>` | profile | text | none | A header of that request. |
 | `pep.options_type` | profile | text | none, no options route | The type of the nodes at the first level of the options route. |
-| `pep.approvals` | profile | boolean | false | True when the service gives approvals (protocol section 17). The runner then runs the cases of this section. The operation `mcp_call_approval` then has the member `approval`. |
 | `pep.mcp.path` | profile | path | none, mandatory | The path of the MCP endpoint. It is the variable `mcp_path`. |
 | `pep.mcp.session_budget` | profile | boolean | false | True when the action `mcp.session` lists a budget. |
 | `pep.operations.<operation>.method` | profile | HTTP method | see the operation | The method of the operation. |
@@ -198,9 +197,14 @@ The option `--print-config` checks the profile and the files, prints each key wi
 | `pep.operations.<operation>.ceiling_value` | profile | whole number | see the operation | The variable `ceiling_value`. |
 | `pep.operations.<operation>.arguments` | profile | JSON | none, an empty object | The arguments of the tool of an MCP call. |
 | `pep.operations.<operation>.capture.<name>` | profile | JSON Pointer | none | A name for a member of the JSON answer to the step before. The templates of the operation read it as a variable. |
-| `pep.operations.mcp_call_approval.approval.op` | profile | JSON object | none, mandatory with `pep.approvals` | The `op` that the service builds from the base call (protocol 17.3). The runner computes the variable `effect` from it. |
-| `pep.operations.mcp_call_approval.approval.variants.<name>.arguments` | profile | JSON | none, mandatory with `pep.approvals` | The arguments of the call of the variant `effect_2` or `effect_3`, with no control argument. |
-| `pep.operations.mcp_call_approval.approval.variants.<name>.op` | profile | JSON object | none, mandatory with `pep.approvals` | The `op` that the service builds from those arguments. The runner computes the variable `effect_2` or `effect_3` from it. |
+| `pep.approval_calls.<action>.tool` | profile | text | none, mandatory with `pep.mcp` | The tool whose call uses the action. The key `<action>` is the name of an action of the service. The profile needs one entry for each action of the document, except `mcp.session` (protocol 5.2b). The cases of protocol section 17 run once for each entry. |
+| `pep.approval_calls.<action>.arguments` | profile | JSON | none, an empty object | The arguments of the base call of the tool, with no control argument. The runner adds `lease_s`. |
+| `pep.approval_calls.<action>.resource_type` | profile | text | none, mandatory with `pep.mcp` | The type of the node of the use. The runner needs it to compute the effect. |
+| `pep.approval_calls.<action>.resource_id` | profile | text | none, mandatory with `pep.mcp` | The id of the node of the use. |
+| `pep.approval_calls.<action>.ancestors` | profile | JSON array | none, mandatory with `pep.mcp` | The chain of the node of the use, from the service down. |
+| `pep.approval_calls.<action>.approval.op` | profile | JSON object | none, mandatory with `pep.mcp` | The `op` that the service builds from the base call (protocol 17.3a). The runner computes the variable `effect` from it. |
+| `pep.approval_calls.<action>.approval.variants.<name>.arguments` | profile | JSON | none, mandatory with `pep.mcp` | The arguments of the call of the variant `effect_2` or `effect_3`, with no control argument. |
+| `pep.approval_calls.<action>.approval.variants.<name>.op` | profile | JSON object | none, mandatory with `pep.mcp` | The `op` that the service builds from those arguments. The runner computes the variable `effect_2` or `effect_3` from it. |
 | `pdp.spawn_fake_pdp` | profile | boolean | false | True to start fake-pdp in the process, with the directory of each case. Do not give it with `--url`. |
 | `pdp.approvals` | profile | boolean | false | True when the PDP gives approvals (protocol section 17). The runner then runs the cases of this section. Do not give it with `pdp.spawn_fake_pdp`: the PDP that the runner starts gives approvals. |
 | `pdp.credential_file` | profile | path | none, no credential | A file with the credential that the PDP asks for. The credential is a secret. |

@@ -114,6 +114,15 @@ impl AnswerCache {
         if self.ttl_ms == 0 {
             return;
         }
+        // 10.1: the PEP never keeps an answer with a reason of 17.1.
+        if decision
+            .context
+            .reason
+            .as_ref()
+            .is_some_and(procurauth_core::authzen::Reason::is_approval)
+        {
+            return;
+        }
         let life = lifetime_ms.min(self.ttl_ms);
         if life == 0 {
             return;

@@ -29,10 +29,15 @@ fn call(control: Control) -> ApprovalCall {
     ApprovalCall {
         op: op(),
         view: view(),
-        control,
+        control: Some(control),
         supersedes: None,
         wait_seconds: None,
     }
+}
+
+/// Follow the steps of 17.7 for the operation of the tests, with `call` as the command.
+fn run(pep: &Pep, who: &Identity, call: ApprovalCall) -> Outcome {
+    pep.decide_approval(who, &operation(), move || Ok(call))
 }
 
 fn operation() -> Operation {
@@ -52,7 +57,7 @@ fn effect() -> String {
     .unwrap()
 }
 
-/// A PEP for a document whose action `data.write` has the member `approval`.
+/// A PEP for the document of the tests. Each action follows section 17, so no member marks an action.
 fn rig(
     handler: impl FnMut(
         &Seen,
@@ -64,12 +69,7 @@ fn rig(
 ) -> (Pep, Arc<Scripted>, Identity, ManualClock) {
     let edge = Edge::new();
     let transport = Scripted::new(handler);
-    let mut document = datastore_document();
-    for action in &mut document.actions {
-        if action.name == ACTION {
-            action.approval = true;
-        }
-    }
+    let document = datastore_document();
     let clock = ManualClock::at_seconds(NOW);
     let pep = Pep::with_clock(
         config("http://pdp.test", &edge),
@@ -105,7 +105,14 @@ fn pdp(
             let (status, body) = api(seen);
             Ok(json_response(status, &body))
         } else if seen.method == "POST" {
-            Ok(json_response(200, &question(seen.body.as_ref().unwrap())))
+            let body = seen.body.as_ref().unwrap();
+            // A question with no effect gets `approval_required` (17.1): the PDP asks for an approval.
+            let answer = if body.pointer("/context/approval").is_none() {
+                json!({"decision": false, "context": {"reason": "approval_required"}})
+            } else {
+                question(body)
+            };
+            Ok(json_response(200, &answer))
         } else {
             Ok(json_response(404, &json!({})))
         }
@@ -135,9 +142,9 @@ fn api_calls(t: &Scripted) -> Vec<Seen> {
 }
 
 #[test]
-fn p_17_7_step_2_a_question_without_usage_and_a_submission_make_a_request_that_waits() {
+fn p_17_7_step_4_a_question_with_the_effect_and_a_submission_make_a_request_that_waits() {
     let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     let Outcome::ApprovalRequired(pending) = outcome else {
         panic!("{outcome:?}");
     };
@@ -146,13 +153,15 @@ fn p_17_7_step_2_a_question_without_usage_and_a_submission_make_a_request_that_w
         ("apr_1", "K7QF")
     );
     let asked = questions(&t);
-    assert_eq!(asked.len(), 1);
+    // Step 1: a question with no effect. Step 3: a question with the effect.
+    assert_eq!(asked.len(), 2);
+    assert!(asked[0].pointer("/context/approval").is_none());
     assert_eq!(
-        asked[0]["context"],
+        asked[1]["context"],
         json!({"approval": {"effect": effect()}})
     );
     // The question never has op or view (17.1).
-    assert!(!asked[0].to_string().contains("append_rows"));
+    assert!(!asked[1].to_string().contains("append_rows"));
     // The submission has the members of 17.4 and no other.
     let calls = api_calls(&t);
     assert_eq!(calls.len(), 1);
@@ -173,7 +182,7 @@ fn p_17_7_step_2_a_question_without_usage_and_a_submission_make_a_request_that_w
 }
 
 #[test]
-fn p_17_7_step_4_after_true_the_pep_asks_with_usage_and_the_same_effect() {
+fn p_17_7_step_6_after_true_the_pep_asks_with_usage_and_the_same_effect() {
     let (pep, t, who, _) = rig(pdp(
         |q| {
             if q.pointer("/context/usage").is_some() {
@@ -184,23 +193,24 @@ fn p_17_7_step_4_after_true_the_pep_asks_with_usage_and_the_same_effect() {
         },
         |_| panic!("no call of the approval API"),
     ));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     let allowed = outcome.into_result().unwrap();
     assert_eq!(allowed.units(), 1);
     let asked = questions(&t);
-    assert_eq!(asked.len(), 2);
-    assert!(asked[0].pointer("/context/usage").is_none());
-    assert_eq!(asked[1]["context"]["usage"], json!({"units": 1}));
-    assert_eq!(asked[1]["context"]["approval"]["effect"], effect());
+    assert_eq!(asked.len(), 3);
+    assert!(asked[0].pointer("/context/approval").is_none());
+    assert!(asked[1].pointer("/context/usage").is_none());
+    assert_eq!(asked[2]["context"]["usage"], json!({"units": 1}));
+    assert_eq!(asked[2]["context"]["approval"]["effect"], effect());
     // The PEP keeps no answer to a question with an effect (17.7): a second call asks again.
-    let again = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let again = run(&pep, &who, call(Control::LeaseSeconds(900)));
     assert!(again.is_allowed());
-    assert_eq!(questions(&t).len(), 4);
+    assert_eq!(questions(&t).len(), 6);
     assert_eq!(pep.kept_answers(), 0);
 }
 
 #[test]
-fn p_17_7_step_3_a_refused_or_void_approval_sends_no_question_with_usage() {
+fn p_17_7_step_5_a_refused_or_void_approval_sends_no_question_with_usage() {
     for (reason, expected) in [
         ("approval_denied", ApprovalRefusal::Denied),
         ("approval_expired", ApprovalRefusal::Expired),
@@ -209,14 +219,12 @@ fn p_17_7_step_3_a_refused_or_void_approval_sends_no_question_with_usage() {
             move |_| json!({"decision": false, "context": {"reason": reason, "comment": "canary"}}),
             |_| panic!("no call of the approval API"),
         ));
-        let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+        let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
         assert_eq!(outcome.refusal(), Some(&Refusal::Approval(expected)));
         assert!(!outcome.refusal().unwrap().to_string().contains("canary"));
-        assert!(
-            questions(&t)
-                .iter()
-                .all(|q| q.pointer("/context/usage").is_none())
-        );
+        assert!(questions(&t).iter().all(|q| {
+            q.pointer("/context/usage").is_none() || q.pointer("/context/approval").is_none()
+        }));
         assert!(api_calls(&t).is_empty());
     }
 }
@@ -233,7 +241,7 @@ fn p_17_7_a_budget_that_refuses_the_use_gives_rate_limited() {
         },
         |_| panic!("no call"),
     ));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     assert_eq!(
         outcome.refusal(),
         Some(&Refusal::RateLimited { retry_after: 12 })
@@ -243,7 +251,7 @@ fn p_17_7_a_budget_that_refuses_the_use_gives_rate_limited() {
 #[test]
 fn p_17_7_a_true_answer_with_usage_and_no_units_counts_as_false() {
     let (pep, _, who, _) = rig(pdp(|_| json!({"decision": true}), |_| panic!("no call")));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     assert!(matches!(outcome.refusal(), Some(Refusal::Forbidden { .. })));
 }
 
@@ -253,7 +261,7 @@ fn p_17_7_without_an_evaluation_id_the_pep_cannot_submit_and_it_fails_closed() {
         |_| json!({"decision": false, "context": {"reason": "approval_required"}}),
         |_| panic!("no call"),
     ));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     assert!(matches!(outcome.refusal(), Some(Refusal::Forbidden { .. })));
     assert!(api_calls(&t).is_empty());
 }
@@ -261,7 +269,7 @@ fn p_17_7_without_an_evaluation_id_the_pep_cannot_submit_and_it_fails_closed() {
 #[test]
 fn p_17_7_a_caller_that_does_not_know_approvals_gets_the_refusal_of_a_false_answer() {
     let (pep, _, who, _) = rig(pdp(evaluation, |_| submitted()));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     let refusal = outcome.into_result().unwrap_err();
     assert_eq!(refusal.status(), 403);
 }
@@ -271,12 +279,14 @@ fn p_17_3_an_op_that_the_effect_refuses_gives_invalid_argument_and_no_question()
     let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
     let mut bad = call(Control::LeaseSeconds(900));
     bad.op = json!({"tool": "t", "table": "orders", "rows": "x", "limit": 1.5});
-    let outcome = pep.decide_approval(&who, &operation(), &bad);
+    let outcome = run(&pep, &who, bad);
     assert_eq!(
         outcome.refusal(),
         Some(&Refusal::Approval(ApprovalRefusal::InvalidArgument))
     );
-    assert!(t.seen().is_empty());
+    // The PEP asked the question with no effect, and nothing more: no effect, no submission.
+    assert_eq!(questions(&t).len(), 1);
+    assert!(api_calls(&t).is_empty());
 }
 
 #[test]
@@ -284,22 +294,120 @@ fn p_17_9_a_view_with_a_pointer_that_names_no_value_is_a_mistake_of_the_service(
     let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
     let mut bad = call(Control::LeaseSeconds(900));
     bad.view = json!({"body": "/nothing"});
-    let outcome = pep.decide_approval(&who, &operation(), &bad);
+    let outcome = run(&pep, &who, bad);
     assert!(matches!(outcome.refusal(), Some(Refusal::Internal(_))));
-    assert!(t.seen().is_empty());
+    assert_eq!(questions(&t).len(), 1);
+    assert!(api_calls(&t).is_empty());
 }
 
 #[test]
-fn p_5_2b_an_action_with_no_member_approval_is_a_mistake_of_the_service() {
+fn p_17_7_step_1_a_true_answer_ends_the_flow_and_the_command_is_never_built() {
+    let (pep, t, who, _) = rig(|seen: &Seen| {
+        if seen.method == "POST" {
+            let usage = seen
+                .body
+                .as_ref()
+                .unwrap()
+                .pointer("/context/usage")
+                .is_some();
+            let answer = if usage {
+                json!({"decision": true, "context": {"usage": {"units": 1}}})
+            } else {
+                json!({"decision": true})
+            };
+            Ok(json_response(200, &answer))
+        } else {
+            Ok(json_response(404, &json!({})))
+        }
+    });
+    let outcome = pep.decide_approval(&who, &operation(), || -> Result<ApprovalCall, _> {
+        panic!("the PEP builds op and view only when the PDP asks for an approval")
+    });
+    assert!(outcome.is_allowed(), "{outcome:?}");
+    let asked = questions(&t);
+    assert_eq!(asked.len(), 1);
+    assert!(asked[0].pointer("/context/approval").is_none());
+}
+
+#[test]
+fn p_17_7_step_1_a_false_answer_with_another_reason_is_refused_as_10_3_says() {
+    let (pep, t, who, _) = rig(|seen: &Seen| {
+        if seen.method == "POST" {
+            Ok(json_response(200, &json!({"decision": false})))
+        } else {
+            Ok(json_response(404, &json!({})))
+        }
+    });
+    let outcome = pep.decide_approval(&who, &operation(), || -> Result<ApprovalCall, _> {
+        panic!("no command")
+    });
+    assert!(matches!(outcome.refusal(), Some(Refusal::Forbidden { .. })));
+    assert_eq!(questions(&t).len(), 1);
+}
+
+#[test]
+fn p_17_3a_an_error_of_the_command_refuses_only_a_call_that_needs_an_approval() {
+    let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
+    let outcome = pep.decide_approval(&who, &operation(), || Err(ApprovalRefusal::InvalidArgument));
+    assert_eq!(
+        outcome.refusal(),
+        Some(&Refusal::Approval(ApprovalRefusal::InvalidArgument))
+    );
+    // The PEP asked the question with no effect, and nothing more.
+    assert_eq!(questions(&t).len(), 1);
+    assert!(api_calls(&t).is_empty());
+}
+
+#[test]
+fn p_17_7_a_call_with_no_control_cannot_submit_and_gets_invalid_argument() {
+    let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
+    let mut none = call(Control::LeaseSeconds(900));
+    none.control = None;
+    let outcome = run(&pep, &who, none);
+    assert_eq!(
+        outcome.refusal(),
+        Some(&Refusal::Approval(ApprovalRefusal::InvalidArgument))
+    );
+    assert!(api_calls(&t).is_empty());
+    // The PEP sent the question with the effect, and no question with usage and the effect.
+    assert!(questions(&t).iter().all(|q| {
+        q.pointer("/context/usage").is_none() || q.pointer("/context/approval").is_none()
+    }));
+}
+
+#[test]
+fn p_17_7a_a_call_that_cannot_wait_gets_403_and_the_code_approval_cannot_wait() {
+    // A plain route calls `decide`. It sends no effect and submits nothing.
+    let (pep, t, who, _) = rig(pdp(evaluation, |_| submitted()));
+    let refusal = pep.decide(&who, &operation()).into_result().unwrap_err();
+    let reply = refusal.to_http();
+    assert_eq!(reply.status, 403);
+    assert_eq!(
+        String::from_utf8(reply.body).unwrap(),
+        r#"{"error":"approval_cannot_wait"}"#
+    );
+    assert!(api_calls(&t).is_empty());
+    assert!(
+        questions(&t)
+            .iter()
+            .all(|q| q.pointer("/context/approval").is_none())
+    );
+}
+
+#[test]
+fn p_10_1_the_pep_keeps_no_answer_with_a_reason_of_17_1() {
     let edge = Edge::new();
     let transport = Scripted::new(pdp(evaluation, |_| submitted()));
-    let (pep, _) = common::pep(transport.clone(), &edge, "http://pdp.test", |_| {});
+    let (pep, _) = common::pep(transport.clone(), &edge, "http://pdp.test", |config| {
+        config.cache_ttl = std::time::Duration::from_secs(60);
+    });
     let who = pep
         .authenticate([(HEADER, edge.token("alice").as_str())])
         .unwrap();
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
-    assert!(matches!(outcome.refusal(), Some(Refusal::Internal(_))));
-    assert!(transport.seen().is_empty());
+    let _ = pep.decide(&who, &operation());
+    let _ = pep.decide(&who, &operation());
+    assert_eq!(pep.kept_answers(), 0);
+    assert_eq!(questions(&transport).len(), 2);
 }
 
 #[test]
@@ -312,11 +420,11 @@ fn p_17_4_the_controls_go_to_the_submission_as_the_agent_gave_them() {
     }));
     let mut with_ref = call(Control::Reference("ref_opaque_0001".into()));
     with_ref.supersedes = Some("apr_0".into());
-    let _ = pep.decide_approval(&who, &operation(), &with_ref);
-    let _ = pep.decide_approval(
+    let _ = run(&pep, &who, with_ref);
+    let _ = run(
+        &pep,
         &who,
-        &operation(),
-        &call(Control::Until("2030-01-01T00:00:00Z".into())),
+        call(Control::Until("2030-01-01T00:00:00Z".into())),
     );
     let bodies = seen_bodies.lock().unwrap().clone();
     assert_eq!(bodies[0]["approval_ref"], "ref_opaque_0001");
@@ -351,7 +459,7 @@ fn p_17_12_the_pep_reads_only_the_verdict_the_id_and_the_code() {
             )
         }
     }));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     let Outcome::ApprovalRequired(pending) = outcome else {
         panic!("{outcome:?}");
     };
@@ -450,7 +558,7 @@ fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
     for (status, body, expected) in cases {
         let reply = body.clone();
         let (pep, _, who, _) = rig(pdp(evaluation, move |_| (status, reply.clone())));
-        let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+        let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
         assert_eq!(outcome.refusal(), Some(&expected), "{status} {body}");
     }
 }
@@ -472,7 +580,7 @@ fn p_17_4_an_unknown_request_gives_invalid_argument_on_a_read_and_a_wrong_answer
 #[test]
 fn p_17_4_a_submission_with_a_bad_answer_is_not_a_request_that_waits() {
     let (pep, _, who, _) = rig(pdp(evaluation, |_| (201, json!({"request_id": "apr_1"}))));
-    let outcome = pep.decide_approval(&who, &operation(), &call(Control::LeaseSeconds(900)));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
     assert!(matches!(
         outcome.refusal(),
         Some(Refusal::Unavailable(UnavailableCause::Answer(_)))
@@ -490,7 +598,7 @@ fn p_17_5_a_wait_reads_the_verdict_with_wait_and_without_renewal_and_stays_pendi
     }));
     let mut waiting = call(Control::LeaseSeconds(900));
     waiting.wait_seconds = Some(1000);
-    let outcome = pep.decide_approval(&who, &operation(), &waiting);
+    let outcome = run(&pep, &who, waiting);
     assert!(matches!(outcome, Outcome::ApprovalRequired(_)));
     let calls = api_calls(&t);
     assert_eq!(calls.len(), 2);
@@ -528,9 +636,10 @@ fn p_17_5_a_wait_that_ends_with_approved_asks_again_from_the_start() {
     ));
     let mut waiting = call(Control::LeaseSeconds(900));
     waiting.wait_seconds = Some(5);
-    let outcome = pep.decide_approval(&who, &operation(), &waiting);
+    let outcome = run(&pep, &who, waiting);
     assert!(outcome.is_allowed(), "{outcome:?}");
-    assert_eq!(questions(&t).len(), 3);
+    // The question with no effect, two questions with the effect and the question with usage.
+    assert_eq!(questions(&t).len(), 4);
     assert_eq!(api_calls(&t).len(), 2);
 }
 
@@ -546,7 +655,7 @@ fn p_17_5_a_failed_read_during_a_wait_leaves_the_result_it_waits() {
     let mut waiting = call(Control::LeaseSeconds(900));
     waiting.wait_seconds = Some(5);
     assert!(matches!(
-        pep.decide_approval(&who, &operation(), &waiting),
+        run(&pep, &who, waiting),
         Outcome::ApprovalRequired(_)
     ));
 }
@@ -566,7 +675,7 @@ fn p_17_7_a_wait_that_ends_with_denied_or_void_refuses() {
         }));
         let mut waiting = call(Control::LeaseSeconds(900));
         waiting.wait_seconds = Some(5);
-        let outcome = pep.decide_approval(&who, &operation(), &waiting);
+        let outcome = run(&pep, &who, waiting);
         assert_eq!(outcome.refusal(), Some(&Refusal::Approval(expected)));
     }
 }

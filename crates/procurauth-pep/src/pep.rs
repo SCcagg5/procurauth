@@ -374,11 +374,33 @@ impl Pep {
         operation: &Operation,
         usage_allowed: bool,
     ) -> Result<Allowed, Refusal> {
+        self.validate_operation(operation)?;
+        let granted_others = self.ask_others(who.sub(), operation)?;
+        let (units, used) = self.run_use(who.sub(), operation.uses(), usage_allowed)?;
+        Ok(Allowed {
+            units,
+            used,
+            others: granted_others,
+        })
+    }
+
+    /// Check each permission of an operation against the action document.
+    pub(crate) fn validate_operation(&self, operation: &Operation) -> Result<(), Refusal> {
         for permission in operation.uses().iter().chain(operation.others()) {
             self.validate(permission, true)?;
         }
-        // The other permissions come first, without `context.usage` (5.5a, 10.1a).
-        // A permission that is also an alternative for the use is not asked twice (10.1).
+        Ok(())
+    }
+
+    /// Ask the other permissions of an operation, without `context.usage` (5.5a, 10.1a).
+    /// A permission that is also an alternative for the use is not asked twice (10.1).
+    /// When one answer is `false`, the PEP refuses. An answer with a reason of 17.1 is a refusal
+    /// too: the approval covers only the use of the operation (17.1, last paragraph).
+    pub(crate) fn ask_others(
+        &self,
+        subject: &str,
+        operation: &Operation,
+    ) -> Result<Vec<Granted>, Refusal> {
         let others: Vec<&Permission> = operation
             .others()
             .iter()
@@ -386,10 +408,10 @@ impl Pep {
             .collect();
         let mut granted_others = Vec::with_capacity(others.len());
         if !others.is_empty() {
-            let answers = self.ask_plain(who.sub(), &others, MatchMode::Node)?;
+            let answers = self.ask_plain(subject, &others, MatchMode::Node)?;
             for (permission, decision) in others.iter().zip(answers) {
                 if !decision.decision {
-                    return Err(denied(&decision));
+                    return Err(denied_other(&decision));
                 }
                 granted_others.push(Granted {
                     permission: (*permission).clone(),
@@ -397,12 +419,7 @@ impl Pep {
                 });
             }
         }
-        let (units, used) = self.run_use(who.sub(), operation.uses(), usage_allowed)?;
-        Ok(Allowed {
-            units,
-            used,
-            others: granted_others,
-        })
+        Ok(granted_others)
     }
 
     /// Check one permission against the action document. A mistake here is a
@@ -513,7 +530,7 @@ impl Pep {
     }
 
     /// Run the use: one action, or several actions in the order of preference.
-    fn run_use(
+    pub(crate) fn run_use(
         &self,
         subject: &str,
         alternatives: &[Permission],
@@ -700,6 +717,23 @@ impl Pep {
 enum Step {
     Granted(u64, Granted),
     Denied(Refusal),
+}
+
+/// The refusal for a `false` answer of another permission of the operation (5.5a). A reason of
+/// 17.1 does not start the approval flow, because the approval covers only the use.
+fn denied_other(decision: &Decision) -> Refusal {
+    if decision
+        .context
+        .reason
+        .as_ref()
+        .is_some_and(Reason::is_approval)
+    {
+        return Refusal::Forbidden {
+            reason: None,
+            cause: DenialCause::OtherPermissionNeedsApproval,
+        };
+    }
+    denied(decision)
 }
 
 /// The refusal for a `false` answer without `budget_exceeded`.

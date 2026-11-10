@@ -158,6 +158,10 @@ pub struct Directory {
     pub failures: Vec<FailureRule>,
     /// The approvals at the start (17.6). The last entry for one subject, action, resource and effect is the latest.
     pub approvals: Vec<SeedApproval>,
+    /// Test mode. When it is true, each action except `access` needs an approval for each subject,
+    /// as if each grant had `confirm` equal to true (17.8). A PEP that follows section 17 then goes
+    /// through the flow of 17.7 for each action.
+    pub confirm_all: bool,
 }
 
 impl Directory {
@@ -231,6 +235,7 @@ fn read_directory(value: &Value, report: &mut Report) -> Option<Directory> {
     let counters = obj.array_opt("counters", report);
     let failures = obj.array_opt("failures", report);
     let approvals = obj.array_opt("approvals", report);
+    out.confirm_all = obj.boolean_opt("confirm_all", report).unwrap_or(false);
     obj.finish(report);
 
     out.services = read_services(services.unwrap_or_default(), &root.key("services"), report);

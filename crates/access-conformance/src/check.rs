@@ -31,6 +31,8 @@ pub(crate) struct Observed<'a> {
     pub(crate) verifier: Option<&'a Verifier>,
     /// The name of the header with the identity token.
     pub(crate) token_header: Option<&'a str>,
+    /// The actions that the profile of a PEP gives a call for (`pep.approval_calls`). `None` outside a PEP run.
+    pub(crate) called_actions: Option<&'a [String]>,
     /// The time, in seconds since the Unix epoch.
     pub(crate) now: u64,
 }
@@ -90,13 +92,82 @@ fn report_text(report: &Report, strict: bool) -> Option<String> {
     (!bad.is_empty()).then(|| bad.join("; "))
 }
 
-fn check_valid_as(kind: ValidAs, text: &str, out: &mut Vec<String>) {
+/// The names of the actions of a document, and the actions that have the member `approval`.
+fn raw_actions(text: &str) -> (Vec<String>, Vec<String>) {
+    let mut names = Vec::new();
+    let mut with_member = Vec::new();
+    if let Ok(document) = serde_json::from_str::<Value>(text)
+        && let Some(actions) = document.get("actions").and_then(Value::as_array)
+    {
+        for action in actions {
+            let name = action
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned();
+            if action.get("approval").is_some() {
+                with_member.push(name.clone());
+            }
+            names.push(name);
+        }
+    }
+    (names, with_member)
+}
+
+fn check_valid_as(kind: ValidAs, text: &str, called: Option<&[String]>, out: &mut Vec<String>) {
+    if kind == ValidAs::ActionDocumentNoApprovalMember {
+        let (_, with_member) = raw_actions(text);
+        if !with_member.is_empty() {
+            out.push(format!(
+                "no action may have the member `approval` (protocol 5.2b), found it on: {}",
+                with_member.join(", ")
+            ));
+        }
+        return;
+    }
+    if kind == ValidAs::ActionDocumentCalledForEachAction {
+        let (names, _) = raw_actions(text);
+        match called {
+            None => out.push(
+                "the step expects a call for each action, and this run has no profile of a PEP"
+                    .to_owned(),
+            ),
+            Some(called) => {
+                let missing: Vec<&str> = names
+                    .iter()
+                    .map(String::as_str)
+                    .filter(|n| *n != "mcp.session" && !called.iter().any(|c| c == n))
+                    .collect();
+                if !missing.is_empty() {
+                    out.push(format!(
+                        "the profile `pep.approval_calls` has no call for these actions of the document: {}. Each action follows protocol section 17 (5.2b)",
+                        missing.join(", ")
+                    ));
+                }
+                let unknown: Vec<&str> = called
+                    .iter()
+                    .map(String::as_str)
+                    .filter(|c| !names.iter().any(|n| n == c))
+                    .collect();
+                if !unknown.is_empty() {
+                    out.push(format!(
+                        "the profile `pep.approval_calls` has calls for actions that the document does not have: {}",
+                        unknown.join(", ")
+                    ));
+                }
+            }
+        }
+        return;
+    }
     let (name, strict, report) = match kind {
         ValidAs::ActionDocument | ValidAs::ActionDocumentNoWarning => (
             "an action document",
             kind == ValidAs::ActionDocumentNoWarning,
             analyze_actions(text).report,
         ),
+        ValidAs::ActionDocumentNoApprovalMember | ValidAs::ActionDocumentCalledForEachAction => {
+            return;
+        }
         ValidAs::OptionsAnswer | ValidAs::OptionsAnswerNoWarning => (
             "an answer of the options route",
             kind == ValidAs::OptionsAnswerNoWarning,
@@ -207,7 +278,7 @@ pub(crate) fn check(expect: &Expect, observed: &Observed<'_>) -> Vec<String> {
                 }
             }
             if let Some(kind) = expect.valid_as {
-                check_valid_as(kind, &text, &mut out);
+                check_valid_as(kind, &text, observed.called_actions, &mut out);
             }
         }
     }
@@ -331,6 +402,7 @@ mod tests {
             upstream: None,
             verifier: None,
             token_header: None,
+            called_actions: None,
             now: 0,
         }
     }

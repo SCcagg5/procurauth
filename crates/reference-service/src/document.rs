@@ -1,6 +1,7 @@
 //! The action document of the reference service (section 5, section 13).
 //!
-//! The service is the `datastore` example, with two more actions. The action
+//! The service is the `datastore` example, with more actions. Each action follows protocol
+//! section 17 (5.2b), so no action has a member `approval`. The action
 //! `data.inspect` lists no limit, so a use of it sends no question with
 //! `context.usage` (6.4). The action `mcp.session` is for the MCP methods that
 //! have no tool (binding 3.6a).
@@ -11,8 +12,8 @@ use procurauth_pep::document::{ActionDocument, ActionDocumentBuilder};
 pub const READ: &str = "data.read";
 /// The action to change data. It lists a budget and one ceiling.
 pub const WRITE: &str = "data.write";
-/// The action to add rows with the approval of the owner. It has the member `approval` (5.2b).
-/// It lists a budget. The tool `append_rows` uses it.
+/// The action to add rows. It lists a budget. The tool `append_rows` uses it. As each action does,
+/// it follows protocol section 17 (5.2b): the PDP decides if a use needs the approval of the owner.
 pub const APPEND: &str = "data.append";
 /// The action to read the structure of the data. It lists no limit.
 pub const INSPECT: &str = "data.inspect";
@@ -53,13 +54,7 @@ pub fn reference_document_with(
         )
         .action(WRITE, &all, "Change data.", &["requests", "max_duration"])
         .action(INSPECT, &all, "Read the structure of the data.", &[])
-        .action(
-            APPEND,
-            &all,
-            "Add rows to a table after the approval of the owner.",
-            &["requests"],
-        )
-        .approval(APPEND);
+        .action(APPEND, &all, "Add rows to a table.", &["requests"]);
     if cfg!(feature = "mcp") {
         builder = builder.action(
             SESSION,
@@ -113,20 +108,12 @@ mod tests {
     }
 
     #[test]
-    fn p_5_2b_the_action_append_has_the_member_approval_and_no_other_action_has_it() {
+    fn p_5_2b_no_action_has_the_member_approval() {
         let document = reference_document("datastore").unwrap();
-        for action in &document.actions {
-            assert_eq!(action.approval, action.name == APPEND, "{}", action.name);
+        let value = document.to_value();
+        for action in value["actions"].as_array().unwrap() {
+            assert!(action.get("approval").is_none(), "{action}");
         }
-        assert_eq!(
-            document.to_value()["actions"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .filter(|a| a["approval"] == "optional")
-                .count(),
-            1
-        );
     }
 
     #[cfg(feature = "mcp")]

@@ -10,9 +10,7 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "given": {
     "tokens": {
@@ -24,6 +22,31 @@
       }
     },
     "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
       {
         "when": {
           "subject": "alice"
@@ -84,6 +107,9 @@
             "json": {
               "/context/usage": {
                 "present": true
+              },
+              "/context/approval/effect": {
+                "present": true
               }
             },
             "count": {
@@ -129,6 +155,9 @@
           {
             "json": {
               "/context/usage": {
+                "present": true
+              },
+              "/context/approval/effect": {
                 "present": true
               }
             },

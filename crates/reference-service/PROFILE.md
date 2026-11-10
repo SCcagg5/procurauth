@@ -11,7 +11,7 @@ The profiles of the runner are in `examples/`. They name the keys of the test ed
 | File | Content |
 | --- | --- |
 | `conformance-profile.json` | The profile for the default configuration. The case U95 is skipped. |
-| `conformance-profile-session-budget.json` | The profile for `conformance-session-budget.json`. All 99 cases run. |
+| `conformance-profile-session-budget.json` | The profile for `conformance-session-budget.json`. All 117 cases run. |
 | `conformance-session-budget.json` | The configuration of `conformance.json`, with `mcp_session_budget` set to true. |
 
 The script `scripts/conformance.sh pep` runs both profiles against the service.
@@ -92,7 +92,6 @@ The body is a JSON-RPC request with the id 7 and the method `tools/call`. The me
 | `mcp_call_budget` | `read_rows` | `{"host": "prod", "database": "test2", "table": "orders", "limit": 1}` | none |
 | `mcp_call_input` | `query_table` | `{"host": "prod", "database": "test2"}` | none |
 | `mcp_call_multi` | `copy_table` | `{"from": {"host": "prod", "database": "test1", "table": "orders"}, "to": {"host": "prod", "database": "test2"}}` | none |
-| `mcp_call_approval` | `append_rows` | `{"host": "prod", "database": "test2", "table": "orders", "rows": [{"id": 1}], "lease_s": 900}` | none |
 
 | Operation | `tool` | `action` | `resource_type` | `resource_id` | `ancestors` |
 | --- | --- | --- | --- | --- | --- |
@@ -100,17 +99,26 @@ The body is a JSON-RPC request with the id 7 and the method `tools/call`. The me
 | `mcp_call_budget` | `read_rows` | `data.read` | `table` | `orders` | service `datastore`, host `prod`, database `test2` |
 | `mcp_call_input` | `query_table` | `data.read` | `database` | `test2` | service `datastore`, host `prod` |
 | `mcp_call_multi` | `copy_table` | `data.write` | `database` | `test2` | service `datastore`, host `prod` |
-| `mcp_call_approval` | `append_rows` | `data.append` | `table` | `orders` | service `datastore`, host `prod`, database `test2` |
 
-For `mcp_call_approval`, the runner adds the control arguments of the base call: `lease_s` equal to 900. The variant `approval_ref` has `approval_ref` in place of it. The variant `wait` adds `wait_s` equal to 1. The member `approval` of the profile gives the `op` of each call, as the table below shows. The variants `effect_2` and `effect_3` change the rows to `[{"id": 2}]` and `[{"id": 3}]`.
+### The calls for each action
 
-| Call | `op` |
+Each action follows protocol section 17 (5.2b). The profile has the member `approval_calls` with one entry for each action of the document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The base call has the control argument `lease_s` equal to 900. The variant `approval_ref` has `approval_ref` in place of it, the variant `no_control` has none, and the variant `wait` adds `wait_s` equal to 1.
+
+| Action | Tool | Node | Other permission |
+| --- | --- | --- | --- |
+| `data.read` | `read_rows` | table `orders` of `test2` | none |
+| `data.write` | `copy_table` | database `test2` | `data.read` on the source (variable `other_action`) |
+| `data.inspect` | `list_tables` | database `test2` | none |
+| `data.append` | `append_rows` | table `orders` of `test2` | none |
+
+The `op` of a call has the member `tool`, each argument that decides what the tool does, and each default. The variants `effect_2` and `effect_3` change one argument. The `view` of each tool has fields that point into `op`. The tool `append_rows` also has the body `/rows`, the compact JSON text of the rows.
+
+| Tool | Base `op` |
 | --- | --- |
-| Base | `{"tool": "append_rows", "host": "prod", "database": "test2", "table": "orders", "rows": "[{\"id\":1}]"}` |
-| `effect_2` | The same, with `rows` equal to `[{"id":2}]` as a text. |
-| `effect_3` | The same, with `rows` equal to `[{"id":3}]` as a text. |
-
-The member `rows` of `op` is the compact JSON text of the array of rows. The `view` of the tool has the fields `Host`, `Database` and `Table`, and the body `/rows`. A body of a `view` must name a text of `op`.
+| `read_rows` | `{"tool": "read_rows", "host": "prod", "database": "test2", "table": "orders", "limit": 100}` |
+| `list_tables` | `{"tool": "list_tables", "host": "prod", "database": "test2", "like": ""}` |
+| `copy_table` | `{"tool": "copy_table", "from": {"host": "prod", "database": "test1", "table": "orders"}, "to": {"host": "prod", "database": "test2"}}` |
+| `append_rows` | `{"tool": "append_rows", "host": "prod", "database": "test2", "table": "orders", "rows": "[{\"id\":1}]"}` |
 
 The tool `get_action_status` has the argument `request_id`. The cases U106 and U110 write its request in full.
 
@@ -140,11 +148,10 @@ The form of the request for input follows the draft of the MCP revision 2026-07-
 | `no_mcp_endpoint` | false |
 | `no_budget_session` | True by default: the action `mcp.session` lists no budget. False with the key `mcp_session_budget` set to true. |
 | `no_input_tool` | false |
-| `no_approval_tool` | false |
 | `no_multi_action` | false |
 | `no_token_cache` | Not for a service. This condition is for an edge. |
 | `single_key_set` | false. The configuration trusts two keys. |
-| `no_approval_support` | false. The profile has `pep.approvals`, so the runner runs U30 and U100 to U110. |
+| `no_approval_support` | Never holds for a PEP. The runner runs U30 and U100 to U117 for each action. |
 
 ## Other requests that the cases write in full
 

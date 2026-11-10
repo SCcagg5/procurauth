@@ -69,11 +69,10 @@
               "database",
               "table"
             ],
-            "description": "Add rows to a table after the approval of the owner.",
+            "description": "Add rows to a table.",
             "limits": [
               "requests"
-            ],
-            "approval": "optional"
+            ]
           },
           {
             "name": "mcp.session",

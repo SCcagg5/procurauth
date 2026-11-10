@@ -15,6 +15,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use procurauth_core::authzen::{Decision, Reason};
+use procurauth_core::effect::effect_hash;
 use procurauth_core::identity::{CheckName, Outcome, TokenPolicy, inspect};
 use procurauth_core::jws::{KeySet, SigningKey};
 use serde_json::{Value, json};
@@ -63,7 +64,6 @@ struct State {
     keys: KeySet,
     defects: Defects,
     cache: Mutex<Vec<String>>,
-    approvals: Mutex<Vec<(String, String, String, Value)>>,
 }
 
 /// The identity token header of the mock.
@@ -200,6 +200,14 @@ fn node(table: &str) -> Value {
 fn empty(status: u16) -> Resp {
     Resp::new(status)
 }
+
+/// True for a reason of protocol 17.1.
+fn is_approval_reason(reason: &str) -> bool {
+    Reason::parse(reason).is_approval()
+}
+
+/// The path of the node of the mock, as the effect writes it (protocol 17.3).
+const NODE_TEXT: &str = "host:prod/database:test1/table:orders";
 
 impl State {
     fn subject_of(&self, req: &Req) -> Result<String, Resp> {
@@ -404,6 +412,10 @@ impl State {
                         .header("Retry-After", &seconds.to_string())
                         .header("Content-Type", "application/json")
                 }
+            }
+            // Protocol 17.7a: a plain route cannot wait for an approval.
+            Decided::Denied(Some(reason)) if is_approval_reason(&reason) => {
+                Resp::json(403, &json!({"error": "approval_cannot_wait"}))
             }
             Decided::Denied(reason) => {
                 if self.defects.leak_reason {
@@ -631,10 +643,10 @@ impl State {
         {
             return Self::rpc_error(400, &id, -32020, "Unsupported protocol version", None);
         }
+        // A result of a tool that ran has no member `isError` (the default is false).
         let ok_result = json!({
             "resultType": "complete",
             "content": [{"type": "text", "text": "ok"}],
-            "isError": false,
         });
         let method = body.get("method").and_then(Value::as_str).unwrap_or("");
         let service = json!({"type": "service", "id": "datastore"});
@@ -658,6 +670,10 @@ impl State {
                         tools.push(json!({"name": name, "description": "A tool.", "inputSchema": {"type": "object"}}));
                     }
                 }
+                if !tools.is_empty() {
+                    tools.push(json!({"name": "get_action_status", "description": "Read the verdict of an action that waits.",
+                        "inputSchema": {"type": "object"}, "annotations": {"readOnlyHint": true}}));
+                }
                 Self::rpc_result(&id, &json!({"tools": tools}))
             }
             "tools/call" => {
@@ -665,80 +681,61 @@ impl State {
                     .pointer("/params/name")
                     .and_then(Value::as_str)
                     .unwrap_or("");
+                if name == "get_action_status" {
+                    return self.status_tool(&id, &sub, &body);
+                }
                 let Some((_, action, kind)) = TOOLS.iter().find(|(n, _, _)| *n == name) else {
                     return Self::rpc_error(200, &id, -32602, "Invalid params", None);
                 };
                 let resource = node("orders");
+                let args = body
+                    .pointer("/params/arguments")
+                    .cloned()
+                    .unwrap_or_else(|| json!({}));
                 match kind {
-                    ToolKind::Budget => self.tool_answer(
+                    ToolKind::Budget => self.gated_call(
                         &id,
-                        self.decide(&sub, action, &resource, true, &["max_rows"]),
+                        &sub,
+                        name,
+                        &args,
+                        (action, &resource, true, &["max_rows"]),
+                        None,
                         ok_result,
                     ),
-                    ToolKind::Plain => self.tool_answer(
+                    ToolKind::Plain => self.gated_call(
                         &id,
-                        self.decide(&sub, action, &resource, false, &[]),
+                        &sub,
+                        name,
+                        &args,
+                        (action, &resource, false, &[]),
+                        None,
                         ok_result,
                     ),
                     ToolKind::Input => {
-                        let decided = self.decide(&sub, action, &resource, false, &[]);
+                        // Binding 3.5: a call that only asks for input runs no action. A reason of
+                        // protocol 17.1 does not refuse it.
+                        let decided = match self.decide(&sub, action, &resource, false, &[]) {
+                            Decided::Denied(Some(reason)) if is_approval_reason(&reason) => {
+                                Decided::Allowed
+                            }
+                            other => other,
+                        };
                         let result = json!({
                             "resultType": "input_required",
                             "inputRequests": {"confirm": {"type": "confirmation"}},
                         });
                         self.tool_answer(&id, decided, result)
                     }
-                    ToolKind::Multi => {
-                        self.tool_answer(&id, self.multi(&sub, &resource), ok_result)
-                    }
-                    ToolKind::Approval => {
-                        let decided = self.decide(&sub, action, &resource, false, &[]);
-                        let mut approvals = self.approvals.lock().unwrap();
-                        let approval = format!("A{}", approvals.len() + 1);
-                        approvals.push((
-                            approval.clone(),
-                            sub.clone(),
-                            (*action).to_owned(),
-                            resource,
-                        ));
-                        let result = json!({
-                            "resultType": "complete",
-                            "content": [{"type": "text", "text": "waiting for an approval"}],
-                            "structuredContent": {"approval_id": approval, "status": "pending"},
-                            "isError": false,
-                        });
-                        drop(approvals);
-                        self.tool_answer(&id, decided, result)
-                    }
-                }
-            }
-            "approvals/decide" => {
-                let approval = body
-                    .pointer("/params/approval_id")
-                    .and_then(Value::as_str)
-                    .unwrap_or("");
-                let approve = body.pointer("/params/approve") == Some(&json!(true));
-                let found = {
-                    let mut approvals = self.approvals.lock().unwrap();
-                    approvals
-                        .iter()
-                        .position(|(a, _, _, _)| a == approval)
-                        .map(|index| approvals.remove(index))
-                };
-                let Some((_, owner, action, resource)) = found else {
-                    return Self::rpc_error(200, &id, -32602, "Invalid params", None);
-                };
-                if owner != sub || !approve {
-                    return Self::rpc_result(
+                    ToolKind::Multi => self.gated_call(
                         &id,
-                        &json!({"resultType": "complete", "content": [{"type": "text", "text": "refused"}], "isError": false}),
-                    );
+                        &sub,
+                        name,
+                        &args,
+                        (action, &resource, true, &[]),
+                        Some(("data.read", &["max_rows"])),
+                        ok_result,
+                    ),
                 }
-                self.tool_answer(
-                    &id,
-                    self.decide(&sub, &action, &resource, true, &[]),
-                    ok_result,
-                )
             }
             _ => {
                 // A method with no tool asks the action `mcp.session` on the service (binding 3.6a).
@@ -767,6 +764,226 @@ impl State {
                     }
                 }
             }
+        }
+    }
+
+    /// A tool error: a result with `isError` true (binding 5.3, 5.7a).
+    fn tool_error(id: &Value, code: &str, message: &str, retryable: bool) -> Resp {
+        let structured =
+            json!({"error": {"code": code, "message": message, "retryable": retryable}});
+        Self::rpc_result(
+            id,
+            &json!({
+                "resultType": "complete",
+                "content": [{"type": "text", "text": structured.to_string()}],
+                "structuredContent": structured,
+                "isError": true,
+            }),
+        )
+    }
+
+    /// One request to the approval API of the PDP (protocol 17.4).
+    fn api(&self, method: &str, target: &str, body: Option<&Value>) -> Option<(u16, Value)> {
+        let auth = format!("Bearer {}", self.credential);
+        let mut headers = vec![("Content-Type", "application/json")];
+        if !self.defects.no_credential {
+            headers.push(("Authorization", auth.as_str()));
+        }
+        let bytes = body.map(Value::to_string);
+        let reply = call(
+            self.pdp,
+            method,
+            target,
+            &headers,
+            bytes.as_deref().map(str::as_bytes),
+            Duration::from_millis(1500),
+        )?;
+        let value = serde_json::from_slice(&reply.body).unwrap_or(Value::Null);
+        Some((reply.status, value))
+    }
+
+    /// The tool `get_action_status` (binding 5.7b): the verdict, with the subject of the token.
+    fn status_tool(&self, id: &Value, sub: &str, body: &Value) -> Resp {
+        let Some(request_id) = body
+            .pointer("/params/arguments/request_id")
+            .and_then(Value::as_str)
+        else {
+            return Self::tool_error(id, "invalid_argument", "An argument is not valid.", false);
+        };
+        let target = format!(
+            "/approval/v1/requests/{request_id}?subject={}&renew=true",
+            sub.replace(':', "%3A")
+        );
+        match self.api("GET", &target, None) {
+            Some((200, answer)) => {
+                let text = answer.get("verdict").and_then(Value::as_str).unwrap_or("");
+                let verdict = if ["pending", "approved", "denied", "void"].contains(&text) {
+                    text
+                } else {
+                    "void"
+                };
+                let structured = json!({"status": verdict});
+                Self::rpc_result(
+                    id,
+                    &json!({
+                        "resultType": "complete",
+                        "content": [{"type": "text", "text": structured.to_string()}],
+                        "structuredContent": structured,
+                    }),
+                )
+            }
+            Some((404, _)) => {
+                Self::tool_error(id, "invalid_argument", "An argument is not valid.", false)
+            }
+            _ => Self::rpc_error(503, id, -32603, "Internal error", None),
+        }
+    }
+
+    /// A call of a tool under protocol section 17: the steps of 17.7 (binding 3.5a, 5.7).
+    /// `use_of` is the action, the node, the flag of usage and the ceilings of the use. `other` is
+    /// the other permission, asked first with no effect.
+    #[allow(clippy::too_many_arguments)]
+    fn gated_call(
+        &self,
+        id: &Value,
+        sub: &str,
+        name: &str,
+        args: &Value,
+        use_of: (&str, &Value, bool, &[&str]),
+        other: Option<(&str, &[&str])>,
+        ok: Value,
+    ) -> Resp {
+        let (action, resource, usage, ceilings) = use_of;
+        let controls: Vec<&str> = ["approval_ref", "lease_s", "until"]
+            .into_iter()
+            .filter(|c| args.get(*c).is_some())
+            .collect();
+        if controls.len() > 1 {
+            return Self::tool_error(id, "invalid_argument", "An argument is not valid.", false);
+        }
+        // A correct PEP asks the other permission first, with no usage (protocol 10.1a). The defect asks
+        // the use with usage first.
+        let ask_other = |this: &Self| -> Option<Resp> {
+            let (other_action, other_ceilings) = other?;
+            match this.decide(sub, other_action, resource, false, other_ceilings) {
+                Decided::Allowed => None,
+                Decided::Denied(Some(reason)) if is_approval_reason(&reason) => {
+                    Some(this.tool_answer(id, Decided::Denied(None), ok.clone()))
+                }
+                refused => Some(this.tool_answer(id, refused, ok.clone())),
+            }
+        };
+        if !self.defects.usage_before_other_permission
+            && let Some(refusal) = ask_other(self)
+        {
+            return refusal;
+        }
+        // Step 1: the question of protocol 10.1, with no effect.
+        match self.decide(sub, action, resource, usage, ceilings) {
+            Decided::Allowed => {
+                if self.defects.usage_before_other_permission
+                    && let Some(refusal) = ask_other(self)
+                {
+                    return refusal;
+                }
+                return Self::rpc_result(id, &ok);
+            }
+            Decided::Denied(Some(reason)) if is_approval_reason(&reason) => {}
+            refused => return self.tool_answer(id, refused, ok),
+        }
+        // Step 3: the effect. `op` has the tool and the arguments that are not control arguments.
+        let mut op = json!({"tool": name});
+        if let (Some(map), Some(given)) = (op.as_object_mut(), args.as_object()) {
+            for (key, value) in given {
+                if !["approval_ref", "lease_s", "until", "wait_s", "supersedes"]
+                    .contains(&key.as_str())
+                {
+                    map.insert(key.clone(), value.clone());
+                }
+            }
+        }
+        let effect = effect_hash("datastore", action, NODE_TEXT, &op).unwrap();
+        let question = |with_usage: bool| {
+            let mut context = json!({"approval": {"effect": effect}});
+            if with_usage {
+                context["usage"] = json!({"units": 1});
+            }
+            json!({"subject": {"type": "user", "id": sub}, "action": {"name": action},
+                   "resource": resource, "context": context})
+        };
+        let Ok(answer) = self.ask(&question(false)) else {
+            return Self::rpc_error(503, id, -32603, "Internal error", None);
+        };
+        let Ok(decision) = Decision::from_value(&answer) else {
+            return Self::rpc_error(503, id, -32603, "Internal error", None);
+        };
+        if decision.decision {
+            // Step 6: the question with usage and the effect.
+            let Ok(answer) = self.ask(&question(true)) else {
+                return Self::rpc_error(503, id, -32603, "Internal error", None);
+            };
+            return match Decision::from_value(&answer) {
+                Ok(d) if d.allows(true) => Self::rpc_result(id, &ok),
+                Ok(d) if d.context.reason == Some(Reason::ApprovalExpired) => {
+                    Self::tool_error(id, "approval_expired", "The approval is not valid.", false)
+                }
+                _ => self.tool_answer(id, Decided::Denied(None), ok),
+            };
+        }
+        match decision.context.reason {
+            Some(Reason::ApprovalRequired | Reason::ApprovalPending) => {
+                let Some(evaluation_id) = decision.context.evaluation_id.clone() else {
+                    return self.tool_answer(id, Decided::Denied(None), ok);
+                };
+                // A call with no control argument cannot give a lease (binding 5.7).
+                let Some(control) = controls.first() else {
+                    return Self::tool_error(
+                        id,
+                        "invalid_argument",
+                        "An argument is not valid.",
+                        false,
+                    );
+                };
+                let view = json!({"title": "Run a tool",
+                    "fields": [["Table", "/table"]]});
+                let mut submission = json!({"evaluation_id": evaluation_id, "effect": effect,
+                    "op": op, "view": view});
+                submission[*control] = args[*control].clone();
+                match self.api("POST", "/approval/v1/requests", Some(&submission)) {
+                    Some((200 | 201, answer)) => {
+                        let (Some(request_id), Some(code)) = (
+                            answer.get("request_id").and_then(Value::as_str),
+                            answer.get("code").and_then(Value::as_str),
+                        ) else {
+                            return Self::rpc_error(503, id, -32603, "Internal error", None);
+                        };
+                        let structured = json!({"action": {"id": request_id,
+                            "status": "awaiting_approval", "code": code, "executed": false}});
+                        Self::rpc_result(
+                            id,
+                            &json!({
+                                "resultType": "complete",
+                                "content": [
+                                    {"type": "text", "text": structured.to_string()},
+                                    {"type": "text", "text": "NOT EXECUTED. The action waits for the approval of its owner."}
+                                ],
+                                "structuredContent": structured,
+                            }),
+                        )
+                    }
+                    _ => Self::rpc_error(503, id, -32603, "Internal error", None),
+                }
+            }
+            Some(Reason::ApprovalDenied) => Self::tool_error(
+                id,
+                "approval_denied",
+                "The owner declined the action.",
+                false,
+            ),
+            Some(Reason::ApprovalExpired) => {
+                Self::tool_error(id, "approval_expired", "The approval is not valid.", false)
+            }
+            _ => self.tool_answer(id, Decided::Denied(None), ok),
         }
     }
 
@@ -800,7 +1017,6 @@ impl State {
             ("POST", "/mcp") => self.mcp(&req),
             ("POST", "/__reset") => {
                 self.cache.lock().unwrap().clear();
-                self.approvals.lock().unwrap().clear();
                 Resp::json(200, &json!({"reset": true}))
             }
             _ => Resp::json(404, &json!({"error": "not found"})),
@@ -822,7 +1038,6 @@ enum ToolKind {
     Budget,
     Input,
     Multi,
-    Approval,
 }
 
 /// The tools of the mock: the name, the action and the kind.
@@ -831,7 +1046,7 @@ const TOOLS: [(&str, &str, ToolKind); 6] = [
     ("write_rows", "data.write", ToolKind::Plain),
     ("confirm", "data.write", ToolKind::Input),
     ("copy_table", "data.copy", ToolKind::Multi),
-    ("drop_table", "data.drop", ToolKind::Approval),
+    ("drop_table", "data.drop", ToolKind::Plain),
     ("query_rows", "data.query", ToolKind::Plain),
 ];
 
@@ -863,7 +1078,6 @@ impl MockPep {
             keys: keys(),
             defects,
             cache: Mutex::new(Vec::new()),
-            approvals: Mutex::new(Vec::new()),
         });
         let server = Server::start("127.0.0.1:0", move |req| state.handle(req));
         Self {
@@ -988,24 +1202,44 @@ pub fn profile_with(
         ops.insert("mcp_call_plain".into(), table("write_rows", "data.write"));
         ops.insert("mcp_call_budget".into(), table("read_rows", "data.read"));
         ops.insert("mcp_call_input".into(), table("confirm", "data.write"));
-        ops.insert("mcp_call_approval".into(), table("drop_table", "data.drop"));
         if features.multi {
             ops.insert("mcp_call_multi".into(), table("copy_table", "data.copy"));
         }
-        let decide = |approve: bool| {
-            json!({
-                "body": {
-                    "jsonrpc": "2.0", "id": 7, "method": "approvals/decide",
-                    "params": {
-                        "approval_id": "{{approval_id}}", "approve": approve,
-                        "_meta": {"io.modelcontextprotocol/protocolVersion": "2026-07-28"}
-                    }
-                },
-                "capture": {"approval_id": "/result/structuredContent/approval_id"}
-            })
+        // One call for each action of the document, except `mcp.session` (protocol 5.2b).
+        let call = |tool: &str, other: Option<&str>| {
+            let op = |extra: Value| {
+                let mut op = json!({"tool": tool, "table": "orders"});
+                if let (Some(map), Some(more)) = (op.as_object_mut(), extra.as_object()) {
+                    map.extend(more.clone());
+                }
+                op
+            };
+            let args = |extra: Value| {
+                let mut args = json!({"table": "orders"});
+                if let (Some(map), Some(more)) = (args.as_object_mut(), extra.as_object()) {
+                    map.extend(more.clone());
+                }
+                args
+            };
+            let mut entry = json!({
+                "tool": tool, "arguments": args(json!({})),
+                "resource_type": "table", "resource_id": "orders", "ancestors": chain(),
+                "approval": {"op": op(json!({})), "variants": {
+                    "effect_2": {"arguments": args(json!({"n": 2})), "op": op(json!({"n": 2}))},
+                    "effect_3": {"arguments": args(json!({"n": 3})), "op": op(json!({"n": 3}))}}}
+            });
+            if let Some(other) = other {
+                entry["other_action"] = json!(other);
+            }
+            entry
         };
-        ops.insert("mcp_approve".into(), decide(true));
-        ops.insert("mcp_refuse".into(), decide(false));
+        pep["approval_calls"] = json!({
+            "data.read": call("read_rows", None),
+            "data.write": call("write_rows", None),
+            "data.query": call("query_rows", None),
+            "data.copy": call("copy_table", Some("data.read")),
+            "data.drop": call("drop_table", None),
+        });
     }
     json!({"pep": pep, "timeouts": {"request_seconds": 5, "case_seconds": 60, "settle_ms": 25}})
 }

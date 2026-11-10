@@ -314,7 +314,6 @@ fn mcp_5_3_a_spent_budget_on_a_tool_call_is_a_tool_error_with_retry_after() {
         resource_types: vec!["service".into()],
         description: "Use the MCP endpoint.".into(),
         limits: vec![],
-        approval: false,
     });
     let pep = Pep::with_clock(cfg, doc, transport, Arc::new(ManualClock::at_seconds(NOW))).unwrap();
     let who = pep
@@ -369,25 +368,30 @@ fn mcp_3_2_the_map_is_checked_against_the_document() {
 }
 
 #[test]
-fn mcp_5_7_the_control_arguments_are_split_from_the_arguments_and_exactly_one_gives_the_wait() {
+fn mcp_5_7_the_control_arguments_are_split_from_the_arguments_and_at_most_one_gives_the_wait() {
     use procurauth_pep::approval::Control;
     use procurauth_pep::mcp::split_approval_arguments;
     let good = split_approval_arguments(
         &json!({"table": "orders", "lease_s": 900, "wait_s": 100, "supersedes": "apr_0"}),
     )
     .unwrap();
-    assert_eq!(good.control, Control::LeaseSeconds(900));
+    assert_eq!(good.control, Some(Control::LeaseSeconds(900)));
     assert_eq!(good.supersedes.as_deref(), Some("apr_0"));
     // The wait is bounded.
     assert_eq!(good.wait_seconds, Some(25));
     // The control arguments never enter the arguments that build `op`.
     assert_eq!(good.rest, json!({"table": "orders"}));
     let reference = split_approval_arguments(&json!({"approval_ref": "r"})).unwrap();
-    assert_eq!(reference.control, Control::Reference("r".into()));
+    assert_eq!(reference.control, Some(Control::Reference("r".into())));
     let until = split_approval_arguments(&json!({"until": "2030-01-01T00:00:00Z"})).unwrap();
-    assert_eq!(until.control, Control::Until("2030-01-01T00:00:00Z".into()));
+    assert_eq!(
+        until.control,
+        Some(Control::Until("2030-01-01T00:00:00Z".into()))
+    );
+    // A call with no control argument is valid: it runs when the PDP asks for no approval.
+    let none = split_approval_arguments(&json!({"table": "orders"})).unwrap();
+    assert_eq!(none.control, None);
     for bad in [
-        json!({}),
         json!({"lease_s": 900, "until": "x"}),
         json!({"lease_s": 900, "approval_ref": "x"}),
         json!({"lease_s": 0}),

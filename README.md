@@ -7,7 +7,7 @@
   <a href="https://github.com/SCcagg5/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/SCcagg5/procurauth?color=4338ca&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/protocol-1.0-4338ca" alt="Protocol 1.0">
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
-  <img src="https://img.shields.io/badge/conformance-218%20cases-34d399" alt="218 conformance cases">
+  <img src="https://img.shields.io/badge/conformance-225%20cases-34d399" alt="225 conformance cases">
   <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
 </p>
 
@@ -26,7 +26,7 @@ ProcurAuth is an open specification for services that let AI agents act for peop
 
 A backend holds the users, their rights and the keys of their agents. A person makes a key for an agent. **A key never has more rights than the person who owns it.** A service does not know the backend. It speaks only [AuthZEN](https://openid.net/specs/authorization-api-1_0.html).
 
-This repository holds the protocol, the MCP binding, the JSON schemas, 218 conformance cases and the programs to test a service.
+This repository holds the protocol, the MCP binding, the JSON schemas, 225 conformance cases and the programs to test a service.
 
 <p align="center">
   <img src="docs/assets/rights.svg" alt="The rights of a key are the rights that its owner has and that the key also holds" width="90%">
@@ -70,6 +70,7 @@ The protocol has these main parts:
 | **Limits** | A ceiling is a value that the service applies, such as `max_rows`. A budget is a count that the PDP keeps, such as requests for each minute. |
 | **Identity token** | A short JWT (`Ed25519` or `ES256`) that the edge signs. The service reads `sub` and sends it to the PDP. |
 | **Refusals** | A PDP answers `false`, with the reason `budget_exceeded` and `retry_after` when a budget is spent. |
+| **Approvals** | The PDP can ask for the approval of the owner of a key for a use of any action. Section 17 is mandatory for a service. The PEP learns only the verdict. |
 | **MCP binding** | The rules for a service with an MCP endpoint: tools, approvals and JSON-RPC errors. |
 
 ## Example
@@ -147,7 +148,7 @@ life       ok   life 300 s, max 300 s
 ## Conformance
 
 <p align="center">
-  <img src="docs/assets/conformance.svg" alt="218 conformance cases: 110 for a PEP, 89 for a PDP and 19 for an edge" width="90%">
+  <img src="docs/assets/conformance.svg" alt="225 conformance cases: 117 for a PEP, 89 for a PDP and 19 for an edge" width="90%">
 </p>
 
 The cases are data, in `conformance/`. Each case cites a paragraph of the protocol. `conformance/COVERAGE.md` shows which paragraph has a case. To test your own service, write a profile and run the cases:
@@ -158,7 +159,7 @@ access-conformance --role pdp  --profile my-pdp.json     --url http://127.0.0.1:
 access-conformance --role edge --profile my-edge.json    --url http://127.0.0.1:8002
 ```
 
-The runner prints one line for each case and a summary line, for example `110 cases: 98 passed, 0 failed, 12 skipped`. It skips the cases of the approval profile (protocol section 17) for a target that gives no approval. In this version, `fake-pdp` and `reference-edge` give them, so the runner runs D76 to D89 and E19 for them. `reference-service` gives them too, so the runner runs U30 and U100 to U110 for it.
+The runner prints one line for each case and a summary line, for example `117 cases: 116 passed, 0 failed, 1 skipped`. Section 17 of the protocol is mandatory for a service, so the runner never skips its cases for a PEP. It runs each case that uses `mcp_call_approval` once for each action of the service. It skips D76 to D89 for a PDP that gives no approval, and E19 for an edge that does not know the key with `confirm`. In this version, `fake-pdp` and `reference-edge` give them.
 
 ## JSON schemas
 

@@ -1,0 +1,93 @@
+{
+  "id": "U115",
+  "title": "A call with no control argument runs when the PDP asks for no approval. The PEP sends no effect and submits no request.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.7",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A call with no control argument",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person",
+        "variant": "no_control"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action": {
+            "absent": true
+          },
+          "/error": {
+            "absent": true
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

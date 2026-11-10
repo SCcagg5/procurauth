@@ -54,7 +54,7 @@ fn a_correct_service_passes_every_case_that_the_runner_can_run() {
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
     assert_eq!(out.ids_with("fail"), Vec::<String>::new());
     assert_eq!(out.ids_with("warn"), Vec::<String>::new());
-    assert_eq!(out.summary(), "110 cases: 58 passed, 0 failed, 52 skipped");
+    assert_eq!(out.summary(), "117 cases: 60 passed, 0 failed, 57 skipped");
     // The mock has no options route, no MCP endpoint and no use that needs two permissions.
     assert!(out.line("U05").contains("skip"), "{}", out.line("U05"));
     assert!(
@@ -230,7 +230,7 @@ fn p_10_7_a_service_with_a_new_connection_for_each_question_gets_a_warning_and_t
     assert_eq!(out.ids_with("warn"), vec!["U69"]);
     assert_eq!(
         out.summary(),
-        "110 cases: 57 passed, 0 failed, 52 skipped, 1 warned"
+        "117 cases: 59 passed, 0 failed, 57 skipped, 1 warned"
     );
     assert!(
         out.line("U69")
@@ -373,15 +373,13 @@ fn full(name: &str, defects: Defects, extra: &[&str]) -> Out {
 }
 
 #[test]
-fn a_correct_service_with_the_options_route_and_mcp_passes_97_cases_and_skips_the_session_budget_and_the_approval_profile()
- {
+fn a_correct_service_with_the_options_route_and_mcp_passes_116_cases_and_skips_the_session_budget()
+{
     let out = full("pep_full", Defects::default(), &[]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "110 cases: 97 passed, 0 failed, 13 skipped");
-    // The cases of the approval profile wait for the lot that gives approvals to the reference service.
-    let mut expected = vec!["U30".to_owned(), "U95".to_owned()];
-    expected.extend((100..=110).map(|n| format!("U{n}")));
-    assert_eq!(out.ids_with("skip"), expected);
+    assert_eq!(out.summary(), "117 cases: 116 passed, 0 failed, 1 skipped");
+    // Section 17 is mandatory for a service: the cases of the approval profile run for each action.
+    assert_eq!(out.ids_with("skip"), vec!["U95".to_owned()]);
     assert!(
         out.line("U95")
             .ends_with("the action mcp.session lists no budget")
@@ -389,7 +387,7 @@ fn a_correct_service_with_the_options_route_and_mcp_passes_97_cases_and_skips_th
 }
 
 #[test]
-fn a_service_whose_session_action_lists_a_budget_passes_98_cases_and_skips_the_approval_profile() {
+fn a_service_whose_session_action_lists_a_budget_passes_the_117_cases() {
     let out = run_pep_features(
         "pep_full_session",
         Defects {
@@ -404,7 +402,7 @@ fn a_service_whose_session_action_lists_a_budget_passes_98_cases_and_skips_the_a
         &[],
     );
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "110 cases: 98 passed, 0 failed, 12 skipped");
+    assert_eq!(out.summary(), "117 cases: 117 passed, 0 failed, 0 skipped");
 }
 
 #[test]

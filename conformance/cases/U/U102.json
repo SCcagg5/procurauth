@@ -4,13 +4,12 @@
   "role": "pep",
   "paragraphs": [
     "17.1",
+    "17.2",
     "17.7"
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "given": {
     "tokens": {
@@ -21,6 +20,18 @@
     "pdp_script": [
       {
         "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
           "effect": "{{effect_2}}",
           "usage": true
         },
@@ -29,6 +40,19 @@
             "decision": false,
             "context": {
               "reason": "approval_expired"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
             }
           }
         }

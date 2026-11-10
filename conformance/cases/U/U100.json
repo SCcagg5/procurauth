@@ -1,6 +1,6 @@
 {
   "id": "U100",
-  "title": "A tool whose action has the member approval runs nothing at the first call. The service submits the request with the effect, op and view, and it gives the result that tells that the action waits.",
+  "title": "A call whose use needs an approval runs nothing at the first call. The service submits the request with the effect, op and view, and it gives the result that tells that the action waits.",
   "role": "pep",
   "paragraphs": [
     "5.2b",
@@ -10,11 +10,8 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
-  "notes": "The first step needs a document that has the member approval on the action of the tool.",
   "given": {
     "tokens": {
       "person": {
@@ -22,6 +19,31 @@
       }
     },
     "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
       {
         "when": {
           "usage": false
@@ -54,21 +76,6 @@
     ]
   },
   "steps": [
-    {
-      "name": "The action document",
-      "request": {
-        "method": "GET",
-        "path": "/.well-known/procurauth/actions"
-      },
-      "expect": {
-        "status": {
-          "equals": 200
-        },
-        "body_text": {
-          "regex": "\"approval\"\\s*:\\s*\"optional\""
-        }
-      }
-    },
     {
       "name": "The call",
       "request": {
@@ -122,6 +129,9 @@
           {
             "json": {
               "/context/usage": {
+                "present": true
+              },
+              "/context/approval/effect": {
                 "present": true
               }
             },

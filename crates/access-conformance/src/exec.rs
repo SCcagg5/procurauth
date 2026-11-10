@@ -19,7 +19,7 @@ use crate::model::{Case, Condition, Endpoint, Expect, Operation, Role, Step, Tok
 use crate::ops::{self, has_header, put_header};
 use crate::pdpcheck::{controls, same_answer};
 use crate::profile::{EdgeProfile, PdpProfile, PepProfile, Timeouts};
-use crate::report::{CaseResult, Failure};
+use crate::report::{CaseResult, Failure, Status};
 use crate::testpdp::{ApprovalRule, Rule, TestPdp};
 use crate::tokens::{MintError, Signer, Verifier};
 use crate::upstream::Upstream;
@@ -59,14 +59,12 @@ impl Capabilities {
             profile.mcp.as_ref().is_none_or(|m| !m.session_budget),
         );
         add(Condition::NoInputTool, !has(Operation::McpCallInput));
-        add(Condition::NoApprovalTool, !has(Operation::McpCallApproval));
         add(
             Condition::NoMultiAction,
             !has(Operation::UseMulti) && !has(Operation::McpCallMulti),
         );
         add(Condition::SingleKeySet, false);
-        // The profile key `pep.approvals` tells that the service gives approvals (protocol section 17).
-        add(Condition::NoApprovalSupport, !profile.approvals);
+        // Each service follows protocol section 17 (5.2b): the condition `no_approval_support` never holds for a PEP.
         Self { held }
     }
 
@@ -80,7 +78,6 @@ impl Capabilities {
             Condition::NoAnswerCache,
             Condition::NoBudgetSession,
             Condition::NoInputTool,
-            Condition::NoApprovalTool,
             Condition::NoMultiAction,
         ] {
             held.insert(condition);
@@ -262,6 +259,16 @@ pub(crate) struct Runner<'a> {
     pub(crate) env: Env,
     /// Notes for the standard error: what the runner could not check.
     pub(crate) notes: std::sync::Mutex<Vec<String>>,
+    /// The action of the call of `pep.approval_calls` that the run of a case uses now.
+    /// It is `None` outside the run of a case that uses `mcp_call_approval`.
+    pub(crate) current_call: std::sync::Mutex<Option<String>>,
+}
+
+/// True when a step of the case uses the operation `mcp_call_approval`.
+fn uses_approval_call(case: &Case) -> bool {
+    case.steps
+        .iter()
+        .any(|s| s.request.operation == Some(Operation::McpCallApproval))
 }
 
 fn failure(step: Option<&str>, message: impl Into<String>) -> Failure {
@@ -292,6 +299,16 @@ impl Runner<'_> {
         let Env::Pep(env) = &self.env else {
             return None;
         };
+        if operation == Operation::McpCallApproval {
+            // The call of the action that the run of the case uses now (`pep.approval_calls`).
+            let current = self
+                .current_call
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            return current
+                .as_ref()
+                .and_then(|action| env.profile.approval_calls.get(action));
+        }
         let default = match operation {
             Operation::ReadActions => true,
             Operation::ListOptions => env.profile.options_type.is_some(),
@@ -593,48 +610,73 @@ impl Runner<'_> {
                 ),
                 _ => None,
             };
-            let tokens = match self.tokens(case, true) {
-                Ok(tokens) => tokens,
-                Err(Prep::Skip(_)) => BTreeMap::new(),
-                Err(Prep::Error(why)) => {
-                    problems.push(format!("Case {}: {why}.", case.id));
-                    continue;
-                }
+            // A case that uses `mcp_call_approval` runs once for each call of the profile.
+            let calls: Vec<Option<String>> = match &self.env {
+                Env::Pep(env) if uses_approval_call(case) => env
+                    .profile
+                    .approval_calls
+                    .keys()
+                    .cloned()
+                    .map(Some)
+                    .collect(),
+                _ => vec![None],
             };
-            let vars = self.case_vars(case, &tokens);
-            if self.caps.first_held(&case.skip_if).is_some() {
-                continue;
+            for call in calls {
+                *self
+                    .current_call
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = call;
+                self.validate_one(case, endpoints.as_ref(), &mut problems);
             }
-            for (index, step) in case.steps.iter().enumerate() {
-                if self.caps.first_held(&step.skip_if).is_some() {
-                    continue;
-                }
-                match self.prepare_step(step, &vars, endpoints.as_ref(), None, true) {
-                    Ok(_) | Err(Prep::Skip(_)) => {}
-                    Err(Prep::Error(why)) => problems.push(format!(
-                        "Case {}, {}: {why}.",
-                        case.id,
-                        step_name(step, index)
-                    )),
-                }
-            }
-            if matches!(self.env, Env::Pep(_)) {
-                match script_rules(case, &vars) {
-                    Ok(_) => {}
-                    Err(why) => problems.push(format!("Case {}: pdp_script: {why}.", case.id)),
-                }
-                if let Err(why) = approval_rules(case, &vars) {
-                    problems.push(format!("Case {}: approval_script: {why}.", case.id));
-                }
-            } else if !case.given.pdp_script.is_empty() || !case.given.approval_script.is_empty() {
-                problems.push(format!(
-                    "Case {}: the case has a pdp_script or an approval_script, and the role {} has no scripted PDP.",
-                    case.id,
-                    self.role().name()
-                ));
-            }
+            *self
+                .current_call
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
         }
         problems
+    }
+
+    fn validate_one(&self, case: &Case, endpoints: Option<&Endpoints>, problems: &mut Vec<String>) {
+        let tokens = match self.tokens(case, true) {
+            Ok(tokens) => tokens,
+            Err(Prep::Skip(_)) => BTreeMap::new(),
+            Err(Prep::Error(why)) => {
+                problems.push(format!("Case {}: {why}.", case.id));
+                return;
+            }
+        };
+        let vars = self.case_vars(case, &tokens);
+        if self.caps.first_held(&case.skip_if).is_some() {
+            return;
+        }
+        for (index, step) in case.steps.iter().enumerate() {
+            if self.caps.first_held(&step.skip_if).is_some() {
+                continue;
+            }
+            match self.prepare_step(step, &vars, endpoints, None, true) {
+                Ok(_) | Err(Prep::Skip(_)) => {}
+                Err(Prep::Error(why)) => problems.push(format!(
+                    "Case {}, {}: {why}.",
+                    case.id,
+                    step_name(step, index)
+                )),
+            }
+        }
+        if matches!(self.env, Env::Pep(_)) {
+            match script_rules(case, &vars) {
+                Ok(_) => {}
+                Err(why) => problems.push(format!("Case {}: pdp_script: {why}.", case.id)),
+            }
+            if let Err(why) = approval_rules(case, &vars) {
+                problems.push(format!("Case {}: approval_script: {why}.", case.id));
+            }
+        } else if !case.given.pdp_script.is_empty() || !case.given.approval_script.is_empty() {
+            problems.push(format!(
+                "Case {}: the case has a pdp_script or an approval_script, and the role {} has no scripted PDP.",
+                case.id,
+                self.role().name()
+            ));
+        }
     }
 
     fn request_deadline(&self, case_deadline: Instant) -> Instant {
@@ -692,12 +734,64 @@ impl Runner<'_> {
             Err(Prep::Skip(reason)) => return Ok(CaseResult::skipped(case, reason)),
             Err(Prep::Error(why)) => return Ok(CaseResult::failed(case, vec![failure(None, why)])),
         };
+        if let Env::Pep(env) = &self.env
+            && uses_approval_call(case)
+        {
+            return Ok(self.run_each_call(case, env, &tokens));
+        }
         let vars = self.case_vars(case, &tokens);
         let deadline = Instant::now() + self.timeouts.case;
         match &self.env {
             Env::Pep(env) => Ok(self.run_pep(case, env, &vars, deadline)),
             Env::Edge(env) => Ok(self.run_edge(case, env, &vars, deadline)),
             Env::Pdp(env) => self.run_pdp(case, env, &vars, deadline, verified),
+        }
+    }
+
+    /// Run a case that uses `mcp_call_approval` once for each call of `pep.approval_calls`: each
+    /// action of the service follows protocol section 17 (5.2b). The case passes when each run passes.
+    /// A failure shows the action in the name of its step.
+    fn run_each_call(
+        &self,
+        case: &Case,
+        env: &PepEnv,
+        tokens: &BTreeMap<String, String>,
+    ) -> CaseResult {
+        let mut failures: Vec<Failure> = Vec::new();
+        let mut ran = false;
+        let mut skip: Option<String> = None;
+        for action in env.profile.approval_calls.keys() {
+            *self
+                .current_call
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(action.clone());
+            let vars = self.case_vars(case, tokens);
+            let deadline = Instant::now() + self.timeouts.case;
+            let result = self.run_pep(case, env, &vars, deadline);
+            match result.status {
+                Status::Pass => ran = true,
+                Status::Skip => skip = result.reason,
+                Status::Fail | Status::Warn => {
+                    ran = true;
+                    for found in result.failures {
+                        failures.push(Failure {
+                            step: Some(match found.step {
+                                Some(step) => format!("[{action}] {step}"),
+                                None => format!("[{action}]"),
+                            }),
+                            message: found.message,
+                        });
+                    }
+                }
+            }
+        }
+        *self
+            .current_call
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+        match skip {
+            Some(reason) if failures.is_empty() && !ran => CaseResult::skipped(case, reason),
+            _ => CaseResult::from_failures(case, failures),
         }
     }
 
@@ -848,11 +942,13 @@ impl Runner<'_> {
             }
         }
         if failures.is_empty() {
+            let called: Vec<String> = env.profile.approval_calls.keys().cloned().collect();
             let mut hooks = PepHooks {
                 pdp: &env.pdp,
                 mark: 0,
                 approval_mark: 0,
                 now: self.now,
+                called: &called,
             };
             let outcome = self.steps(case, vars, None, deadline, &mut hooks);
             skip = outcome.skip;
@@ -1221,6 +1317,7 @@ struct PepHooks<'a> {
     mark: usize,
     approval_mark: usize,
     now: &'a dyn Fn() -> u64,
+    called: &'a [String],
 }
 
 impl Hooks for PepHooks<'_> {
@@ -1242,6 +1339,7 @@ impl Hooks for PepHooks<'_> {
                 upstream: None,
                 verifier: None,
                 token_header: None,
+                called_actions: Some(self.called),
                 now: (self.now)(),
             },
         )
@@ -1271,6 +1369,7 @@ impl Hooks for EdgeHooks<'_> {
                 upstream: Some(&received),
                 verifier: Some(&self.env.verifier),
                 token_header: Some(&self.env.profile.token_header),
+                called_actions: None,
                 now: (self.now)(),
             },
         )
@@ -1293,6 +1392,7 @@ impl Hooks for PdpHooks {
                 upstream: None,
                 verifier: None,
                 token_header: None,
+                called_actions: None,
                 now: 0,
             },
         )

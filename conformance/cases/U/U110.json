@@ -9,9 +9,7 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "given": {
     "tokens": {

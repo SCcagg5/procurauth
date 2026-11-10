@@ -1,0 +1,21 @@
+{
+  "server": "datastore",
+  "resource_types": [
+    {
+      "name": "host",
+      "parent": "service",
+      "description": "One database server."
+    }
+  ],
+  "actions": [
+    {
+      "name": "data.write",
+      "resource_types": [
+        "service",
+        "host"
+      ],
+      "description": "Change data.",
+      "approval": "optional"
+    }
+  ]
+}

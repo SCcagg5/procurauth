@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use procurauth_schema_check::{Schemas, repository_root};
 use serde_json::Value;
 
-const VARIABLES: [&str; 21] = [
+const VARIABLES: [&str; 22] = [
     "service",
     "action",
     "resource_type",
@@ -36,6 +36,7 @@ const VARIABLES: [&str; 21] = [
     "effect_3",
     "approval_ref",
     "confirm_access_key_text",
+    "other_action",
 ];
 
 /// The cases of the series `U`, `D` and `E` are in `conformance/cases/`.
@@ -511,21 +512,12 @@ fn needed_conditions(step: &Value) -> Vec<&'static str> {
             needed.extend(["no_mcp_endpoint", "no_budget_action", "no_multi_action"])
         }
         "mcp_call_input" => needed.extend(["no_mcp_endpoint", "no_input_tool"]),
-        "mcp_call_approval" | "mcp_approve" | "mcp_refuse" => {
-            needed.extend(["no_mcp_endpoint", "no_approval_tool"]);
-        }
         op if op.starts_with("mcp_") => needed.push("no_mcp_endpoint"),
         _ => {}
     }
     let text = step["request"].to_string();
     if text.contains("{{mcp_path}}") {
         needed.push("no_mcp_endpoint");
-    }
-    if step["request"].get("variant").is_some()
-        || step["expect"].get("pdp_approvals").is_some()
-        || step.to_string().contains("{{effect")
-    {
-        needed.push("no_approval_support");
     }
     if text.contains("{{options_type}}") || text.contains("/.well-known/procurauth/resources") {
         needed.push("no_options_route");
@@ -648,8 +640,9 @@ fn required_paragraphs(role: &str) -> BTreeSet<String> {
                     (3 | 4 | 6 | 7 | 8 | 11, Some(_)) => true,
                     (5, Some(n)) => (1..=5).contains(&n),
                     (10, Some(n)) => n == 7,
-                    // Section 17 is optional (protocol 1.3). A PDP that gives approvals follows it, except 17.7.
-                    (17, Some(n)) => n != 7,
+                    // A PDP that gives approvals follows section 17 (protocol 1.3), except the paragraphs
+                    // that only a PEP follows: 17.3a, 17.7 and 17.7a.
+                    (17, Some(n)) => n != 7 && p != "17.3a",
                     _ => false,
                 };
                 if keep {
@@ -662,8 +655,8 @@ fn required_paragraphs(role: &str) -> BTreeSet<String> {
                 "3.3", "3.4", "4.1", "4.4", "4.5", "5.1", "5.2", "5.2a", "5.2b", "5.3c", "5.4",
                 "5.5", "5.5a", "5.6", "5.7", "5.8", "6.1", "6.2", "6.4", "6.11", "6.12", "7.1",
                 "7.3", "7.4", "7.5", "7.6", "8.3", "9.3", "9.4", "9.5", "9.6", "9.7", "15",
-                // Section 17 is optional (protocol 1.3). A service with an action that has approval follows these.
-                "17.1", "17.3", "17.4", "17.7", "17.9", "17.9a", "17.12",
+                // Section 17 is mandatory for a service (protocol 1.3).
+                "17.1", "17.2", "17.3", "17.3a", "17.4", "17.7", "17.7a", "17.9", "17.9a", "17.12",
             ];
             for p in &protocol {
                 let (section, paragraph) = split_number(p);
@@ -848,8 +841,9 @@ fn coverage_gives_a_reason_for_each_paragraph_with_no_case() {
 }
 
 #[test]
-fn a_case_of_the_approval_profile_has_the_condition_no_approval_support() {
-    // Section 17 and the binding paragraphs 5.7 to 5.7b are optional. A target that gives no approval skips these cases.
+fn a_case_of_the_approval_profile_has_the_condition_no_approval_support_unless_it_is_for_a_pep() {
+    // Section 17 is mandatory for a service (protocol 1.3, 5.2b). A PEP never skips these cases.
+    // A PDP or an edge that gives no approval skips the cases that cite section 17.
     for case in cases() {
         let id = case.value["id"].as_str().unwrap();
         let cites_approval = case.value["paragraphs"]
@@ -859,10 +853,11 @@ fn a_case_of_the_approval_profile_has_the_condition_no_approval_support() {
             .map(|p| p.as_str().unwrap())
             .any(|p| p.starts_with("17.") || p.starts_with("mcp:5.7") || p == "5.2b");
         let skip = skip_list(&case.value);
+        let is_pep = case.value["role"] == "pep";
         assert_eq!(
-            cites_approval,
+            cites_approval && !is_pep,
             skip.contains("no_approval_support"),
-            "{id}: a case that cites the approval profile has the condition no_approval_support, and only such a case has it"
+            "{id}: a case of a PDP or of an edge that cites the approval profile has the condition no_approval_support, and only such a case has it"
         );
     }
 }

@@ -73,6 +73,13 @@ pub const RULES: &[Rule] = &[
     row(D, "5.2", "unknown_member", W, "unknown member"),
     row(
         D,
+        "5.2b",
+        "removed_member",
+        W,
+        "member approval of an action",
+    ),
+    row(
+        D,
         "5.3",
         "unknown_member",
         E,

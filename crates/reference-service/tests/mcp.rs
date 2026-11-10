@@ -218,10 +218,15 @@ fn mcp_4_1_the_list_names_the_tools_that_the_pdp_lets_the_subject_do() {
         ]
     );
     // The key has `data.read` and `data.inspect` on `test2` and no `data.write` and no `data.append`.
-    // The list has no `get_action_status`, because it has no tool with an approval (5.7b).
+    // The list has `get_action_status`: it names a tool, and each tool can give a result that waits (5.7b).
     assert_eq!(
         names(&s.edge.key_token(KEY_ALICE, "alice")),
-        ["read_rows", "list_tables", "query_table"]
+        [
+            "read_rows",
+            "list_tables",
+            "query_table",
+            "get_action_status"
+        ]
     );
     // The list asks one item for each action, with `context.match` equal to `subtree`, and no usage.
     let log = s.pdp.log();

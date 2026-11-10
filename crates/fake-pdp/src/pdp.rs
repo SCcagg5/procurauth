@@ -104,12 +104,13 @@ impl Pdp {
         &mut self.approvals
     }
 
-    /// True when the service has an action with the member `approval` (5.2b): it can use the approval API.
+    /// True when the service has a good action document with at least one action: it can use the
+    /// approval API. Each action of a service follows section 17 (5.2b), so there is no per-action flag.
     pub fn serves_approvals(&self, service: &str) -> bool {
         self.directory
             .service(service)
             .and_then(|s| s.document.as_ref())
-            .is_some_and(|d| d.actions.iter().any(|a| a.approval))
+            .is_some_and(|d| !d.actions.is_empty())
     }
 
     /// The data.
@@ -211,10 +212,11 @@ impl Pdp {
 
         // The approval (17.1, 17.8). The grants decided first: only an allowed question gets here.
         let now_seconds = now_millis / 1000;
-        let needs_approval = match owner_grants {
-            None => confirm_required(own_grants, action, &node),
-            Some(og) => key_confirm_required(own_grants, og, action, &node),
-        };
+        let needs_approval = (directory.confirm_all && action != ACCESS_ACTION)
+            || match owner_grants {
+                None => confirm_required(own_grants, action, &node),
+                Some(og) => key_confirm_required(own_grants, og, action, &node),
+            };
         let mut approval_to_consume = None;
         if needs_approval {
             let Some(effect) = context.approval_effect.as_deref() else {

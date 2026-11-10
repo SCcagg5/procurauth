@@ -1,0 +1,24 @@
+{
+  "id": "U112",
+  "title": "The action document has no member approval in any action. Each action follows section 17.",
+  "role": "pep",
+  "paragraphs": [
+    "5.2b"
+  ],
+  "requirement": "MUST",
+  "given": {},
+  "steps": [
+    {
+      "name": "The action document",
+      "request": {
+        "operation": "read_actions"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "valid_as": "action_document_no_approval_member"
+      }
+    }
+  ]
+}

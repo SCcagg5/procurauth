@@ -213,29 +213,6 @@
           }
         ]
       },
-      "mcp_call_approval": {
-        "tool": "drop_table",
-        "action": "data.drop",
-        "arguments": {
-          "table": "orders"
-        },
-        "resource_type": "table",
-        "resource_id": "orders",
-        "ancestors": [
-          {
-            "type": "service",
-            "id": "datastore"
-          },
-          {
-            "type": "host",
-            "id": "prod"
-          },
-          {
-            "type": "database",
-            "id": "test1"
-          }
-        ]
-      },
       "mcp_approve": {
         "body": {
           "jsonrpc": "2.0",
@@ -268,6 +245,269 @@
         },
         "capture": {
           "approval_id": "/result/structuredContent/approval_id"
+        }
+      }
+    },
+    "approval_calls": {
+      "data.read": {
+        "tool": "read_rows",
+        "arguments": {
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test1"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "read_rows",
+            "table": "orders"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "table": "orders",
+                "n": 2
+              },
+              "op": {
+                "tool": "read_rows",
+                "table": "orders",
+                "n": 2
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "table": "orders",
+                "n": 3
+              },
+              "op": {
+                "tool": "read_rows",
+                "table": "orders",
+                "n": 3
+              }
+            }
+          }
+        }
+      },
+      "data.write": {
+        "tool": "write_rows",
+        "arguments": {
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test1"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "write_rows",
+            "table": "orders"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "table": "orders",
+                "n": 2
+              },
+              "op": {
+                "tool": "write_rows",
+                "table": "orders",
+                "n": 2
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "table": "orders",
+                "n": 3
+              },
+              "op": {
+                "tool": "write_rows",
+                "table": "orders",
+                "n": 3
+              }
+            }
+          }
+        }
+      },
+      "data.query": {
+        "tool": "query_rows",
+        "arguments": {
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test1"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "query_rows",
+            "table": "orders"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "table": "orders",
+                "n": 2
+              },
+              "op": {
+                "tool": "query_rows",
+                "table": "orders",
+                "n": 2
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "table": "orders",
+                "n": 3
+              },
+              "op": {
+                "tool": "query_rows",
+                "table": "orders",
+                "n": 3
+              }
+            }
+          }
+        }
+      },
+      "data.copy": {
+        "tool": "copy_table",
+        "arguments": {
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test1"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "copy_table",
+            "table": "orders"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "table": "orders",
+                "n": 2
+              },
+              "op": {
+                "tool": "copy_table",
+                "table": "orders",
+                "n": 2
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "table": "orders",
+                "n": 3
+              },
+              "op": {
+                "tool": "copy_table",
+                "table": "orders",
+                "n": 3
+              }
+            }
+          }
+        },
+        "other_action": "data.read"
+      },
+      "data.drop": {
+        "tool": "drop_table",
+        "arguments": {
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test1"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "drop_table",
+            "table": "orders"
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "table": "orders",
+                "n": 2
+              },
+              "op": {
+                "tool": "drop_table",
+                "table": "orders",
+                "n": 2
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "table": "orders",
+                "n": 3
+              },
+              "op": {
+                "tool": "drop_table",
+                "table": "orders",
+                "n": 3
+              }
+            }
+          }
         }
       }
     }

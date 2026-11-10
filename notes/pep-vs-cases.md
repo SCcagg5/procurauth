@@ -2,7 +2,7 @@
 
 This file tells which function of `procurauth-pep` each case of the series U needs. The reference service uses these functions.
 
-The test `crates/reference-service/tests/u_cases.rs` is a small local runner. It reads the cases, makes the tokens, starts a test PDP with the script of the case, and sends the operations as `crates/reference-service/PROFILE.md` says. It runs 98 of the 99 cases against the reference service, and all of them pass. The runner `access-conformance` does the same work for any service.
+The test `crates/reference-service/tests/u_cases.rs` is a small local runner. It reads the cases, makes the tokens, starts a test PDP with the script of the case, and sends the operations as `crates/reference-service/PROFILE.md` says. It runs 116 of the 117 cases against the reference service, and all of them pass. Each case that uses `mcp_call_approval` runs once for each action. The runner `access-conformance` does the same work for any service.
 
 The case U95 is skipped. It needs a budget on the action `mcp.session`, and the action of the service lists none (condition `no_budget_session`). The library test `mcp_3_6a_a_method_with_no_tool_asks_mcp_session_and_gets_a_result` covers the use of this action with no budget. The library follows 6.4 for each action. Thus a budget on this action gives a question with `context.usage`, as for another action.
 
@@ -41,7 +41,7 @@ The column Service tells how the service covers the case. The conditions to skip
 | U27 | mcp:3.3, mcp:3.3a, mcp:5.2, mcp:5.6a | `Pep::authenticate`, `refusal_reply` (HTTP 401, empty body) | Passes |
 | U28 | mcp:5.1, mcp:5.5 | `refusal_reply` (HTTP 503, `-32603`) | Passes |
 | U29 | mcp:3.6a, mcp:5.1, mcp:5.1b | `McpGate::session`, `refusal_reply` | Passes |
-| U30 | mcp:3.5a | `McpGate::call`, `Stage::Ask`, `Stage::Run`, `McpGate::list_tools` | Passes |
+| U30 | mcp:3.5a, mcp:5.7, 17.1, 17.7 | `McpGate::approve`, `Pep::decide_approval`, `McpGate::list_tools` | Passes, for each action |
 | U31 | mcp:5.1b | `McpGate::session`, `refusal_reply` | Passes |
 | U32 | 6.12, 10.3 | `Pep::decide` (`DenialCause::NoUsageUnits`) | Passes |
 | U33 | 6.12 | `Pep::decide` (`DenialCause::NoUsageUnits`) | Passes |
@@ -111,6 +111,12 @@ The column Service tells how the service covers the case. The conditions to skip
 | U97 | mcp:3.7, mcp:5.1 | `McpGate::call`, `Operation::also` | Passes |
 | U98 | mcp:7.3 | `Pep::authenticate` (reads only the token header) | Passes |
 | U99 | mcp:7.3, 9.4 | `Pep::authenticate`, `refusal_reply` (HTTP 401, empty body) | Passes |
+| U100 to U110 | 17.1 to 17.12, mcp:5.7 to mcp:5.7b | `Pep::decide_approval`, `McpGate::approve`, `McpGate::status`, `ApprovalCall`, `awaiting_reply`, `approval_tool_error` | Pass, for each action |
+| U111, U112 | 5.2b | `reference_document`, the profile `approval_calls` | Pass |
+| U113 | 10.3, 17.7a | `Pep::decide`, `Refusal::to_http` (the code `approval_cannot_wait`) | Passes |
+| U114 | mcp:3.6a, mcp:5.1, 17.7a | `McpGate::session`, `refusal_reply` | Passes |
+| U115, U116 | mcp:5.7, mcp:5.7a, 17.7 | `split_approval_arguments`, `Pep::decide_approval` | Pass, for each action |
+| U117 | mcp:3.5, 17.7 | `McpGate::call`, `Stage::Ask` | Passes |
 
 ## Library tests of the same rules
 

@@ -5,7 +5,7 @@ A role is a PEP (series U), a PDP (series D) or an edge (series E).
 The paragraphs come from protocol 1.3 and 15 (item 2), and from binding 1.4.
 The second table lists the vectors of files that are not cases. The third table lists the rules that no case tests, with the reason.
 
-Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optional. A target that gives no approval skips the cases that cite them, with the condition `no_approval_support`.
+Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PEP runs the cases that cite it, and the cases of the series U never have the condition `no_approval_support`. A PDP or an edge that gives no approval skips the cases of the series D and E that cite section 17, with this condition.
 
 ## How to read the tables
 
@@ -89,7 +89,7 @@ Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optio
 | 5.1 | pep | U13, U14, U15 |
 | 5.2 | pep | U16 |
 | 5.2a | pep | none |
-| 5.2b | pep | U100 |
+| 5.2b | pep | U100, U111, U112 |
 | 5.3c | pep | U17 |
 | 5.4 | pep | none |
 | 5.5 | pep | U34 |
@@ -118,7 +118,7 @@ Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optio
 | 10.1a | pep | U34, U35 |
 | 10.1b | pep | none |
 | 10.2 | pep | U36, U37 |
-| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105 |
+| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105, U113 |
 | 10.6 | pep | U68 |
 | 10.7 | pep | U69 |
 | 10.7a | pep | none |
@@ -126,9 +126,12 @@ Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optio
 | 11.2 | pep | U60 |
 | 15 | pep | U84 |
 | 17.1 | pep | U30, U102, U103, U107 |
+| 17.2 | pep | U102 |
 | 17.3 | pep | U103, U108 |
+| 17.3a | pep | U103, U108, U111 |
 | 17.4 | pep | U100, U101, U109 |
-| 17.7 | pep | U30, U100, U101, U102, U104, U106, U110 |
+| 17.7 | pep | U30, U100, U101, U102, U104, U106, U110, U115, U116, U117 |
+| 17.7a | pep | U113, U114 |
 | 17.9 | pep | U107, U108 |
 | 17.9a | pep | U103, U109 |
 | 17.12 | pep | U105, U109, U110 |
@@ -138,16 +141,16 @@ Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optio
 | mcp:3.3 | pep | U27, U85 |
 | mcp:3.3a | pep | U27, U86 |
 | mcp:3.4 | pep | U18 |
-| mcp:3.5 | pep | U18 |
+| mcp:3.5 | pep | U18, U117 |
 | mcp:3.5a | pep | U30 |
 | mcp:3.6 | pep | U18 |
-| mcp:3.6a | pep | U29, U95 |
+| mcp:3.6a | pep | U29, U95, U114 |
 | mcp:3.7 | pep | U96, U97 |
 | mcp:4.1 | pep | U26, U88 |
 | mcp:4.2 | pep | U26, U89 |
 | mcp:4.3 | pep | none |
 | mcp:4.4 | pep | none |
-| mcp:5.1 | pep | U23, U26, U28, U29, U89, U90, U91, U94, U97 |
+| mcp:5.1 | pep | U23, U26, U28, U29, U89, U90, U91, U94, U97, U114 |
 | mcp:5.1a | pep | U92 |
 | mcp:5.1b | pep | U29, U31 |
 | mcp:5.2 | pep | U27, U86 |
@@ -157,8 +160,8 @@ Section 17 of the protocol and the paragraphs 5.2b, 5.7, 5.7a and 5.7b are optio
 | mcp:5.5 | pep | U28, U91 |
 | mcp:5.6 | pep | U94 |
 | mcp:5.6a | pep | U27, U86 |
-| mcp:5.7 | pep | U30, U100 |
-| mcp:5.7a | pep | U105 |
+| mcp:5.7 | pep | U30, U100, U115, U116 |
+| mcp:5.7a | pep | U105, U116 |
 | mcp:5.7b | pep | U106, U110 |
 | mcp:7.1 | pep | none |
 | mcp:7.2 | pep | none |
@@ -183,7 +186,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 
 | Id | Paragraph | File | Content |
 | --- | --- | --- | --- |
-| V01 | 17.3 | `vectors/effect.json` | Inputs that give a canonical JCS text and an effect: the order of members, nested objects, the UTF-16 order of names, escapes, the limits of the integers, empty values, no Unicode normalisation and the form of the resource. |
+| V01 | 17.3 | `vectors/effect.json` | Inputs that give a canonical JCS text and an effect: the order of members, nested objects, the UTF-16 order of names, escapes, the limits of the integers, empty values, no Unicode normalisation, the form of the resource, and the `op` of a read, of an empty `op` and of a navigation (17.3a). |
 | V02 | 17.3 | `vectors/effect.json` | Inputs that a PEP and a PDP refuse with `invalid_op`: floats, the integers 2^53 and -(2^53), an integer of more than 64 bits, the text `-0` and an `op` that is not an object. |
 
 ## Not testable
@@ -254,7 +257,9 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 17.1 | pep | The PEP never reads the evaluation_id. | A case cannot see what the PEP reads. |
 | 17.4 | pep | The PEP sends the credential of the service to the approval API. | The test PDP of the runner accepts any credential on its approval API. |
 | 17.7 | pep | The PEP never reads an approval_ref or an intent. | A case cannot see what the PEP reads. |
-| 17.7 | pep | The PEP treats a reason of 17.1 for an action that has no member approval as 10.3 says. | The profile of the service gives no action without the member approval that the PDP can ask for an approval. |
+| 17.3a | pep | The `op` of a call names the operation, has no value that changes at each call, and the PEP never cuts or hides a part of it. | A case cannot see how the PEP builds `op`. The case U108 compares the effect with the `op` of the profile. |
+| 17.3a | pep | The size of `op` and `view` is not more than `max_command_bytes`. | The runner does not know the bound of the PDP. A PDP that gets a larger command answers 413 `command_too_large`, and the PEP gives the tool error `invalid_argument`. |
+| 17.7a | pep | A person with an interactive session gets HTTP 403 with the code `approval_cannot_wait`. | The runner sends one identity token for a subject, and the PEP does not see a session. The cases U113 and U114 test the call that cannot wait for any subject. |
 | 17.9 | pep | The PEP sends op, view and effect only in a submission, with the sizes that the PDP allows. | The runner does not know the largest size of the PDP. The cases U107 and U108 test the places and the pointers. |
 | mcp:3.1 | pep | The service does the MCP work: the endpoint, the map of the tools, the list of the tools and the approvals. | The sentence is a summary. Each rule has its own paragraph with cases. |
 | mcp:3.2 | pep | The map of the tools is not in the MCP messages. | A case cannot read the map of the service. |

@@ -1,11 +1,10 @@
 //! The approval of an effect (protocol section 17, binding 3.5a and 5.7).
 //!
-//! An action with the member `approval` (5.2b) runs only after the owner of the key
-//! approves the effect of the operation. [`Pep::decide_approval`] follows the steps of
-//! 17.7. It asks the PDP without `context.usage` and with the effect. It submits the
-//! request when the answer is `approval_required` or `approval_pending`. It asks again
-//! with `context.usage` after a `true` answer, and it runs nothing before the second
-//! `true` answer.
+//! Each action of a service follows section 17 (5.2b). A use runs only after the owner approves
+//! its effect, when the PDP asks for it. [`Pep::decide_approval`] follows the steps of 17.7.
+//! It asks as 10.1 says, with no effect. On a reason of 17.1, it asks again with the effect and no
+//! `context.usage`, and it submits the request. After a `true` answer, it asks with `context.usage`,
+//! and it runs the action only after a `true` answer to that question.
 //!
 //! # What the PEP learns and what it never reads
 //!
@@ -78,7 +77,7 @@ impl Verdict {
 }
 
 /// How long the agent wants to wait (17.5), or the reference that it got from the PDP (17.4).
-/// A call has exactly one of the three (binding 5.7).
+/// A call has at most one of the three (binding 5.7). The PEP needs one only to submit a request.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Control {
     /// `approval_ref`: an opaque text. The PEP never reads it.
@@ -92,12 +91,13 @@ pub enum Control {
 /// What the call of an agent gives for the approval of an action (binding 5.7).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApprovalCall {
-    /// The values that decide what the operation does (17.3). A JSON object.
+    /// The values that decide what the operation does (17.3a). A JSON object.
     pub op: Value,
-    /// The template of what the owner reads (17.9). Each pointer names a value of `op`.
+    /// The template of what the owner reads (17.3a, 17.9). Each pointer names a value of `op`.
     pub view: Value,
-    /// `approval_ref`, `lease_s` or `until`.
-    pub control: Control,
+    /// `approval_ref`, `lease_s` or `until`. A call that has none runs when the PDP asks for no approval.
+    /// When the PDP asks for one, the PEP cannot submit and the call gets `invalid_argument` (binding 5.7).
+    pub control: Option<Control>,
     /// The id of a request that this call replaces.
     pub supersedes: Option<String>,
     /// The most seconds that the call waits for a verdict. The PEP bounds it by [`WAIT_MAX_SECONDS`].
@@ -404,34 +404,35 @@ fn operation_error(why: &str) -> Refusal {
 }
 
 impl Pep {
-    /// True when the action of the document has the member `approval` (5.2b).
-    pub fn action_has_approval(&self, action: &str) -> bool {
-        self.document().action(action).is_some_and(|a| a.approval)
-    }
-
     /// What the PEP received on the approval API since the start.
     pub fn approval_stats(&self) -> ApprovalStats {
         self.client.stats().clone()
     }
 
-    /// Ask for an operation whose action has the member `approval`, and follow the steps of 17.7.
+    /// Ask for an operation, and follow the steps of 17.7. This works for each action.
     ///
-    /// 1. Ask without `context.usage`, with the effect. This answer is never kept.
-    /// 2. On `approval_required` or `approval_pending`, submit the request and give
+    /// 1. Ask as 10.1 says: the question of the use, with `context.usage` when the action lists a
+    ///    budget, and no effect. A `true` answer, and a `false` answer with another reason than
+    ///    17.1, end here as 10.3 says.
+    /// 2. On a reason of 17.1, call `build`, which gives `op`, `view` and the controls of the call
+    ///    (17.3a). Ask without `context.usage`, with the effect. This answer is never kept.
+    /// 3. On `approval_required` or `approval_pending`, submit the request and give
     ///    [`Outcome::ApprovalRequired`]. The caller runs nothing.
-    /// 3. On `approval_denied` or `approval_expired`, refuse, and ask nothing more.
-    /// 4. On `true`, ask with `context.usage` and the same effect. Run the action only after a
+    /// 4. On `approval_denied` or `approval_expired`, refuse, and ask nothing more.
+    /// 5. On `true`, ask with `context.usage` and the same effect. Run the action only after a
     ///    `true` answer to this question.
     ///
-    /// The effect comes from `call.op` and from the action and the node of the operation (17.3).
-    /// `call.op` must hold only the values that the PEP runs.
+    /// `build` runs only when the PDP asks for an approval. A call that needs none has no cost for it,
+    /// and an error of `build` never refuses such a call. The effect comes from `op` and from the
+    /// action and the node of the operation (17.3). `op` must hold only the values that the PEP runs.
+    /// The operation has one use. Its other permissions (5.5a) are asked first, with no effect.
     pub fn decide_approval(
         &self,
         who: &Identity,
         operation: &Operation,
-        call: &ApprovalCall,
+        build: impl FnOnce() -> Result<ApprovalCall, ApprovalRefusal>,
     ) -> Outcome {
-        match self.approval_inner(who, operation, call) {
+        match self.approval_inner(who, operation, build) {
             Ok(outcome) => outcome,
             Err(refusal) => Outcome::Refused(refusal),
         }
@@ -458,23 +459,23 @@ impl Pep {
         &self,
         who: &Identity,
         operation: &Operation,
-        call: &ApprovalCall,
+        build: impl FnOnce() -> Result<ApprovalCall, ApprovalRefusal>,
     ) -> Result<Outcome, Refusal> {
-        let (Some(permission), 1, true) = (
-            operation.uses().first(),
-            operation.uses().len(),
-            operation.others().is_empty(),
-        ) else {
-            return Err(operation_error(
-                "an operation with an approval has one use and no other permission",
-            ));
+        let (Some(permission), 1) = (operation.uses().first(), operation.uses().len()) else {
+            return Err(operation_error("an operation with an approval has one use"));
         };
-        self.validate(permission, true)?;
-        if !self.action_has_approval(&permission.action) {
-            return Err(operation_error(
-                "the action has no member `approval` in the action document",
-            ));
+        self.validate_operation(operation)?;
+        let others = self.ask_others(who.sub(), operation)?;
+        // Step 1: the question of 10.1, with no effect. Only a reason of 17.1 starts the flow.
+        match self.run_use(who.sub(), operation.uses(), true) {
+            Ok((units, used)) => return Ok(Outcome::Allowed(Allowed::new(units, used, others))),
+            Err(Refusal::Forbidden {
+                reason: Some(reason),
+                cause: DenialCause::Decision,
+            }) if reason.is_approval() => {}
+            Err(refusal) => return Err(refusal),
         }
+        let call = build().map_err(Refusal::Approval)?;
         if check_view(&call.view, &call.op).is_err() {
             return Err(operation_error(
                 "the view of the operation is not valid for its op",
@@ -501,7 +502,7 @@ impl Pep {
                 )
                 .map_err(Refusal::Unavailable)?;
             if plain.decision {
-                return self.approval_use(who, permission, &effect);
+                return self.approval_use(who, permission, &effect, others);
             }
             match plain.context.reason {
                 Some(Reason::ApprovalRequired | Reason::ApprovalPending) => {}
@@ -513,14 +514,23 @@ impl Pep {
                 }
                 _ => return Err(denial(&plain)),
             }
-            // 17.7, step 2: the PEP sends the `evaluation_id` back as it came. It never reads it.
+            // 17.7, step 3: the PEP sends the `evaluation_id` back as it came. It never reads it.
             let Some(evaluation_id) = plain.context.evaluation_id.clone() else {
                 // Without the id the PEP cannot submit. It fails closed (decision 83).
                 return Err(denial(&plain));
             };
-            let pending =
-                self.client
-                    .submit_approval(&submission(&evaluation_id, &effect, call))?;
+            // A call with no control argument cannot give a lease. The PEP submits nothing (binding 5.7).
+            let Some(control) = call.control.as_ref() else {
+                return Err(Refusal::Approval(ApprovalRefusal::InvalidArgument));
+            };
+            let pending = self.client.submit_approval(&submission(
+                &evaluation_id,
+                &effect,
+                &call.op,
+                &call.view,
+                control,
+                call.supersedes.as_deref(),
+            ))?;
             let Some(seconds) = wait.take().filter(|w| *w > 0) else {
                 return Ok(Outcome::ApprovalRequired(pending));
             };
@@ -543,12 +553,14 @@ impl Pep {
         })
     }
 
-    /// The use of an approved effect: the question with `context.usage` (17.2, 17.7 step 4).
+    /// The use of an approved effect: the question with `context.usage` (17.2, 17.7 step 5).
+    /// The PEP sends it also when the action lists no budget.
     fn approval_use(
         &self,
         who: &Identity,
         permission: &Permission,
         effect: &str,
+        others: Vec<Granted>,
     ) -> Result<Outcome, Refusal> {
         let answer = self
             .client
@@ -572,7 +584,7 @@ impl Pep {
                     permission: permission.clone(),
                     ceilings,
                 },
-                Vec::new(),
+                others,
             )));
         }
         match answer.context.reason {
@@ -581,7 +593,7 @@ impl Pep {
             }),
             Some(Reason::ApprovalDenied) => Err(Refusal::Approval(ApprovalRefusal::Denied)),
             Some(Reason::ApprovalExpired) => Err(Refusal::Approval(ApprovalRefusal::Expired)),
-            // Another answer is treated as 10.3 says (17.7, step 5).
+            // Another answer is treated as 10.3 says (17.7, step 6).
             _ => Err(denial(&answer)),
         }
     }
@@ -606,18 +618,25 @@ impl Pep {
 }
 
 /// The body of a submission (17.4). It has the members that 17.4 lists and no other.
-fn submission(evaluation_id: &str, effect: &str, call: &ApprovalCall) -> Value {
+fn submission(
+    evaluation_id: &str,
+    effect: &str,
+    op: &Value,
+    view: &Value,
+    control: &Control,
+    supersedes: Option<&str>,
+) -> Value {
     let mut body = Map::new();
     body.insert("evaluation_id".into(), json!(evaluation_id));
     body.insert("effect".into(), json!(effect));
-    body.insert("op".into(), call.op.clone());
-    body.insert("view".into(), call.view.clone());
-    match &call.control {
+    body.insert("op".into(), op.clone());
+    body.insert("view".into(), view.clone());
+    match control {
         Control::Reference(text) => body.insert("approval_ref".into(), json!(text)),
         Control::LeaseSeconds(seconds) => body.insert("lease_s".into(), json!(seconds)),
         Control::Until(text) => body.insert("until".into(), json!(text)),
     };
-    if let Some(id) = &call.supersedes {
+    if let Some(id) = supersedes {
         body.insert("supersedes".into(), json!(id));
     }
     Value::Object(body)
@@ -651,14 +670,15 @@ mod tests {
 
     #[test]
     fn p_17_4_a_submission_has_exactly_one_control_and_the_listed_members() {
-        let call = ApprovalCall {
-            op: json!({"tool": "t"}),
-            view: json!({"title": "T"}),
-            control: Control::LeaseSeconds(900),
-            supersedes: None,
-            wait_seconds: Some(5),
-        };
-        let body = submission("ev", "sha256:00", &call);
+        let (op, view) = (json!({"tool": "t"}), json!({"title": "T"}));
+        let body = submission(
+            "ev",
+            "sha256:00",
+            &op,
+            &view,
+            &Control::LeaseSeconds(900),
+            None,
+        );
         let names: Vec<&str> = body
             .as_object()
             .unwrap()
@@ -666,12 +686,14 @@ mod tests {
             .map(String::as_str)
             .collect();
         assert_eq!(names, ["effect", "evaluation_id", "lease_s", "op", "view"]);
-        let with_ref = ApprovalCall {
-            control: Control::Reference("r".into()),
-            supersedes: Some("apr_1".into()),
-            ..call
-        };
-        let body = submission("ev", "sha256:00", &with_ref);
+        let body = submission(
+            "ev",
+            "sha256:00",
+            &op,
+            &view,
+            &Control::Reference("r".into()),
+            Some("apr_1"),
+        );
         assert_eq!(body["approval_ref"], "r");
         assert_eq!(body["supersedes"], "apr_1");
         assert!(body.get("lease_s").is_none());

@@ -153,19 +153,14 @@ fn action_rows() -> Vec<Row> {
             true,
         ),
         same(
-            "approval optional in an action",
+            "approval in an action is an unknown member, a warning (5.2b)",
             e(&|d| d["actions"][1]["approval"] = json!("optional")),
             true,
         ),
         same(
-            "approval with another value",
-            e(&|d| d["actions"][1]["approval"] = json!("required")),
-            false,
-        ),
-        same(
-            "approval that is not a text",
+            "approval with another value is also a warning (5.2b)",
             e(&|d| d["actions"][1]["approval"] = json!(true)),
-            false,
+            true,
         ),
         same("missing server", e(&|d| remove(d, "server")), false),
         same(

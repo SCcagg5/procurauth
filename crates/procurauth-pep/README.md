@@ -75,7 +75,7 @@ The type `Refusal` has the status of 10.3. The reason of the PDP stays in the lo
 | `Pep` | `authenticate`, `decide`, `decide_approval`, `check`, `display`, `options`, `actions_reply`, `metadata`, `approval_status`, `approval_keepalive`, `approval_stats`. |
 | `Operation`, `Permission` | One use, the other permissions (5.5a), and several actions for the use (10.1). |
 | `Outcome`, `Allowed`, `Granted` | The result of `decide`: the units, and the ceilings of each permission. `Outcome::ApprovalRequired` is the result of `decide_approval` for a request that waits. |
-| `approval` | `ApprovalCall`, `Control`, `Verdict`, `ApprovalRefusal` and `ApprovalStats` for an action with the member `approval` (protocol 17). |
+| `approval` | `ApprovalCall`, `Control`, `Verdict`, `ApprovalRefusal` and `ApprovalStats` for each action (protocol 5.2b, 17). |
 | `Ceilings` | `cap`, `cap_or_ceiling`, `check` and `cap_duration`. |
 | `ActionDocumentBuilder`, `load_file`, `ServedDocument` | Build, load and serve the action document (section 5). |
 | `OptionsQuery`, `OptionsSource` | The options route (5.6 to 5.8). |
@@ -86,9 +86,10 @@ The type `Refusal` has the status of 10.3. The reason of the PDP stays in the lo
 
 ### Methods of the PEP
 
-- `decide` asks the other permissions first, without `context.usage`. Then it asks the use. For an action that lists a budget, the question of the use has `context.usage`.
-- `check` asks without `context.usage` and takes no unit. Use it for a call that asks the client for input or for an approval (binding 3.5, 3.5a).
-- `decide_approval` follows the steps of 17.7 for an action with the member `approval`. It asks with the effect and no usage. It submits the request on `approval_required` or `approval_pending`. After a `true` answer, it asks with `context.usage` and the same effect. The caller gives `op`, `view` and the control: `approval_ref`, `lease_s` or `until`.
+- `decide` asks the other permissions first, without `context.usage`. Then it asks the use. For an action that lists a budget, the question of the use has `context.usage`. A route that cannot wait calls `decide`. For a reason of 17.1, the refusal maps to HTTP 403 with the code `approval_cannot_wait` (17.7a).
+- `check` asks without `context.usage` and takes no unit. Use it for a call that asks the client for input (binding 3.5).
+- `decide_approval` follows the steps of 17.7 for each action. It asks as 10.1 says, with no effect. On a reason of 17.1, it calls the function `build` of the caller. This function gives `op`, `view` and the control.
+- Then the PEP asks with the effect and no usage, and it submits the request on `approval_required` or `approval_pending`. After a `true` answer, it asks with `context.usage` and the same effect. A call with no control cannot submit, and it gets `ApprovalRefusal::InvalidArgument`.
 - `approval_status` reads the verdict with `renew=true` and the subject of the token. `approval_keepalive` renews the lease. Call them only for a call of the agent that names the request. The PEP never renews on a timer.
 - `approval_stats` gives the counters of what the PEP received from the approval API. The PEP reads only `verdict`, `request_id` and `code`. It never reads an intent, an explanation or an `approval_ref`.
 - `display` asks with `context.match` equal to `subtree` for a list of permissions (4.4). The answers are for the display only. They never let an operation run.

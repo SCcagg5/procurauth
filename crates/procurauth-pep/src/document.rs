@@ -84,20 +84,7 @@ impl ActionDocumentBuilder {
             resource_types: resource_types.iter().map(|s| (*s).to_owned()).collect(),
             description: description.to_owned(),
             limits: limits.iter().map(|s| (*s).to_owned()).collect(),
-            approval: false,
         });
-        self
-    }
-
-    /// Give the declared action the member `approval` (5.2b). A grant of the action can have `confirm`.
-    /// A service with such an action follows protocol 17 for each use of it.
-    /// The call does nothing when the action is not declared, and `build` then reports no error:
-    /// declare the action first.
-    #[must_use]
-    pub fn approval(mut self, action: &str) -> Self {
-        if let Some(found) = self.document.actions.iter_mut().find(|a| a.name == action) {
-            found.approval = true;
-        }
         self
     }
 

@@ -110,6 +110,13 @@ pub(crate) fn op_vars(operation: Operation, def: &OpDef, service: &str) -> Vars 
     if let Some(value) = def.ceiling_value {
         vars.set("ceiling_value", json!(value));
     }
+    if operation == Operation::McpCallApproval {
+        // The action of the other permission of the call, or a text that no action has (protocol 5.2).
+        vars.set(
+            "other_action",
+            Value::String(def.other_action.clone().unwrap_or_else(|| "-".to_owned())),
+        );
+    }
     if operation == Operation::McpCallApproval
         && let Ok([base, second, third]) = effects(def, service)
     {
@@ -157,7 +164,8 @@ fn add_mcp_headers(headers: &mut Headers, body: &Value) {
 
 /// The arguments of a call of `mcp_call_approval`: the arguments of the base call or of the variant
 /// `effect_2` or `effect_3`, and the control arguments. The base call has `lease_s`. The variant
-/// `approval_ref` gives `approval_ref` in place of it. The variant `wait` adds `wait_s`.
+/// `approval_ref` gives `approval_ref` in place of it. The variant `no_control` has no control argument.
+/// The variant `wait` adds `wait_s`.
 fn approval_arguments(def: &OpDef, vars: &Vars, variant: Option<Variant>) -> Result<Value, String> {
     let unknown = |name: String| format!("the variable `{name}` has no value");
     let template = match (variant, &def.approval) {
@@ -172,10 +180,14 @@ fn approval_arguments(def: &OpDef, vars: &Vars, variant: Option<Variant>) -> Res
     let Some(map) = arguments.as_object_mut() else {
         return Err("the arguments of the call are not a JSON object".to_owned());
     };
-    if variant == Some(Variant::ApprovalRef) {
-        map.insert("approval_ref".to_owned(), json!(APPROVAL_REF));
-    } else {
-        map.insert("lease_s".to_owned(), json!(BASE_LEASE_SECONDS));
+    match variant {
+        Some(Variant::ApprovalRef) => {
+            map.insert("approval_ref".to_owned(), json!(APPROVAL_REF));
+        }
+        Some(Variant::NoControl) => {}
+        _ => {
+            map.insert("lease_s".to_owned(), json!(BASE_LEASE_SECONDS));
+        }
     }
     if variant == Some(Variant::Wait) {
         map.insert("wait_s".to_owned(), json!(WAIT_SECONDS));

@@ -52,8 +52,7 @@
             "limits": [
               "requests",
               "max_duration"
-            ],
-            "approval": "optional"
+            ]
           }
         ],
         "resources": [

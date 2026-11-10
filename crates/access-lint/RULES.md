@@ -24,6 +24,7 @@ The checks of `grants` and `options` that need the document run only when the do
 | document | 5.2 | `wrong_type` | error | value of a wrong type | A member has a JSON type that 5.2 does not give it. |
 | document | 5.2 | `missing_member` | error | member is absent | A mandatory member of 5.2 is absent. |
 | document | 5.2 | `unknown_member` | warning | unknown member | A member that 5.2 does not name. A reader ignores it (1.2, 5.3). |
+| document | 5.2b | `removed_member` | warning | member approval of an action | An action has the member `approval`. This member does not exist. A reader ignores it. Remove it, because each action follows section 17. |
 | document | 5.3 | `unknown_member` | error | unknown member in a limit declaration | A limit declaration has a member that 6.1 does not name. This makes the document bad. |
 | document | 6.1 | `wrong_type` | error | value of a wrong type | A member of a limit declaration has a wrong JSON type. |
 | document | 6.1 | `missing_member` | error | member is absent | A limit declaration lacks `name`, `label`, `description`, `unit` or `kind`. |

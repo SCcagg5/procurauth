@@ -66,6 +66,7 @@ pub(crate) fn pep_runner<'a>(
         caps: Capabilities::for_pep(pep),
         global,
         notes: std::sync::Mutex::default(),
+        current_call: std::sync::Mutex::default(),
         env: Env::Pep(PepEnv {
             profile: pep.clone(),
             signer,
@@ -169,6 +170,7 @@ pub(crate) fn edge_runner<'a>(
         caps,
         global,
         notes: std::sync::Mutex::default(),
+        current_call: std::sync::Mutex::default(),
         env: Env::Edge(EdgeEnv {
             profile: edge.clone(),
             verifier,
@@ -198,6 +200,7 @@ pub(crate) fn pdp_runner<'a>(
         caps: Capabilities::for_pdp(pdp),
         global: Vars::new(),
         notes: std::sync::Mutex::default(),
+        current_call: std::sync::Mutex::default(),
         env: Env::Pdp(PdpEnv {
             profile: pdp.clone(),
             credential,

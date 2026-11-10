@@ -44,6 +44,9 @@ struct WhenSpec {
     match_mode: Option<String>,
     #[serde(default)]
     effect: Option<String>,
+    /// True to match only a question with no `context.approval` (protocol 17.1).
+    #[serde(default)]
+    no_effect: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -96,6 +99,7 @@ pub(crate) struct Rule {
     usage: Option<bool>,
     match_mode: Option<String>,
     effect: Option<String>,
+    no_effect: Option<bool>,
     reaction: Reaction,
 }
 
@@ -141,6 +145,7 @@ impl Rule {
             usage: spec.when.usage,
             match_mode: spec.when.match_mode,
             effect: spec.when.effect,
+            no_effect: spec.when.no_effect,
             reaction,
         })
     }
@@ -176,6 +181,11 @@ impl Rule {
                 .pointer("/context/approval/effect")
                 .and_then(Value::as_str)
                 != Some(effect)
+        {
+            return false;
+        }
+        if let Some(none) = self.no_effect
+            && question.pointer("/context/approval").is_none() != none
         {
             return false;
         }

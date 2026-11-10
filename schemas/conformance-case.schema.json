@@ -77,7 +77,6 @@
           "no_mcp_endpoint",
           "no_budget_session",
           "no_input_tool",
-          "no_approval_tool",
           "no_multi_action",
           "single_key_set",
           "no_approval_support"
@@ -240,6 +239,10 @@
               "description": "The member context.approval.effect of the question. It is the text sha256: and 64 digits, or a variable such as {{effect}}.",
               "type": "string",
               "pattern": "^(sha256:[0-9a-f]{64}|\\{\\{effect(_[0-9]+)?\\}\\})$"
+            },
+            "no_effect": {
+              "description": "True for a question with no context.approval (protocol 17.1). False for a question that has it.",
+              "type": "boolean"
             }
           }
         },
@@ -314,8 +317,8 @@
           "type": "string"
         },
         "variant": {
-          "description": "For the operation mcp_call_approval only. It changes the base call. The values effect_2 and effect_3 change an argument that decides what the tool does, so the effect is the variable effect_2 or effect_3. The value approval_ref gives the control argument approval_ref in place of lease_s. The value wait adds the control argument wait_s. A control argument does not change the effect (protocol 17.9a).",
-          "enum": ["effect_2", "effect_3", "approval_ref", "wait"]
+          "description": "For the operation mcp_call_approval only. It changes the base call. The values effect_2 and effect_3 change an argument that decides what the tool does, so the effect is the variable effect_2 or effect_3. The value approval_ref gives the control argument approval_ref in place of lease_s. The value wait adds the control argument wait_s, and the value no_control gives none. A control argument never changes the effect (protocol 17.9a).",
+          "enum": ["effect_2", "effect_3", "approval_ref", "wait", "no_control"]
         }
       },
       "dependentSchemas": {
@@ -340,7 +343,7 @@
         "json": { "description": "Members of the body of the answer, when the body is JSON.", "$ref": "#/$defs/pointer_matchers" },
         "valid_as": {
           "description": "The body of the answer is a good document of this kind, as the core library reads it. A value with no_warning also needs a reader report with no warning.",
-          "enum": ["action_document", "action_document_no_warning", "options_answer", "options_answer_no_warning"]
+          "enum": ["action_document", "action_document_no_warning", "action_document_no_approval_member", "action_document_called_for_each_action", "options_answer", "options_answer_no_warning"]
         },
         "pdp_connections": {
           "description": "For a PEP. The number of connections that the test PDP accepted since the start of the case.",

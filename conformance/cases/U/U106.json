@@ -8,9 +8,7 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "notes": "A PEP that renews on a timer would send a request on the route status or keepalive during the first step.",
   "given": {
@@ -20,6 +18,31 @@
       }
     },
     "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
       {
         "when": {
           "usage": false

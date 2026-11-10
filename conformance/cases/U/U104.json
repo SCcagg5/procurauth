@@ -8,9 +8,7 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "notes": "The second call must ask both questions again. A PEP that keeps the answer with units 0 sends none.",
   "given": {
@@ -20,6 +18,31 @@
       }
     },
     "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
       {
         "when": {
           "usage": true

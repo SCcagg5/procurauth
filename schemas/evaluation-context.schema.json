@@ -24,7 +24,7 @@
       "enum": ["node", "subtree"]
     },
     "approval": {
-      "description": "In a request: the effect of the operation, for the use of an action that has the member approval (protocol 17.1). The question never has op or view.",
+      "description": "In a request: the effect of the operation, for the use of an action that needed an approval (protocol 17.1). The question never has op or view.",
       "type": "object",
       "additionalProperties": false,
       "required": ["effect"],

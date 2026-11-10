@@ -82,6 +82,7 @@ The data file is a JSON object. The schema is `schemas/fake-pdp-data.schema.json
 - `counters`: the first values of the counters. They apply to the window of the clock at start.
 - `failures`: the failures to make. The kinds are `error_503`, `delay` and `no_answer`.
 - `approvals`: the approval requests that exist at the start (protocol 17.6). The last entry for one subject, action, resource and effect is the latest. See "Approvals".
+- `confirm_all`: a boolean, false by default. This is a test mode. When it is true, each action except `access` needs an approval for each subject, as if each grant had `confirm` equal to true. Use it to test that a PEP follows protocol section 17 for each action of its document.
 - `clock` and `metadata`: see the table of keys.
 
 The example `examples/datastore.json` is the data of protocol section 13. It has Alice, her key, Bob and his key. The example `examples/datastore-with-counters.json` also has first counter values, metadata and a failure.
@@ -139,7 +140,7 @@ When a credential belongs to one service, the PDP answers `invalid_resource` for
 
 ## Approvals
 
-The PDP gives the approvals of protocol section 17. It does this for each action whose grant has `confirm`. No flag turns it on.
+The PDP gives the approvals of protocol section 17. It does this for each action whose grant has `confirm`, or for each action when the data has `confirm_all`. No other flag turns it on.
 
 A question for such an action needs an approval. The PDP first decides as for a question without an effect. Only a `true` decision goes on to the approval.
 
@@ -148,7 +149,7 @@ A question for such an action needs an approval. The PDP first decides as for a 
 - An approval that can be used gives `true`. With usage, the PDP consumes the approval and takes the units in one atomic step (17.2). When a budget refuses, nothing is consumed.
 - A question with `context.match` equal to `subtree` and a question for `access` never need an approval (17.8).
 
-The API for a PEP is in the endpoints table. The credential of a service decides the access. A service with no action that has the member `approval` gets HTTP 403. A request of another service or of another subject gets HTTP 404.
+The API for a PEP is in the endpoints table. The credential of a service decides the access. A service with no action in its document gets HTTP 403. A request of another service or of another subject gets HTTP 404.
 
 The values that the PDP publishes are fixed. The metadata members `procurauth_approval_*` give them.
 

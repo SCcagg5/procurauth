@@ -1,0 +1,227 @@
+{
+  "id": "U113",
+  "title": "A call that cannot wait, a request to an HTTP route, gets HTTP 403 and the code approval_cannot_wait on approval_required. The PEP sends no effect and runs nothing.",
+  "role": "pep",
+  "paragraphs": [
+    "10.3",
+    "17.7a"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A use of an action with no budget",
+      "request": {
+        "operation": "use_plain",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error": {
+            "equals": "approval_cannot_wait"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A use on the service",
+      "request": {
+        "operation": "use_service",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error": {
+            "equals": "approval_cannot_wait"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "A use of an action that lists a budget",
+      "request": {
+        "operation": "use_budget",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error": {
+            "equals": "approval_cannot_wait"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      },
+      "skip_if": [
+        "no_budget_action"
+      ]
+    },
+    {
+      "name": "A use of an action that lists a ceiling",
+      "request": {
+        "operation": "use_ceiling",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error": {
+            "equals": "approval_cannot_wait"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      },
+      "skip_if": [
+        "no_ceiling_action"
+      ]
+    },
+    {
+      "name": "A use that needs two permissions",
+      "request": {
+        "operation": "use_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 403
+        },
+        "json": {
+          "/error": {
+            "equals": "approval_cannot_wait"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      },
+      "skip_if": [
+        "no_budget_action",
+        "no_multi_action"
+      ]
+    }
+  ]
+}

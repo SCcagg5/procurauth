@@ -185,7 +185,7 @@
           "description": "The arguments of the tool of an MCP call. The default is an empty object."
         },
         "approval": {
-          "description": "Only for mcp_call_approval. What the runner needs to compute the effects of the calls (protocol 17.3). The effect binds the service, the action, the resource of the operation and the op. The op is what the service builds from the arguments of the call.",
+          "description": "Only for an entry of approval_calls. What the runner needs to compute the effects of the calls (protocol 17.3, 17.3a). The effect binds the service, the action, the resource of the operation and the op. The op is what the service builds from the arguments of the call.",
           "type": "object",
           "additionalProperties": false,
           "required": [
@@ -226,6 +226,11 @@
             "type": "string",
             "pattern": "^(/([^/~]|~[01])*)*$"
           }
+        },
+        "other_action": {
+          "description": "Only for an entry of approval_calls. The variable other_action: the action of the other permission of the call (protocol 5.5a), for a tool that needs two permissions. The test PDP answers true to that question. Without the member, the variable is a hyphen, which no action has.",
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -358,10 +363,6 @@
           "description": "The type of the nodes at the first level of the options route. The member says that the service has the route.",
           "type": "string",
           "minLength": 1
-        },
-        "approvals": {
-          "description": "True when the service gives approvals (protocol section 17). The runner then runs the cases of this section. The operation mcp_call_approval then has the member approval. The default is false.",
-          "type": "boolean"
         },
         "mcp": {
           "description": "The MCP endpoint of the service.",
@@ -529,19 +530,6 @@
                 }
               ]
             },
-            "mcp_call_approval": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/operation"
-                },
-                {
-                  "required": [
-                    "tool",
-                    "action"
-                  ]
-                }
-              ]
-            },
             "mcp_approve": {
               "allOf": [
                 {
@@ -585,6 +573,35 @@
               ]
             }
           }
+        },
+        "approval_calls": {
+          "description": "One call of a tool for each action of the service, except mcp.session (protocol 5.2b). The key is the name of the action. The cases of protocol section 17 that use mcp_call_approval run once for each entry. The runner reads the action document of the service, and the case U111 fails when an action has no entry. The member needs the member mcp.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+            "maxLength": 64
+          },
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/operation"
+              },
+              {
+                "required": [
+                  "tool",
+                  "resource_type",
+                  "resource_id",
+                  "ancestors",
+                  "approval"
+                ],
+                "not": {
+                  "required": [
+                    "action"
+                  ]
+                }
+              }
+            ]
+          }
         }
       },
       "allOf": [
@@ -614,11 +631,6 @@
                   {
                     "required": [
                       "mcp_call_multi"
-                    ]
-                  },
-                  {
-                    "required": [
-                      "mcp_call_approval"
                     ]
                   },
                   {
@@ -657,6 +669,30 @@
           "then": {
             "required": [
               "options_type"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "approval_calls"
+            ]
+          },
+          "then": {
+            "required": [
+              "mcp"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "mcp"
+            ]
+          },
+          "then": {
+            "required": [
+              "approval_calls"
             ]
           }
         }

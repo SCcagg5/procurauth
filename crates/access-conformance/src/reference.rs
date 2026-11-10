@@ -231,13 +231,6 @@ pub(crate) const KEYS: &[Key] = &[
         "The type of the nodes at the first level of the options route."
     ),
     key!(
-        "pep.approvals",
-        "profile",
-        "boolean",
-        "false",
-        "True when the service gives approvals (protocol section 17). The runner then runs the cases of this section. The operation `mcp_call_approval` then has the member `approval`."
-    ),
-    key!(
         "pep.mcp.path",
         "profile",
         "path",
@@ -350,24 +343,59 @@ pub(crate) const KEYS: &[Key] = &[
         "A name for a member of the JSON answer to the step before. The templates of the operation read it as a variable."
     ),
     key!(
-        "pep.operations.mcp_call_approval.approval.op",
+        "pep.approval_calls.<action>.tool",
         "profile",
-        "JSON object",
-        "none, mandatory with `pep.approvals`",
-        "The `op` that the service builds from the base call (protocol 17.3). The runner computes the variable `effect` from it."
+        "text",
+        "none, mandatory with `pep.mcp`",
+        "The tool whose call uses the action. The key `<action>` is the name of an action of the service. The profile needs one entry for each action of the document, except `mcp.session` (protocol 5.2b). The cases of protocol section 17 run once for each entry."
     ),
     key!(
-        "pep.operations.mcp_call_approval.approval.variants.<name>.arguments",
+        "pep.approval_calls.<action>.arguments",
         "profile",
         "JSON",
-        "none, mandatory with `pep.approvals`",
+        "none, an empty object",
+        "The arguments of the base call of the tool, with no control argument. The runner adds `lease_s`."
+    ),
+    key!(
+        "pep.approval_calls.<action>.resource_type",
+        "profile",
+        "text",
+        "none, mandatory with `pep.mcp`",
+        "The type of the node of the use. The runner needs it to compute the effect."
+    ),
+    key!(
+        "pep.approval_calls.<action>.resource_id",
+        "profile",
+        "text",
+        "none, mandatory with `pep.mcp`",
+        "The id of the node of the use."
+    ),
+    key!(
+        "pep.approval_calls.<action>.ancestors",
+        "profile",
+        "JSON array",
+        "none, mandatory with `pep.mcp`",
+        "The chain of the node of the use, from the service down."
+    ),
+    key!(
+        "pep.approval_calls.<action>.approval.op",
+        "profile",
+        "JSON object",
+        "none, mandatory with `pep.mcp`",
+        "The `op` that the service builds from the base call (protocol 17.3a). The runner computes the variable `effect` from it."
+    ),
+    key!(
+        "pep.approval_calls.<action>.approval.variants.<name>.arguments",
+        "profile",
+        "JSON",
+        "none, mandatory with `pep.mcp`",
         "The arguments of the call of the variant `effect_2` or `effect_3`, with no control argument."
     ),
     key!(
-        "pep.operations.mcp_call_approval.approval.variants.<name>.op",
+        "pep.approval_calls.<action>.approval.variants.<name>.op",
         "profile",
         "JSON object",
-        "none, mandatory with `pep.approvals`",
+        "none, mandatory with `pep.mcp`",
         "The `op` that the service builds from those arguments. The runner computes the variable `effect_2` or `effect_3` from it."
     ),
     key!(
@@ -760,9 +788,6 @@ pub(crate) fn effective(cli: &Cli, role: Role, raw: &Value, base: &Path) -> Vec<
         Role::Pep => {
             if !has("pep.answer_cache") {
                 defaults.push(ConfigLine::new("pep.answer_cache", "false", "default"));
-            }
-            if !has("pep.approvals") {
-                defaults.push(ConfigLine::new("pep.approvals", "false", "default"));
             }
             if section_has("/mcp") && !has("pep.mcp.session_budget") {
                 defaults.push(ConfigLine::new(

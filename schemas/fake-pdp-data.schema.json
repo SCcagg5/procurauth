@@ -51,6 +51,10 @@
       "type": "array",
       "items": { "$ref": "#/$defs/approval" }
     },
+    "confirm_all": {
+      "description": "Test mode. Default false. When it is true, each action except access needs an approval for each subject, as if each grant had confirm equal to true (protocol 17.8). Use it to test that a PEP follows protocol section 17 for each action of its action document.",
+      "type": "boolean"
+    },
     "failures": {
       "description": "The failures that the PDP makes, to test the PEP (protocol 6.9, 10.3).",
       "type": "array",

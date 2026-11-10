@@ -31,7 +31,7 @@ use crate::approval::{
 use crate::document::ActionDocument;
 use crate::identity::Identity;
 use crate::operation::{Operation, Permission, node};
-use crate::pep::{Allowed, Pep};
+use crate::pep::{Allowed, Granted, Pep};
 use crate::refusal::Refusal;
 use crate::reply::HttpReply;
 
@@ -581,7 +581,7 @@ pub fn status_reply(request: &RpcRequest, verdict: Verdict) -> McpReply {
 /// The name of the tool that reads the verdict (binding 5.7b).
 pub const STATUS_TOOL: &str = "get_action_status";
 
-/// The control arguments of a call of a tool with an approval (binding 5.7).
+/// The control arguments of a call of a tool (binding 5.7). Each tool accepts them.
 const CONTROL_ARGUMENTS: [&str; 5] = ["approval_ref", "wait_s", "supersedes", "lease_s", "until"];
 /// The longest text of a control argument.
 const CONTROL_MAX_BYTES: usize = 512;
@@ -589,8 +589,8 @@ const CONTROL_MAX_BYTES: usize = 512;
 /// The control arguments of a call, and the other arguments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApprovalArguments {
-    /// `approval_ref`, `lease_s` or `until`.
-    pub control: Control,
+    /// `approval_ref`, `lease_s` or `until`, or none (binding 5.7).
+    pub control: Option<Control>,
     /// `supersedes`.
     pub supersedes: Option<String>,
     /// `wait_s`, bounded by the PEP.
@@ -601,19 +601,19 @@ pub struct ApprovalArguments {
 
 impl ApprovalArguments {
     /// The call for [`crate::Pep::decide_approval`], with the `op` and the `view` that the tool built.
-    pub fn into_call(self, op: Value, view: Value) -> ApprovalCall {
+    pub fn into_call(&self, op: Value, view: Value) -> ApprovalCall {
         ApprovalCall {
             op,
             view,
-            control: self.control,
-            supersedes: self.supersedes,
+            control: self.control.clone(),
+            supersedes: self.supersedes.clone(),
             wait_seconds: self.wait_seconds,
         }
     }
 }
 
-/// Split the control arguments from the arguments of a call (binding 5.7). A call must give
-/// exactly one of `approval_ref`, `lease_s` and `until`. A control argument has the right type.
+/// Split the control arguments from the arguments of a call (binding 5.7). A call gives at most
+/// one of `approval_ref`, `lease_s` and `until`. A control argument has the right type.
 /// The control arguments never enter `op`.
 ///
 /// # Errors
@@ -642,9 +642,10 @@ pub fn split_approval_arguments(arguments: &Value) -> Result<ApprovalArguments, 
     };
     let (reference, lease, until) = (text("approval_ref")?, whole("lease_s", 1)?, text("until")?);
     let control = match (reference, lease, until) {
-        (Some(r), None, None) => Control::Reference(r),
-        (None, Some(l), None) => Control::LeaseSeconds(l),
-        (None, None, Some(u)) => Control::Until(u),
+        (Some(r), None, None) => Some(Control::Reference(r)),
+        (None, Some(l), None) => Some(Control::LeaseSeconds(l)),
+        (None, None, Some(u)) => Some(Control::Until(u)),
+        (None, None, None) => None,
         _ => return Err(()),
     };
     let supersedes = text("supersedes")?;
@@ -687,8 +688,9 @@ pub fn status_tool_entry() -> Value {
 /// The stage of a `tools/call` (3.4, 3.5, 3.5a).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stage {
-    /// The call only asks the client for input or for an approval. It is not a
-    /// use. The PEP asks without `context.usage`.
+    /// The call only asks the client for input. It is not a use. The PEP asks without
+    /// `context.usage`. A reason of 17.1 does not refuse such a call (binding 3.5): the
+    /// action needs an approval at the run, not now.
     Ask,
     /// The tool runs. This is the use. The PEP asks with `context.usage` when the action lists a budget.
     Run,
@@ -772,30 +774,45 @@ impl<'a> McpGate<'a> {
             });
         }
         match stage {
-            Stage::Ask => self.pep.check(who, operation),
-            Stage::Run => self.pep.decide(who, operation),
+            Stage::Ask => match self.pep.check(who, operation).into_result() {
+                // Binding 3.5: the call that asks for input runs no action. A reason of 17.1
+                // tells that the use needs an approval later, so the call goes on.
+                Err(Refusal::Forbidden {
+                    reason: Some(reason),
+                    cause: crate::refusal::DenialCause::Decision,
+                }) if reason.is_approval() => Ok(Allowed::new(
+                    0,
+                    Granted {
+                        permission: operation.uses().first().cloned().ok_or_else(|| {
+                            Refusal::Internal("the operation has no use".to_owned())
+                        })?,
+                        ceilings: crate::ceilings::Ceilings::default(),
+                    },
+                    Vec::new(),
+                )),
+                other => other,
+            },
+            Stage::Run => self.pep.decide(who, operation).into_result(),
         }
-        .into_result()
     }
 }
 
 impl McpGate<'_> {
-    /// True when `tools/list` names `get_action_status`: the list names a tool whose action has
-    /// the member `approval` (binding 5.7b).
+    /// True when `tools/list` names `get_action_status`: the list names at least one tool (binding 5.7b).
+    /// Each tool follows protocol 17, so each tool can give a result that waits.
     pub fn lists_status_tool(&self, visible: &[&ToolSpec]) -> bool {
-        visible
-            .iter()
-            .any(|tool| self.pep.action_has_approval(&tool.action))
+        !visible.is_empty()
     }
 
-    /// Ask for one call of a tool whose action has the member `approval` (binding 3.5a, protocol 17.7).
+    /// Ask for one call of a tool, and follow protocol 17.7 (binding 3.5a). `build` gives `op`,
+    /// `view` and the controls, and it runs only when the PDP asks for an approval.
     /// A tool that the map does not have gets the refusal of a `false` answer (4.2, 5.1).
     pub fn approve(
         &self,
         who: &Identity,
         tool: &str,
         operation: &Operation,
-        call: &ApprovalCall,
+        build: impl FnOnce() -> Result<ApprovalCall, ApprovalRefusal>,
     ) -> crate::pep::Outcome {
         if self.tools.get(tool).is_none() {
             return crate::pep::Outcome::Refused(Refusal::Forbidden {
@@ -803,11 +820,11 @@ impl McpGate<'_> {
                 cause: crate::refusal::DenialCause::Decision,
             });
         }
-        self.pep.decide_approval(who, operation, call)
+        self.pep.decide_approval(who, operation, build)
     }
 
     /// Read the verdict for `get_action_status` (binding 5.7b). The tool is not a use, and it asks no question.
-    /// The service has the tool only when its document has an action with the member `approval`.
+    /// A service with a tool has this tool.
     ///
     /// # Errors
     /// Returns the refusal. The error for a request that is unknown or that is of another subject is
@@ -816,12 +833,9 @@ impl McpGate<'_> {
         self.pep.approval_status(who, request_id)
     }
 
-    /// True when the service has a tool with an approval: `get_action_status` exists.
+    /// True when the service has a tool: `get_action_status` exists (binding 5.7b).
     pub fn has_status_tool(&self) -> bool {
-        self.tools
-            .tools()
-            .iter()
-            .any(|tool| self.pep.action_has_approval(&tool.action))
+        !self.tools.tools().is_empty()
     }
 }
 

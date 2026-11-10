@@ -1,0 +1,111 @@
+{
+  "id": "U116",
+  "title": "A call with no control argument cannot give a lease when the PDP asks for an approval. It gets the tool error invalid_argument. The PEP submits no request and sends no question with usage and effect.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.7",
+    "mcp:5.7a",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required",
+              "evaluation_id": "ev_conformance_1"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A call with no control argument",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person",
+        "variant": "no_control"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "equals": true
+          },
+          "/result/structuredContent/error/code": {
+            "equals": "invalid_argument"
+          },
+          "/result/structuredContent/error/retryable": {
+            "equals": false
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              },
+              "/context/approval/effect": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

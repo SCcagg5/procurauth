@@ -7,7 +7,7 @@
 //! | `POST /approval/v1/requests/{id}/keepalive` | Renew the lease and read the verdict. |
 //!
 //! The routes share the listener and the credential of the PDP endpoints. A credential that
-//! belongs to a service that has no action with the member `approval` gets HTTP 403.
+//! belongs to a service that has no action in its document gets HTTP 403.
 //! No answer has more than the verdict (17.12).
 
 use std::time::{Duration, Instant};

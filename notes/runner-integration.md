@@ -26,7 +26,7 @@ Start the service before the runner. The service must call the test PDP of the r
 6. Declare each part that the service has. The key `options_type` says that the service has the options route. The key `mcp` says that it has an MCP endpoint. The key `answer_cache` says that it keeps answers.
 7. When the service keeps state between requests, for example an answer cache, give a request in `pep.reset`. The runner sends it before each case. A cache that lasts from one case to the next gives false failures, because the cases share subjects.
 
-8. For a service that gives approvals (protocol section 17), set `pep.approvals` to true. Give the operation `mcp_call_approval` the member `approval`. It has the `op` of the base call and of the variants `effect_2` and `effect_3`. The runner computes the effects from them. It adds the control arguments `lease_s` 900, `approval_ref` and `wait_s` to the calls. The test PDP also serves the approval API of 17.4 at the same address.
+8. Each action follows protocol section 17, so a profile with `mcp` has the member `approval_calls`: one entry for each action of the document, except `mcp.session`. Each entry has the member `approval` with the `op` of the base call and of the variants `effect_2` and `effect_3`. The runner computes the effects from them, and it runs the cases of section 17 once for each entry. It adds the control arguments `lease_s` 900, `approval_ref` and `wait_s` to the calls. The test PDP also serves the approval API of 17.4 at the same address.
 
 ### What the cases assume
 

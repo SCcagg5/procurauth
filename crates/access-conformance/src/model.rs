@@ -82,13 +82,12 @@ pub(crate) enum Condition {
     NoBudgetSession,
     /// The service has no tool that asks the client for input.
     NoInputTool,
-    /// The service has no tool whose action waits for an approval.
-    NoApprovalTool,
     /// The service has no use that needs two permissions.
     NoMultiAction,
     /// The key set of the edge holds one key only.
     SingleKeySet,
-    /// The target does not give approvals (protocol section 17).
+    /// The PDP or the edge gives no approval (protocol section 17). It never holds for a PEP:
+    /// each service follows section 17 (protocol 5.2b).
     NoApprovalSupport,
 }
 
@@ -104,7 +103,6 @@ impl Condition {
             Self::NoMcpEndpoint => "the service has no MCP endpoint",
             Self::NoBudgetSession => "the action mcp.session lists no budget",
             Self::NoInputTool => "the service has no tool that asks for input",
-            Self::NoApprovalTool => "the service has no tool that waits for an approval",
             Self::NoMultiAction => "the service has no use that needs two permissions",
             Self::SingleKeySet => "the key set of the edge holds one key",
             Self::NoApprovalSupport => {
@@ -287,6 +285,8 @@ pub(crate) enum Variant {
     ApprovalRef,
     /// The call adds the control argument `wait_s`.
     Wait,
+    /// The call has no control argument: no `lease_s`, no `approval_ref` and no `until`.
+    NoControl,
 }
 
 /// The request of a step.
@@ -330,6 +330,11 @@ pub(crate) enum ValidAs {
     ActionDocument,
     /// A good action document, and a report with no warning.
     ActionDocumentNoWarning,
+    /// A good action document in which no action has the member `approval` (protocol 5.2b).
+    ActionDocumentNoApprovalMember,
+    /// A good action document in which each action except `mcp.session` is the action of an entry of
+    /// `pep.approval_calls` of the profile (protocol 5.2b).
+    ActionDocumentCalledForEachAction,
     /// A good answer of the options route.
     OptionsAnswer,
     /// A good answer of the options route, and a report with no warning.

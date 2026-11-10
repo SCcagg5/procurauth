@@ -1,0 +1,29 @@
+{
+  "id": "U111",
+  "title": "Each action of the action document, except mcp.session, has a call in the profile. The runner then tests the flow of section 17 for it.",
+  "role": "pep",
+  "paragraphs": [
+    "5.2b",
+    "17.3a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {},
+  "steps": [
+    {
+      "name": "The action document",
+      "request": {
+        "operation": "read_actions"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "valid_as": "action_document_called_for_each_action"
+      }
+    }
+  ],
+  "notes": "The runner runs the cases that use mcp_call_approval once for each entry of pep.approval_calls. This case fails when the document has an action with no entry, so a service cannot skip an action."
+}

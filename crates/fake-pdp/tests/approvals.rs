@@ -109,6 +109,28 @@ fn p_17_1_a_question_with_no_effect_gets_approval_required_and_no_evaluation_id(
 }
 
 #[test]
+fn p_17_8_the_test_mode_confirm_all_gates_each_action_except_access() {
+    // The subject of this directory has grants with no `confirm`. With `confirm_all`, the PDP
+    // asks for an approval for each action of the document, as protocol 5.2b and 17 say.
+    let mut data = directory();
+    for subject in data["subjects"].as_array_mut().unwrap() {
+        for grant in subject["grants"].as_array_mut().unwrap() {
+            grant.as_object_mut().unwrap().remove("confirm");
+        }
+    }
+    let plain = start_admin(&data);
+    let answer = ask(&plain, &ask_effect(KEY, None, false));
+    assert_ne!(answer["context"]["reason"], "approval_required", "{answer}");
+    data["confirm_all"] = json!(true);
+    let server = start_admin(&data);
+    let answer = ask(&server, &ask_effect(KEY, None, false));
+    assert_eq!(answer["context"]["reason"], "approval_required", "{answer}");
+    let answer = ask(&server, &ask_effect(KEY, Some(&effect(&op())), false));
+    assert_eq!(answer["context"]["reason"], "approval_required", "{answer}");
+    assert!(answer["context"]["evaluation_id"].is_string());
+}
+
+#[test]
 fn p_17_1_the_whole_course_of_an_approval() {
     let server = start_admin(&directory());
     let op = op();
@@ -625,7 +647,7 @@ fn p_17_4_the_methods_and_the_paths_of_the_api_are_closed() {
 }
 
 #[test]
-fn p_17_4_a_service_with_no_approval_action_gets_403_and_each_service_sees_its_own_requests() {
+fn p_17_4_a_service_with_no_action_gets_403_and_each_service_sees_its_own_requests() {
     let mut data = directory();
     let digest = |text: &str| hex_of(&Sha256::digest(text.as_bytes()));
     data["services"][0]["credential_sha256"] = json!(digest("token-datastore"));

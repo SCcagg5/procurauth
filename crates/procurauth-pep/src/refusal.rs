@@ -13,6 +13,9 @@ use serde_json::json;
 use crate::approval::ApprovalRefusal;
 use crate::reply::HttpReply;
 
+/// The stable error code of a call that cannot wait for an approval (17.7a): HTTP 403.
+pub const APPROVAL_CANNOT_WAIT: &str = "approval_cannot_wait";
+
 /// Why the PEP refuses an identity token (9.4).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AuthFailure {
@@ -41,6 +44,9 @@ pub enum DenialCause {
     NoUsageUnits,
     /// The answer has a ceiling that the PEP cannot apply (7.5).
     UnknownCeiling(String),
+    /// The PDP answered a reason of 17.1 for another permission of the operation (5.5a).
+    /// The approval covers only the use, so the PEP fails closed (17.1, last paragraph).
+    OtherPermissionNeedsApproval,
 }
 
 /// Why the PEP cannot get a valid answer from the PDP (10.3).
@@ -112,6 +118,16 @@ impl Refusal {
     pub fn public_message(&self) -> &'static str {
         match self {
             Self::Unauthenticated(_) => "unauthorized",
+            // 17.7a: the call cannot wait for an approval. The code is stable.
+            Self::Forbidden {
+                reason: Some(reason),
+                cause: DenialCause::Decision,
+            } if reason.is_approval() => APPROVAL_CANNOT_WAIT,
+            // The approval covers only the use: another permission that needs one cannot be given.
+            Self::Forbidden {
+                cause: DenialCause::OtherPermissionNeedsApproval,
+                ..
+            } => APPROVAL_CANNOT_WAIT,
             Self::Forbidden { .. }
             | Self::Approval(ApprovalRefusal::Denied | ApprovalRefusal::Expired) => "forbidden",
             Self::Approval(ApprovalRefusal::InvalidArgument) => "invalid_argument",
@@ -169,6 +185,10 @@ impl fmt::Display for Refusal {
                     DenialCause::UnknownCeiling(name) => write!(
                         f,
                         "403: the answer has the ceiling `{name}`, which the PEP cannot apply (7.5)"
+                    ),
+                    DenialCause::OtherPermissionNeedsApproval => write!(
+                        f,
+                        "403: another permission of the operation needs an approval (17.1)"
                     ),
                 }
             }
@@ -262,6 +282,23 @@ mod tests {
                 .unwrap()
                 .contains("budget_exceeded")
         );
+    }
+
+    #[test]
+    fn p_17_7a_a_call_that_cannot_wait_gets_403_and_the_stable_code() {
+        for reason in [
+            Reason::ApprovalRequired,
+            Reason::ApprovalPending,
+            Reason::ApprovalDenied,
+            Reason::ApprovalExpired,
+        ] {
+            let reply = forbidden(Some(reason)).to_http();
+            assert_eq!(reply.status, 403);
+            assert_eq!(
+                String::from_utf8(reply.body).unwrap(),
+                r#"{"error":"approval_cannot_wait"}"#
+            );
+        }
     }
 
     #[test]

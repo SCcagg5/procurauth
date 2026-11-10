@@ -758,6 +758,17 @@ impl Reason {
         }
     }
 
+    /// True for the four reasons of 17.1: the action needs the approval of the owner.
+    pub fn is_approval(&self) -> bool {
+        matches!(
+            self,
+            Self::ApprovalRequired
+                | Self::ApprovalPending
+                | Self::ApprovalDenied
+                | Self::ApprovalExpired
+        )
+    }
+
     /// Read the text of a reason.
     pub fn parse(text: &str) -> Self {
         match text {

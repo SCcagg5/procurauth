@@ -118,6 +118,7 @@ The service holds a small tree in memory. A write changes it for the life of the
 | `data.read` | service, host, database, table | `requests`, `max_rows`, `max_duration` |
 | `data.write` | service, host, database, table | `requests`, `max_duration` |
 | `data.inspect` | service, host, database, table | none |
+| `data.append` | service, host, database, table | `requests` |
 | `mcp.session` | service | none |
 
 The budget `requests` counts the uses. The ceiling `max_rows` is the most rows of one read. A read without `limit` gives 100 rows at most. The ceiling `max_duration` is the longest run of one use, in seconds.
@@ -131,6 +132,7 @@ A read lowers the value of `timeout_seconds` to the ceiling. A write refuses a `
 - The service reads the token only from the header of the configuration. It never reads `Authorization` or a cookie.
 - The service builds the chain of the node from its own data (4.5).
 - A `false` answer gives HTTP 403. A spent budget gives HTTP 429 with `Retry-After`. No valid answer gives HTTP 503. The body never shows the reason (10.3).
+- Each action follows protocol section 17. A route cannot wait for an approval, so a reason of 17.1 gives HTTP 403 with the code `approval_cannot_wait` (17.7a). Each MCP tool follows 17.7: it builds `op` and `view` when the PDP asks for an approval, and it gives the result of binding 5.7.
 - The service asks the PDP before it looks for the node. A client that has no right learns nothing about the existence of a node.
 - The service never sends a question with `context.usage` again after a lost answer (10.6).
 - The service keeps its connections to the PDP open, and it splits its questions at the maxima of the PDP (10.7, 10.7a).

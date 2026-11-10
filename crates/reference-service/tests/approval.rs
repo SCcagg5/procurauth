@@ -54,6 +54,14 @@ fn owner(s: &Stack, request_id: &str, decision: &str) {
     assert_eq!(reply.status, 200, "{}", reply.text());
 }
 
+/// True when the answer of the PDP to this question is `true`.
+fn is_true(entry: &fake_pdp::log::LogEntry) -> bool {
+    entry
+        .answer
+        .as_ref()
+        .is_some_and(|a| a["decision"] == json!(true))
+}
+
 fn result(reply: &Reply) -> Value {
     assert_eq!(reply.status, 200, "{}", reply.text());
     reply.json()["result"].clone()
@@ -111,10 +119,11 @@ fn mcp_5_7_the_call_waits_the_owner_approves_and_the_second_call_runs_one_time()
         "awaiting_approval"
     );
     assert_ne!(again["structuredContent"]["action"]["id"], id.as_str());
-    // The questions: one without usage, then with usage after the approval.
+    // The questions: one with no effect, one with the effect and no usage, then one with usage
+    // and the effect after the approval. Only the last one has a `true` answer with usage.
     let log = s.pdp.log();
     let append: Vec<_> = log.iter().filter(|e| e.action == "data.append").collect();
-    assert!(append.iter().filter(|e| e.usage).count() == 1);
+    assert!(append.iter().filter(|e| e.usage && is_true(e)).count() == 1);
 }
 
 #[test]
@@ -144,19 +153,18 @@ fn mcp_5_7a_a_declined_request_gives_approval_denied_with_no_text_of_the_owner()
         .pdp
         .log()
         .iter()
-        .filter(|e| e.action == "data.append" && e.usage)
+        .filter(|e| e.action == "data.append" && e.usage && is_true(e))
         .count();
     assert_eq!(usage_questions, 0, "a refused approval asks no use");
     assert_eq!(s.used("alice", "second"), 0);
 }
 
 #[test]
-fn mcp_5_7_a_call_with_no_control_or_with_two_controls_gets_invalid_argument_and_asks_nothing() {
+fn mcp_5_7_a_call_with_two_controls_or_a_bad_control_gets_invalid_argument_and_asks_nothing() {
     let s = admin_stack();
     let token = s.edge.token("alice");
     let rows = json!([{"id": 1}]);
     for controls in [
-        json!({}),
         json!({"lease_s": 900, "until": "2030-01-01T00:00:00Z"}),
         json!({"lease_s": 0}),
         json!({"lease_s": "900"}),
@@ -176,6 +184,34 @@ fn mcp_5_7_a_call_with_no_control_or_with_two_controls_gets_invalid_argument_and
     }
     assert!(s.pdp.log().iter().all(|e| e.action != "data.append"));
     assert_eq!(s.app.pep().approval_stats().submissions, 0);
+}
+
+#[test]
+fn mcp_5_7_a_call_with_no_control_cannot_give_a_lease_when_the_pdp_asks_for_an_approval() {
+    let s = admin_stack();
+    let token = s.edge.token("alice");
+    // The grant of alice has `confirm` on `data.append`: the PDP asks for an approval.
+    let reply = s.mcp(
+        Some(&token),
+        &call(7, "append_rows", &args(&json!([{"id": 1}]), &json!({}))),
+    );
+    let r = result(&reply);
+    assert_eq!(r["isError"], true);
+    assert_eq!(r["structuredContent"]["error"]["code"], "invalid_argument");
+    // The PEP submitted nothing, and no question with usage and the effect ran the action.
+    assert_eq!(s.app.pep().approval_stats().submissions, 0);
+    assert_eq!(s.used("alice", "second"), 0);
+    // A call that needs no approval runs with no control argument.
+    let read = result(&s.mcp(
+        Some(&token),
+        &call(
+            8,
+            "list_tables",
+            &json!({"host": "prod", "database": "test2"}),
+        ),
+    ));
+    assert!(read.get("isError").is_none(), "{read}");
+    assert!(read["structuredContent"]["tables"].is_array());
 }
 
 #[test]
@@ -215,7 +251,7 @@ fn mcp_5_7b_a_request_of_another_subject_and_an_unknown_request_get_the_same_err
 }
 
 #[test]
-fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_for_an_approval_tool() {
+fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_when_it_names_a_tool() {
     let s = admin_stack();
     let reply = s.mcp(
         Some(&s.edge.token("alice")),
@@ -229,7 +265,7 @@ fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_for_an_approval_t
         .find(|t| t["name"] == "get_action_status")
         .unwrap();
     assert_eq!(status["annotations"]["readOnlyHint"], true);
-    // A subject with no right on the action does not see the approval tool, nor the status tool.
+    // The status tool is listed with each list that names a tool: each tool can give a result that waits.
     let key = s.edge.key_token(KEY_ALICE, "alice");
     let names: Vec<String> = result(&s.mcp(Some(&key), &rpc(7, "tools/list", json!({}))))["tools"]
         .as_array()
@@ -238,7 +274,7 @@ fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_for_an_approval_t
         .map(|t| t["name"].as_str().unwrap().to_owned())
         .collect();
     assert!(!names.contains(&"append_rows".to_owned()));
-    assert!(!names.contains(&"get_action_status".to_owned()));
+    assert!(names.contains(&"get_action_status".to_owned()));
 }
 
 #[test]

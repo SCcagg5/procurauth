@@ -72,8 +72,6 @@ pub struct Action {
     pub description: String,
     /// The names of the limits of the action (6.2).
     pub limits: Vec<String>,
-    /// True when the action has the member `approval` (5.2b): a grant can have `confirm`.
-    pub approval: bool,
 }
 
 /// A node that the service names (5.2).
@@ -290,9 +288,6 @@ impl ActionDocument {
                 m.insert("description".into(), json!(a.description));
                 if !a.limits.is_empty() {
                     m.insert("limits".into(), json!(a.limits));
-                }
-                if a.approval {
-                    m.insert("approval".into(), json!("optional"));
                 }
                 Value::Object(m)
             })
@@ -674,21 +669,18 @@ fn read_actions(items: &[Value], base: &JsonPath, scan: &Scan, report: &mut Repo
         let types = obj.strings("resource_types", report);
         let description = obj.string("description", report).unwrap_or_default();
         let limits = obj.strings_opt("limits", report);
-        let approval = obj.string_opt("approval", report);
-        obj.finish(report);
-        if let Some(value) = approval
-            && value != "optional"
-        {
-            report.error(
+        // 5.2b: the member `approval` does not exist. Each action follows section 17.
+        // A reader ignores it as an unknown member, and it gives a specific warning.
+        let has_approval = obj.has("approval");
+        if has_approval {
+            report.warning(
                 &path.key("approval"),
                 "5.2b",
-                "bad_approval",
-                format!(
-                    "Member `approval`: expected the text `optional`, found {}.",
-                    show(&json!(value))
-                ),
+                "removed_member",
+                "Member `approval` is not a member of an action. A reader ignores it. Each action follows protocol section 17, so remove the member.".to_owned(),
             );
         }
+        obj.finish(report);
         warn_length(
             report,
             &path.key("description"),
@@ -769,7 +761,6 @@ fn read_actions(items: &[Value], base: &JsonPath, scan: &Scan, report: &mut Repo
             resource_types: types.iter().map(|t| (*t).to_owned()).collect(),
             description: description.to_owned(),
             limits: limits.iter().map(|l| (*l).to_owned()).collect(),
-            approval: approval == Some("optional"),
         });
     }
     out
@@ -1152,23 +1143,20 @@ mod tests {
     }
 
     #[test]
-    fn p_5_2b_the_member_approval_has_the_value_optional() {
+    fn p_5_2b_the_member_approval_is_ignored_and_gives_a_warning() {
         let mut doc = section_13();
         doc["actions"][1]["approval"] = json!("optional");
-        assert!(findings_of(&doc).is_empty());
+        let found = findings_of(&doc);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert_eq!(found[0].1, "removed_member");
+        assert_eq!(found[0].2, Severity::Warning);
         let parsed = analyze_value(&doc).document.unwrap();
-        assert!(parsed.actions[1].approval);
-        assert!(!parsed.actions[0].approval);
-        assert_eq!(parsed.to_value()["actions"][1]["approval"], "optional");
-    }
-
-    #[test]
-    fn p_5_2b_another_value_is_a_bad_member() {
-        let mut doc = section_13();
-        doc["actions"][1]["approval"] = json!("required");
-        one_error(&doc, "$.actions[1].approval", "bad_approval");
+        assert!(parsed.to_value()["actions"][1].get("approval").is_none());
+        // The member has no value that makes the document bad.
         doc["actions"][1]["approval"] = json!(true);
-        one_error(&doc, "$.actions[1].approval", "wrong_type");
+        let found = findings_of(&doc);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert!(analyze_value(&doc).document.is_some());
     }
 
     #[test]

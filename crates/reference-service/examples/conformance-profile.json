@@ -25,7 +25,6 @@
     },
     "answer_cache": false,
     "options_type": "host",
-    "approvals": true,
     "mcp": {
       "path": "/mcp",
       "session_budget": false
@@ -221,8 +220,10 @@
             "id": "prod"
           }
         ]
-      },
-      "mcp_call_approval": {
+      }
+    },
+    "approval_calls": {
+      "data.append": {
         "tool": "append_rows",
         "arguments": {
           "host": "prod",
@@ -234,7 +235,6 @@
             }
           ]
         },
-        "action": "data.append",
         "resource_type": "table",
         "resource_id": "orders",
         "ancestors": [
@@ -296,6 +296,219 @@
                 "database": "test2",
                 "table": "orders",
                 "rows": "[{\"id\":3}]"
+              }
+            }
+          }
+        }
+      },
+      "data.read": {
+        "tool": "read_rows",
+        "arguments": {
+          "host": "prod",
+          "database": "test2",
+          "table": "orders"
+        },
+        "resource_type": "table",
+        "resource_id": "orders",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          },
+          {
+            "type": "database",
+            "id": "test2"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "read_rows",
+            "host": "prod",
+            "database": "test2",
+            "table": "orders",
+            "limit": 100
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "limit": 10
+              },
+              "op": {
+                "tool": "read_rows",
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "limit": 10
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "limit": 20
+              },
+              "op": {
+                "tool": "read_rows",
+                "host": "prod",
+                "database": "test2",
+                "table": "orders",
+                "limit": 20
+              }
+            }
+          }
+        }
+      },
+      "data.inspect": {
+        "tool": "list_tables",
+        "arguments": {
+          "host": "prod",
+          "database": "test2"
+        },
+        "resource_type": "database",
+        "resource_id": "test2",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "list_tables",
+            "host": "prod",
+            "database": "test2",
+            "like": ""
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "like": "o"
+              },
+              "op": {
+                "tool": "list_tables",
+                "host": "prod",
+                "database": "test2",
+                "like": "o"
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "host": "prod",
+                "database": "test2",
+                "like": "c"
+              },
+              "op": {
+                "tool": "list_tables",
+                "host": "prod",
+                "database": "test2",
+                "like": "c"
+              }
+            }
+          }
+        }
+      },
+      "data.write": {
+        "tool": "copy_table",
+        "other_action": "data.read",
+        "arguments": {
+          "from": {
+            "host": "prod",
+            "database": "test1",
+            "table": "orders"
+          },
+          "to": {
+            "host": "prod",
+            "database": "test2"
+          }
+        },
+        "resource_type": "database",
+        "resource_id": "test2",
+        "ancestors": [
+          {
+            "type": "service",
+            "id": "datastore"
+          },
+          {
+            "type": "host",
+            "id": "prod"
+          }
+        ],
+        "approval": {
+          "op": {
+            "tool": "copy_table",
+            "from": {
+              "host": "prod",
+              "database": "test1",
+              "table": "orders"
+            },
+            "to": {
+              "host": "prod",
+              "database": "test2"
+            }
+          },
+          "variants": {
+            "effect_2": {
+              "arguments": {
+                "from": {
+                  "host": "prod",
+                  "database": "test1",
+                  "table": "customers"
+                },
+                "to": {
+                  "host": "prod",
+                  "database": "test2"
+                }
+              },
+              "op": {
+                "tool": "copy_table",
+                "from": {
+                  "host": "prod",
+                  "database": "test1",
+                  "table": "customers"
+                },
+                "to": {
+                  "host": "prod",
+                  "database": "test2"
+                }
+              }
+            },
+            "effect_3": {
+              "arguments": {
+                "from": {
+                  "host": "staging",
+                  "database": "test1",
+                  "table": "orders"
+                },
+                "to": {
+                  "host": "prod",
+                  "database": "test2"
+                }
+              },
+              "op": {
+                "tool": "copy_table",
+                "from": {
+                  "host": "staging",
+                  "database": "test1",
+                  "table": "orders"
+                },
+                "to": {
+                  "host": "prod",
+                  "database": "test2"
+                }
               }
             }
           }

@@ -204,7 +204,8 @@ impl App {
 
     /// Ask the PDP, and give the answer or the reply for the refusal.
     fn allow(&self, who: &Identity, operation: &Operation) -> Result<Allowed, Routed> {
-        // `decide` never gives `ApprovalRequired`: this route has no action with an approval.
+        // A plain HTTP route cannot wait for an approval (17.7a). When the PDP answers a reason of 17.1,
+        // `into_result` gives the refusal that maps to HTTP 403 with the code `approval_cannot_wait`.
         self.pep
             .decide(who, operation)
             .into_result()

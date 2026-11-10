@@ -38,7 +38,7 @@ The terms of protocol section 2 apply. This binding adds these terms:
 - **Standalone key**: a key that a service checks by itself, with no edge (section 7). It is not a key of the protocol (protocol 2, Key).
 
 ## 3. The work of the service
-3.1 The service does the MCP work: the MCP endpoint, the map of the tools and the list of the tools. For a tool with an effect, the service asks the decision point and it applies the answer (3.5a) [CONTRACT, section 9]. The service is the PEP of each tool (protocol 1.3). The edge decides only the action `access` on the service (protocol 8.3). It answers no MCP method.
+3.1 The service does the MCP work: the MCP endpoint, the map of the tools and the list of the tools. For each tool, the service asks the decision point and it applies the answer (3.5a) [CONTRACT, section 9]. The service is the PEP of each tool (protocol 1.3). The edge decides only the action `access` on the service (protocol 8.3). It answers no MCP method.
 
 3.2 The map of the tools gives each tool one action of the action document (protocol 5.2). The arguments of a call name the resource of the call. The service builds the chain of this resource from its own data (protocol 4.1, 4.5). The map is not in the MCP messages (1.5).
 
@@ -48,19 +48,19 @@ The terms of protocol section 2 apply. This binding adds these terms:
 
 3.4 A `tools/call` is one operation (protocol 2). When the tool runs, the call is one use of the action of the tool. For an action that lists a budget, the service sends one question with `context.usage` for this use (protocol 6.4).
 
-3.5 A call that only asks the client for input (MCP `InputRequiredResult`) is not a use. For this call, the service asks the action of the tool without `context.usage` (protocol 6.6, 10.1). The later call that gives the input and runs the tool is the use of 3.4. For an action that lists a budget, a kept `true` answer of the first call never starts this use (protocol 10.1).
+3.5 A call that only asks the client for input (MCP `InputRequiredResult`) is not a use. For this call, the service asks the action of the tool without `context.usage` (protocol 6.6, 10.1). The later call that gives the input and runs the tool is the use of 3.4. For an action that lists a budget, a kept `true` answer of the first call never starts this use (protocol 10.1). A reason of protocol 17.1 in the answer does not refuse the first call, because it runs no action: the use needs an approval later. The call asks the client for input.
 
-3.5a A tool with an effect has an action with the member `approval` (protocol 5.2b) [CONTRACT, 9.1, 9.4]. For each call of this tool, the service follows protocol 17.7. At the call, it asks the action without `context.usage`, with `context.approval.effect` (protocol 17.1). After the approval, at the run, it sends the question of 3.4 with `context.usage` and the effect (protocol 17.2). A refused or void approval takes no unit. The service keeps no state for an approval, and it learns only the verdict (5.7).
+3.5a Each tool follows protocol section 17 (protocol 5.2b, 17.7) [CONTRACT, 9.1], also a tool that only reads. For each call, the service asks as protocol 10.1 says, with no effect. When the PDP answers a reason of protocol 17.1, the service builds `op` and `view` of the call (protocol 17.3a). It asks without `context.usage`, with `context.approval.effect` (protocol 17.1). After the approval, at the run, it sends the question of 3.4 with `context.usage` and the effect (protocol 17.2). A refused or void approval takes no unit, and the service learns only the verdict (5.7).
 
-A tool that only asks the owner of the key is not a tool with an effect [CONTRACT, 9.1]. It sends no other data out of the system and it changes no resource. It needs no approval, and it has no action with the member `approval`.
+The `op` of a call has the member `tool`, the name of the tool. It also has each argument that decides what the tool does, and each default that the tool applies, for example a number of rows. It has no control argument (5.7). The `view` shows each argument that the agent chose (protocol 17.3a).
 
-The effect of a call has the tool and the arguments that decide what the tool does. It has no control argument (5.7).
+A tool that only asks the owner of the key has no action in the map of the tools [CONTRACT, 9.1]. It sends no other data out of the system and it changes no resource. It is not a use. It sends no question and needs no approval.
 
-3.6a A request for an MCP method with no tool asks the action `mcp.session` on the resource of type `service` with the id of the service (protocol 4.1). Such methods are `initialize`, `ping`, `server/discover` and the notifications. The service declares the action `mcp.session` in its action document (protocol 5.2). When this action lists a budget, each such request is one use (protocol 6.4).
+3.6a A request for an MCP method with no tool asks the action `mcp.session` on the resource of type `service` with the id of the service (protocol 4.1). Such methods are `initialize`, `ping`, `server/discover` and the notifications. The service declares the action `mcp.session` in its action document (protocol 5.2). When this action lists a budget, each such request is one use (protocol 6.4). Such a request cannot wait (protocol 17.7a). For a reason of protocol 17.1, the service answers as 5.1 says, with no effect and no submission.
 
 3.6 A `tools/list` is not a use. Its questions are questions for a display (protocol 2, Use), and section 4 gives them.
 
-3.7 A tool can need permissions on other actions or on other resources (protocol 5.5a). The service asks them as protocol 10.1a shows, with `context.usage` only for the action of the tool. When one answer is `false`, the service refuses the call as 5.1 says. Section 10 gives an example.
+3.7 A tool can need permissions on other actions or on other resources (protocol 5.5a). The service asks them as protocol 10.1a shows, with `context.usage` only for the action of the tool. When one answer is `false`, the service refuses the call as 5.1 says. A reason of protocol 17.1 for such a permission is a refusal too, because the approval covers only the use (protocol 15, item 8). Section 10 gives an example.
 
 ## 4. The list of the tools
 4.1 For `tools/list`, the service names only the tools whose action the PDP lets the subject do in the service. For each tool, it asks the action of the tool on the service, with `context.match` = `subtree` (protocol 4.4). It asks these questions without `context.usage`, with one item for each action of its tools, not for each tool. It sends them in one Access Evaluations request, or in several requests when the items are above the maxima of the PDP (protocol 6.6, 6.11, 10.7a). It names a tool when the answer for the action of the tool is `true`.
@@ -74,7 +74,7 @@ The effect of a call has the tool and the arguments that decide what the tool do
 ## 5. Refusals of a service
 5.1 Protocol 10.3 applies to an MCP request: the service fails closed and sends no `context.reason` to the client. The exceptions are the code `budget_exceeded` in the tool error of 5.3 and the codes of 5.7a. The service maps each answer of the PDP as the list below shows:
 - `false` with no reason, or with any other reason: on `tools/call`, HTTP 200 and `-32602`, as for an unknown tool [CONTRACT, 3.6]. The next two items hold the exceptions. On another MCP request, HTTP 403 with the body of 5.1b.
-- `false` with a reason of protocol 17.1: on `tools/call` of a tool with an approval, the result of 5.7 or the tool error of 5.7a. On another MCP request, HTTP 403 with the body of 5.1b.
+- `false` with a reason of protocol 17.1: on `tools/call`, the result of 5.7 or the tool error of 5.7a. On another MCP request, which cannot wait (protocol 17.7a), HTTP 403 with the body of 5.1b.
 - `false` with `budget_exceeded`: on `tools/call`, HTTP 200 and the tool error of 5.3. On another MCP request, HTTP 429 with `Retry-After`, and the JSON-RPC error of 5.4.
 - No answer, an HTTP error, or an answer that is not valid: HTTP 503 and the JSON-RPC error of 5.5.
 
@@ -102,7 +102,9 @@ The effect of a call has the tool and the arguments that decide what the tool do
 
 5.6a When the service refuses an MCP request before it reads the `id`, the body of the answer is empty, as for an edge (6.1). The client reads the HTTP status and the headers. The service sends a JSON-RPC error only when it knows the `id` of the request.
 
-5.7 A tool whose action has the member `approval` accepts these optional control arguments: `approval_ref`, `wait_s`, `supersedes`, `lease_s` and `until`. The service sends them to the approval API as protocol 17.4 gives (protocol 17.9a). They never enter the effect. `wait_s` is the most seconds that the service waits for a verdict, and the service bounds it. A call must give exactly one of `approval_ref`, `lease_s` and `until`. Another call gets the tool error `invalid_argument` (5.7a), and the service takes no further step.
+5.7 Each tool accepts these optional control arguments: `approval_ref`, `wait_s`, `supersedes`, `lease_s` and `until`. The service sends them to the approval API as protocol 17.4 gives (protocol 17.9a). They never enter the effect. `wait_s` is the most seconds that the service waits for a verdict, and the service bounds it. A call gives at most one of `approval_ref`, `lease_s` and `until`. A call with more than one, or with a bad type, gets the tool error `invalid_argument` (5.7a), and the service asks the PDP nothing.
+
+A call with none of the three runs when the PDP asks for no approval. When the PDP asks for an approval and the call has none of the three, the service cannot give a lease. It submits nothing, and the call gets the tool error `invalid_argument` (5.7a).
 
 When protocol 17.7 tells that the action waits, the service answers HTTP 200 with a result that is not an error. Its `structuredContent.action` has `id` (the `request_id`), `status` equal to `awaiting_approval`, `code` and `executed` equal to `false`. The second item of `content` is a fixed text that starts with `NOT EXECUTED`. The service copies no value of the request into it (5.6). The result has this form:
 ```json
@@ -112,18 +114,18 @@ When protocol 17.7 tells that the action waits, the service answers HTTP 200 wit
   "structuredContent": { "action": { "id": "apr_9f3a", "status": "awaiting_approval", "code": "K7QF", "executed": false } } }
 ```
 
-5.7a A refused call of a tool with an approval is a tool error, in the form of 5.3. It has a fixed message and never has the text of the owner (protocol 17.12). The codes are:
+5.7a A refused call of a tool, for a cause of protocol section 17, is a tool error, in the form of 5.3. It has a fixed message and never has the text of the owner (protocol 17.12). The codes are:
 - `approval_denied`, `retryable` false: the PDP answered `approval_denied` (protocol 17.1);
 - `approval_expired`, `retryable` false: the PDP answered `approval_expired`. The code does not tell if the approval expired, was abandoned, was cancelled or was replaced (protocol 17.6);
-- `invalid_argument`, `retryable` false: a control argument is bad (5.7), or the PDP answered 413 `command_too_large`, or 422 with `invalid_argument`, `invalid_lease` or `lease_required` (protocol 17.4);
+- `invalid_argument`, `retryable` false: a control argument is bad, or the call needs an approval and has none of the three (5.7). The code also covers a command larger than `max_command_bytes` (protocol 17.3a). It covers a 413 `command_too_large`, and a 422 with `invalid_argument`, `invalid_lease` or `lease_required` (protocol 17.4);
 - `approval_unavailable`, `retryable` true: the PDP answered 409 `no_device` to a submission (protocol 17.4);
 - `approval_rate_limited`, `retryable` true, with `retry_after`: the PDP answered 429 to a submission. The service copies `retry_after`.
 
 Another answer of the approval API gives HTTP 503 and the JSON-RPC error of 5.5. A call to the approval API that fails gives the same result. A request that the service sends again is a new request (protocol 12).
 
-5.7b A service with a tool that has an approval also has the tool `get_action_status`. Its argument is `request_id`. Its result has `structuredContent` equal to `{"status": "<verdict>"}`, with a verdict of protocol 17.6. The annotation `readOnlyHint` is true. The result is not an error, also for `denied` and `void`.
+5.7b A service with a tool also has the tool `get_action_status`. Each tool can give a result that waits. Its argument is `request_id`. Its result has `structuredContent` equal to `{"status": "<verdict>"}`, with a verdict of protocol 17.6. The annotation `readOnlyHint` is true. The result is not an error, also for `denied` and `void`.
 
-The tool has no action in the map of the tools (3.2), and it is not a use. The service sends no question to the PDP for it. It reads the verdict with `renew=true` and the subject of the token, and so it renews the lease for the agent (protocol 17.4, 17.5). A request that is unknown, or that is of another subject, gives the tool error `invalid_argument`. `tools/list` names the tool when it names a tool with an approval (4.1).
+The tool has no action in the map of the tools (3.2), and it is not a use. The service sends no question to the PDP for it. It reads the verdict with `renew=true` and the subject of the token, and so it renews the lease for the agent (protocol 17.4, 17.5). A request that is unknown, or that is of another subject, gives the tool error `invalid_argument`. `tools/list` names the tool when it names at least one tool (4.1).
 
 ## 6. Refusals of an edge
 6.1 When an edge refuses an MCP request, the body of the answer is empty, for each status. The client reads the HTTP status and the headers: `WWW-Authenticate` on a 401 (protocol 9.8) and `Retry-After` on a 429. The edge sends no JSON-RPC error, so it needs no part of the body of the request. Only a service that answers by itself uses the JSON-RPC errors of section 5.
@@ -160,7 +162,7 @@ The tool has no action in the map of the tools (3.2), and it is not a use. The s
 - U27 (3.3, 3.3a, 5.2, 5.6a): an MCP request with no identity token gets HTTP 401 and an empty body.
 - U28 (5.1, 5.5): when the test PDP does not answer, a `tools/call` gets HTTP 503 and `-32603`.
 - U29 (3.6a): a `ping` asks the action `mcp.session` on the resource of type `service` with the id of the service. The test PDP answers `false`, and the `ping` gets HTTP 403 and `-32001`.
-- U30 (3.5a, 5.7; protocol 17.1, 17.7): a tool whose action has the member `approval` sends one question without `context.usage`, with the effect, at the call. The service gives the result of 5.7. After the approval, it sends one question with `context.usage` equal to `{"units": 1}` and the effect. A refused approval sends none.
+- U30 (3.5a, 5.7; protocol 17.1, 17.7): the test PDP answers `approval_required` for the action of a tool. The service sends one question without `context.usage`, with the effect, at the call. It gives the result of 5.7. After the approval, it sends one question with `context.usage` equal to `{"units": 1}` and the effect. A refused approval sends none. The runner does this for each action of the service.
 - U31 (5.1b): the test PDP answers `false` with no reason for a `server/discover`. The answer is HTTP 403 with the body `{"jsonrpc": "2.0", "id": 7, "error": {"code": -32001, "message": "forbidden"}}`.
 - E01 (6.1, 6.2, 6.3; protocol 9.8): an MCP request with a key text that the edge does not know gets HTTP 401, `WWW-Authenticate: Bearer error="invalid_token"` with no `resource_metadata`, and an empty body. No refusal of the edge has the status 400, 404 or 405.
 

@@ -9,9 +9,7 @@
   ],
   "requirement": "MUST",
   "skip_if": [
-    "no_mcp_endpoint",
-    "no_approval_tool",
-    "no_approval_support"
+    "no_mcp_endpoint"
   ],
   "notes": "The PDP answers approval_pending to both calls. A PEP that keeps this answer sends no question and no submission at the second call, so it fails.",
   "given": {
@@ -21,6 +19,31 @@
       }
     },
     "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
       {
         "when": {
           "usage": false
@@ -91,6 +114,9 @@
             "json": {
               "/context/usage": {
                 "present": true
+              },
+              "/context/approval/effect": {
+                "present": true
               }
             },
             "count": {
@@ -160,6 +186,9 @@
           {
             "json": {
               "/context/usage": {
+                "present": true
+              },
+              "/context/approval/effect": {
                 "present": true
               }
             },
