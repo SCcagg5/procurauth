@@ -320,12 +320,14 @@ impl ReferencePdp {
             },
         };
         // The `confirm` of a grant of a person has no effect on the questions of the person (17.8).
-        let needs_approval = subject_confirm_required(
-            own,
-            owner.map(|owner| owner.grants.as_slice()),
-            action,
-            node,
-        );
+        // A question of an other permission of an operation ignores `confirm` (5.5a, 17.8).
+        let needs_approval = !context.permission_only
+            && subject_confirm_required(
+                own,
+                owner.map(|owner| owner.grants.as_slice()),
+                action,
+                node,
+            );
         let mut usable = None;
         if needs_approval {
             let gate = context.approval_effect.as_deref().map_or(

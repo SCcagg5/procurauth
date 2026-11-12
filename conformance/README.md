@@ -22,9 +22,9 @@ An id has the letter of the series and a number of two or three digits. The seri
 
 The numbers of a series have no gap. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9. These cases are in this directory, and they have exactly these ids. Each of them cites a paragraph of the binding and has the condition `no_mcp_endpoint`.
 
-The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U117, the series D with D76 to D94, and the series E with E19.
+The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U117, the series D with D76 to D96, and the series E with E19.
 
-The cases D90 to D94 test the metadata members, the person and `mcp.session` with `confirm`, and the largest number of a limit. The case D23 also checks the reason of a bad id. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
+The cases D90 to D94 test the metadata members, the person and `mcp.session` with `confirm`, and the largest number of a limit. The cases D95 and D96 test the member `permission_only` of the question of an other permission. The case D23 also checks the reason of a bad id. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
 
 The ids V01 and V02 are not case ids. They name two groups of vectors in `vectors/effect.json`. The schema `schemas/effect-vectors.schema.json` defines the format of this file. `COVERAGE.md` lists the groups.
 
@@ -94,9 +94,9 @@ A step sends a token with the member `token`. The variable `{{token_<name>}}` gi
 
 A PEP case does not need to know the data of the service under test. It gives a script. Each rule has `when` and `respond`. The runner reads the rules in order. The first rule whose `when` matches the question gives the answer.
 
-A `when` matches when each member that it has is equal to the question. The members are `subject`, `action`, `resource`, `usage`, `match`, `effect` and `no_effect`. The member `effect` is `context.approval.effect`, and a variable such as `{{effect_2}}` can give it.
+A `when` matches when each member that it has is equal to the question. The members are `subject`, `action`, `resource`, `usage`, `match`, `effect`, `no_effect` and `permission_only`. The member `effect` is `context.approval.effect`, and a variable such as `{{effect_2}}` can give it.
 
-The value `true` of `no_effect` matches a question with no `context.approval`. This is the first question of the flow of protocol 17.7. The value `true` of `usage` matches a question with `context.usage`. The value `false` matches a question without it.
+The value `true` of `no_effect` matches a question with no `context.approval`. This is the first question of the flow of protocol 17.7. The value `true` of `usage` matches a question with `context.usage`. The value `false` matches a question without it. The value `true` of `permission_only` matches the question of an other permission (protocol 5.5a).
 
 An empty `when` matches each question. A question that no rule matches gets the answer from the directory. Without a directory, this is a fault of the case.
 
@@ -254,7 +254,7 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 
 The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. A PDP MAY give no approval: it then gates no action and never answers a reason of protocol 17.1. For an edge, the runner holds it unless the profile has `edge.keys.confirm_access`. An edge asks only the action `access`, so it never asks for an approval.
 
-The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
+The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93, D95, D96 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
 
 The profile of a PEP with an MCP endpoint has the member `approval_calls`: one entry for each action of the action document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The case U111 fails when the document has an action with no entry.
 

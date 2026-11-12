@@ -86,7 +86,7 @@ The type `Refusal` has the status of 10.3. The reason of the PDP stays in the lo
 
 ### Methods of the PEP
 
-- `decide` asks the other permissions first, without `context.usage`. Then it asks the use. For an action that lists a budget, the question of the use has `context.usage`. A route that cannot wait calls `decide`. For a reason of 17.1, the refusal maps to HTTP 403 with the code `approval_cannot_wait` (17.7a).
+- `decide` asks the other permissions first, with `context.permission_only` and without `context.usage` (5.5a). Then it asks the use. For an action that lists a budget, the question of the use has `context.usage`. A route that cannot wait calls `decide`. For a reason of 17.1, the refusal maps to HTTP 403 with the code `approval_cannot_wait` (17.7a).
 - `check` asks without `context.usage` and takes no unit. Use it for a call that asks the client for input (binding 3.5).
 - `decide_approval` follows the steps of 17.7 for each action. It asks as 10.1 says, with no effect. On a reason of 17.1, it calls the function `build` of the caller. This function gives `op`, `view` and the control.
 - Then the PEP asks with the effect and no usage, and it submits the request on `approval_required` or `approval_pending`. After a `true` answer, it asks with `context.usage` and the same effect. A call with no control cannot submit, and it gets `ApprovalRefusal::InvalidArgument`.

@@ -215,8 +215,11 @@ impl Pdp {
         // The `confirm` of a grant of a person has no effect on the questions of the person, and no
         // grant makes `access` or `mcp.session` need an approval (17.8). The test mode `confirm_all`
         // is the one exception: it also gates a person, because a test of a PEP signs in as a person.
-        let needs_approval = (directory.confirm_all && confirm_has_effect(action))
-            || subject_confirm_required(own_grants, owner_grants, action, &node);
+        // A question of an other permission of an operation ignores `confirm` too: the approval follows
+        // the action of the use alone (5.5a, 17.8).
+        let needs_approval = !context.permission_only
+            && ((directory.confirm_all && confirm_has_effect(action))
+                || subject_confirm_required(own_grants, owner_grants, action, &node));
         let mut approval_to_consume = None;
         if needs_approval {
             let Some(effect) = context.approval_effect.as_deref() else {

@@ -1,6 +1,6 @@
 {
   "id": "U34",
-  "title": "An operation with one more permission asks that permission without context.usage, and it asks the action of the use with it.",
+  "title": "An operation with one more permission asks that permission with context.permission_only and without context.usage, and it asks the action of the use with usage.",
   "role": "pep",
   "paragraphs": [
     "5.5",
@@ -83,6 +83,9 @@
             "json": {
               "/context/usage": {
                 "absent": true
+              },
+              "/context/permission_only": {
+                "present": true
               }
             },
             "count": {

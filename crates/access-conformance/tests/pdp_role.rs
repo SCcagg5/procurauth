@@ -60,13 +60,13 @@ fn changed_data(name: &str, changes: &[(&str, Change<'_>)]) -> PathBuf {
 }
 
 #[test]
-fn all_94_cases_of_the_series_d_pass_against_fake_pdp_in_the_process() {
+fn all_96_cases_of_the_series_d_pass_against_fake_pdp_in_the_process() {
     let dir = temp_dir("pdp_spawn_all");
     let profile = spawn_profile(&dir);
     let out = run_cli(&["--role", "pdp", "--profile", &profile]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "94 cases: 94 passed, 0 failed, 0 skipped");
-    assert_eq!(out.stdout.lines().count(), 95);
+    assert_eq!(out.summary(), "96 cases: 96 passed, 0 failed, 0 skipped");
+    assert_eq!(out.stdout.lines().count(), 97);
     assert!(
         out.line("D01").starts_with("D01  pass  4.3,7.3"),
         "{}",
@@ -75,7 +75,7 @@ fn all_94_cases_of_the_series_d_pass_against_fake_pdp_in_the_process() {
 }
 
 #[test]
-fn the_json_form_has_94_passed_cases_and_no_target() {
+fn the_json_form_has_96_passed_cases_and_no_target() {
     let dir = temp_dir("pdp_spawn_json");
     let profile = spawn_profile(&dir);
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--format", "json"]);
@@ -83,9 +83,9 @@ fn the_json_form_has_94_passed_cases_and_no_target() {
     let report = out.json();
     assert_eq!(report["role"], "pdp");
     assert_eq!(report["target"], Value::Null);
-    assert_eq!(report["summary"]["passed"], 94);
+    assert_eq!(report["summary"]["passed"], 96);
     assert_eq!(report["summary"]["skipped"], 0);
-    assert_eq!(report["cases"].as_array().unwrap().len(), 94);
+    assert_eq!(report["cases"].as_array().unwrap().len(), 96);
 }
 
 #[test]
@@ -424,7 +424,7 @@ fn with_a_reset_and_a_clock_url_the_usage_cases_that_set_no_counter_pass() {
 }
 
 #[test]
-fn a_pdp_with_a_load_request_passes_77_cases_and_skips_the_17_of_the_approval_profile() {
+fn a_pdp_with_a_load_request_passes_77_cases_and_skips_the_19_of_the_approval_profile() {
     let dir = temp_dir("pdp_external_load");
     let pdp = LoadablePdp::start();
     let base = pdp.url();
@@ -435,7 +435,7 @@ fn a_pdp_with_a_load_request_passes_77_cases_and_skips_the_17_of_the_approval_pr
     );
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--url", &base]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "94 cases: 77 passed, 0 failed, 17 skipped");
+    assert_eq!(out.summary(), "96 cases: 77 passed, 0 failed, 19 skipped");
     // Each case loaded its own data, with the counters and the clock of the case.
     let loads = pdp.loads.lock().unwrap();
     assert_eq!(loads.len(), 77);
@@ -456,8 +456,8 @@ fn p_17_a_pdp_that_says_it_gives_approvals_runs_the_cases_of_section_17() {
     );
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--url", &base]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "94 cases: 94 passed, 0 failed, 0 skipped");
-    assert_eq!(pdp.loads.lock().unwrap().len(), 94);
+    assert_eq!(out.summary(), "96 cases: 96 passed, 0 failed, 0 skipped");
+    assert_eq!(pdp.loads.lock().unwrap().len(), 96);
 }
 
 #[test]

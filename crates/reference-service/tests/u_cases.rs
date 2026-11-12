@@ -152,6 +152,9 @@ fn rule_matches(when: &Value, question: &Value) -> bool {
         "no_effect" => {
             question.pointer("/context/approval").is_none() == expected.as_bool().unwrap()
         }
+        "permission_only" => {
+            question.pointer("/context/permission_only").is_some() == expected.as_bool().unwrap()
+        }
         other => panic!("the runner does not know the member `when.{other}`"),
     })
 }

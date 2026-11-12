@@ -250,6 +250,16 @@ impl EvaluationRequest {
         self
     }
 
+    /// Add `context.permission_only` equal to `true`: the question is for an other permission of an
+    /// operation, not for its use action (5.5a). The PDP then ignores `confirm` (17.8).
+    #[must_use]
+    pub fn with_permission_only(mut self) -> Self {
+        self.context
+            .get_or_insert_with(Map::new)
+            .insert("permission_only".to_owned(), json!(true));
+        self
+    }
+
     /// Add `context.match` (4.4).
     #[must_use]
     pub fn with_match(mut self, mode: MatchMode) -> Self {
@@ -603,6 +613,9 @@ pub struct RequestContext {
     pub match_mode: MatchMode,
     /// The value of `context.approval.effect`, the effect of the operation (17.1).
     pub approval_effect: Option<String>,
+    /// True when `context.permission_only` is `true`: the question is for an other permission of an
+    /// operation, not for its use action (5.5a). The PDP then ignores `confirm` (17.8).
+    pub permission_only: bool,
 }
 
 impl RequestContext {
@@ -700,6 +713,33 @@ impl RequestContext {
                             "Member `effect` is absent.",
                         ),
                     }
+                }
+            }
+        }
+        if let Some(flag) = context.get("permission_only") {
+            let flag_path = path.key("permission_only");
+            if flag == &Value::Bool(true) {
+                out.permission_only = true;
+            } else {
+                report.error(
+                    &flag_path,
+                    "5.5a",
+                    "bad_permission_only",
+                    format!(
+                        "Member `permission_only`: expected `true`, found {}.",
+                        show(flag)
+                    ),
+                );
+            }
+            // An other permission is never the use: it has no usage and no effect (5.5a, 17.1).
+            for (name, paragraph) in [("usage", "6.4"), ("approval", "17.1")] {
+                if context.contains_key(name) {
+                    report.error(
+                        &path.key(name),
+                        paragraph,
+                        "permission_only_with_use",
+                        format!("A question with `context.permission_only` must not have `context.{name}` (5.5a)."),
+                    );
                 }
             }
         }
@@ -1308,6 +1348,47 @@ mod tests {
             "missing_member"
         );
         assert_eq!(ctx(json!({"usage": 1})).unwrap_err()[0].code, "bad_usage");
+    }
+
+    #[test]
+    fn p_5_5a_the_context_can_mark_the_question_of_an_other_permission() {
+        let effect = "sha256:0000000000000000000000000000000000000000000000000000000000000000";
+        let ctx = |v: Value| RequestContext::from_context(v.as_object());
+        assert!(!ctx(json!({})).unwrap().permission_only);
+        assert!(
+            ctx(json!({"permission_only": true}))
+                .unwrap()
+                .permission_only
+        );
+        // It can go with `match` equal to `subtree`.
+        assert!(
+            ctx(json!({"permission_only": true, "match": "subtree"}))
+                .unwrap()
+                .permission_only
+        );
+        // Only the value `true` is valid.
+        for bad in [
+            json!(false),
+            json!("true"),
+            json!(1),
+            json!(null),
+            json!({}),
+        ] {
+            assert_eq!(
+                ctx(json!({"permission_only": bad})).unwrap_err()[0].code,
+                "bad_permission_only"
+            );
+        }
+        // An other permission has no usage and no effect.
+        assert_eq!(
+            ctx(json!({"permission_only": true, "usage": {"units": 1}})).unwrap_err()[0].code,
+            "permission_only_with_use"
+        );
+        assert_eq!(
+            ctx(json!({"permission_only": true, "approval": {"effect": effect}})).unwrap_err()[0]
+                .code,
+            "permission_only_with_use"
+        );
     }
 
     #[test]

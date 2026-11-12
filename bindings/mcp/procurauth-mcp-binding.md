@@ -60,7 +60,7 @@ A tool that only asks the owner of the key has no action in the map of the tools
 
 3.6 A `tools/list` is not a use. Its questions are questions for a display (protocol 2, Use), and section 4 gives them.
 
-3.7 A tool can need permissions on other actions or on other resources (protocol 5.5a). The service asks them as protocol 10.1a shows, with `context.usage` only for the action of the tool. When one answer is `false`, the service refuses the call as 5.1 says. A reason of protocol 17.1 for such a permission is a refusal too, because the approval covers only the use (protocol 15, item 8). Section 10 gives an example.
+3.7 A tool can need permissions on other actions or on other resources (protocol 5.5a). The action of the tool is the action of the use: the service declares it in its documentation and names it in its questions. The service asks the other permissions as protocol 10.1a shows, with `context.permission_only` equal to `true` and with `context.usage` only for the action of the tool. When one answer is `false`, the service refuses the call as 5.1 says. The PDP never gives a reason of protocol 17.1 for such a permission, because the approval covers the action of the use only (protocol 15, item 8). A `confirm` on such a permission limits the scope and asks for no approval. A service that gets such a reason for it answers HTTP 503 and `-32603`, as for an answer that is not valid. Section 10 gives an example.
 
 ## 4. The list of the tools
 4.1 For `tools/list`, the service names only the tools whose action the PDP lets the subject do in the service. For each tool, it asks the action of the tool on the service, with `context.match` = `subtree` (protocol 4.4). It asks these questions without `context.usage`, with one item for each action of its tools, not for each tool. It sends them in one Access Evaluations request, or in several requests when the items are above the maxima of the PDP (protocol 6.6, 6.11, 10.7a). It names a tool when the answer for the action of the tool is `true`.
@@ -74,7 +74,7 @@ A tool that only asks the owner of the key has no action in the map of the tools
 ## 5. Refusals of a service
 5.1 Protocol 10.3 applies to an MCP request: the service fails closed and sends no `context.reason` to the client. The exceptions are the code `budget_exceeded` in the tool error of 5.3 and the codes of 5.7a. The service maps each answer of the PDP as the list below shows:
 - `false` with no reason, or with any other reason: on `tools/call`, HTTP 200 and `-32602`, as for an unknown tool [CONTRACT, 3.6]. The next two items hold the exceptions. On another MCP request, HTTP 403 with the body of 5.1b.
-- `false` with a reason of protocol 17.1: on `tools/call`, the result of 5.7 or the tool error of 5.7a. On another MCP request, which cannot wait (protocol 17.7a), HTTP 403 with the body of 5.1b.
+- `false` with a reason of protocol 17.1 for the action of the tool: on `tools/call`, the result of 5.7 or the tool error of 5.7a. On another MCP request, which cannot wait (protocol 17.7a), HTTP 403 with the body of 5.1b.
 - `false` with `budget_exceeded`: on `tools/call`, HTTP 200 and the tool error of 5.3. On another MCP request, HTTP 429 with `Retry-After`, and the JSON-RPC error of 5.4.
 - No answer, an HTTP error, or an answer that is not valid: HTTP 503 and the JSON-RPC error of 5.5.
 

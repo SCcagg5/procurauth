@@ -903,3 +903,58 @@ fn p_17_9_a_view_has_no_mandatory_member() {
         assert_eq!(reply.status, 201, "{index}: {}", reply.text());
     }
 }
+
+/// 5.5a, 17.8: the question of an other permission has `permission_only`, and the PDP ignores `confirm`. The
+/// same question without the member is the use and needs an approval.
+#[test]
+fn p_5_5a_the_confirm_has_no_effect_on_the_question_of_an_other_permission() {
+    let server = start_admin(&directory());
+    let mut other = question("key:ownconf01", "data.write", ANALYTICS, false);
+    other["context"] = json!({"permission_only": true});
+    let answer = ask(&server, &other);
+    assert_eq!(answer["decision"], true, "{answer}");
+    assert!(answer["context"]["reason"].is_null(), "{answer}");
+    assert!(answer["context"]["evaluation_id"].is_null(), "{answer}");
+    let used = ask(
+        &server,
+        &question("key:ownconf01", "data.write", ANALYTICS, false),
+    );
+    assert_eq!(used["context"]["reason"], "approval_required", "{used}");
+}
+
+#[test]
+fn p_5_5a_a_bad_permission_only_gets_http_400_and_a_batch_item_gets_invalid_request() {
+    let server = start_admin(&directory());
+    let contexts = [
+        json!({"permission_only": true, "usage": {"units": 1}}),
+        json!({"permission_only": true, "approval": {"effect": effect(&op())}}),
+        json!({"permission_only": false}),
+        json!({"permission_only": "true"}),
+    ];
+    for context in contexts {
+        let mut body = question(KEY, "data.write", ANALYTICS, false);
+        body["context"] = context.clone();
+        assert_eq!(
+            once_json(server.local_addr(), EVALUATION, &body).status,
+            400,
+            "{context}"
+        );
+    }
+    // In a batch, an item with `permission_only` and no usage is fine, and a bad item is `invalid_request`.
+    let mut good = question(KEY, "data.write", ANALYTICS, false);
+    good["context"] = json!({"permission_only": true});
+    let mut bad = question(KEY, "data.write", ANALYTICS, false);
+    bad["context"] = json!({"permission_only": 1});
+    let reply = once_json(
+        server.local_addr(),
+        EVALUATIONS,
+        &json!({"evaluations": [good, bad]}),
+    );
+    assert_eq!(reply.status, 200);
+    let items = reply.json();
+    assert_eq!(items["evaluations"][0]["decision"], true);
+    assert_eq!(
+        items["evaluations"][1]["context"]["reason"],
+        "invalid_request"
+    );
+}

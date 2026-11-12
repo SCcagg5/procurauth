@@ -342,7 +342,20 @@ impl State {
         usage: bool,
         ceilings: &[&str],
     ) -> Decided {
-        let key = format!("{sub}|{action}|{resource}|{usage}");
+        self.decide_with(sub, action, resource, usage, false, ceilings)
+    }
+
+    /// The same, for the question of an other permission when `permission_only` is true (protocol 5.5a).
+    fn decide_with(
+        &self,
+        sub: &str,
+        action: &str,
+        resource: &Value,
+        usage: bool,
+        permission_only: bool,
+        ceilings: &[&str],
+    ) -> Decided {
+        let key = format!("{sub}|{action}|{resource}|{usage}|{permission_only}");
         if self.defects.cache_true_answers && self.cache.lock().unwrap().contains(&key) {
             return Decided::Allowed;
         }
@@ -353,6 +366,9 @@ impl State {
         });
         if usage {
             question["context"] = json!({"usage": {"units": 1}});
+        }
+        if permission_only {
+            question["context"] = json!({"permission_only": true});
         }
         let answer = match self.ask(&question) {
             Ok(answer) => answer,
@@ -453,9 +469,9 @@ impl State {
                 Decided::Allowed => {}
                 other => return other,
             }
-            return self.decide(sub, "data.read", resource, false, &["max_rows"]);
+            return self.decide_with(sub, "data.read", resource, false, true, &["max_rows"]);
         }
-        match self.decide(sub, "data.read", resource, false, &["max_rows"]) {
+        match self.decide_with(sub, "data.read", resource, false, true, &["max_rows"]) {
             Decided::Allowed => {}
             other => return other,
         }
@@ -841,7 +857,7 @@ impl State {
 
     /// A call of a tool under protocol section 17: the steps of 17.7 (binding 3.5a, 5.7).
     /// `use_of` is the action, the node, the flag of usage and the ceilings of the use. `other` is
-    /// the other permission, asked first with no effect.
+    /// the other permission, asked first with `context.permission_only`.
     #[allow(clippy::too_many_arguments)]
     fn gated_call(
         &self,
@@ -865,10 +881,11 @@ impl State {
         // the use with usage first.
         let ask_other = |this: &Self| -> Option<Resp> {
             let (other_action, other_ceilings) = other?;
-            match this.decide(sub, other_action, resource, false, other_ceilings) {
+            match this.decide_with(sub, other_action, resource, false, true, other_ceilings) {
                 Decided::Allowed => None,
+                // The PDP gives no reason of 17.1 to this question (protocol 17.8): the answer is not valid.
                 Decided::Denied(Some(reason)) if is_approval_reason(&reason) => {
-                    Some(this.tool_answer(id, Decided::Denied(None), ok.clone()))
+                    Some(this.tool_answer(id, Decided::Unavailable, ok.clone()))
                 }
                 refused => Some(this.tool_answer(id, refused, ok.clone())),
             }

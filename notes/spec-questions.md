@@ -99,7 +99,8 @@ This file lists the places where the text of the protocol or of the MCP binding 
 
    Status: Decided by the owner on 2026-11-12 (decision 183): a route of a plain HTTP service keeps HTTP 403 with `approval_cannot_wait`. A standalone key stays outside the approval.
 
-53. **17.7, 5.5a, spec question 29.** An operation that needs a second permission fails when the PDP asks for an approval for that permission. A `confirm` on `data.read` then stops each copy. We recommend that one approval covers the whole operation: the PEP sends the effect of the operation with each permission, and one submission lists them. Until then, the portal must not offer `confirm` for an action that an operation uses as an other permission. Does the owner want a design for it?
+53. **17.7, 5.5a, spec question 29.** An operation that needs a second permission fails when the PDP asks for an approval for that permission. A `confirm` on `data.read` then stops each copy. We recommend that one approval covers the whole operation: the PEP sends the effect of the operation with each permission, and one submission lists them. Does the owner want a design for it?
+   Status: Closed (lot PS1, decisions 191 to 197): the approval follows the action of the use alone, and the member `context.permission_only` marks the other permissions.
 
    Status: Still open: it needs a decision of the owner (decision 182). The text does not change.
 

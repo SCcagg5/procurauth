@@ -243,6 +243,10 @@
             "no_effect": {
               "description": "True for a question with no context.approval (protocol 17.1). False for a question that has it.",
               "type": "boolean"
+            },
+            "permission_only": {
+              "description": "True for a question with context.permission_only (protocol 5.5a). False for a question without it.",
+              "type": "boolean"
             }
           }
         },

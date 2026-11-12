@@ -15,6 +15,16 @@
     },
     "pdp_script": [
       {
+        "when": {
+          "permission_only": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
         "when": {},
         "respond": {
           "body": {

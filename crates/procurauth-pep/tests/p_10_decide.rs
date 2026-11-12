@@ -673,6 +673,63 @@ fn p_10_1a_when_the_other_permission_is_false_no_question_has_usage() {
 }
 
 #[test]
+fn p_5_5a_the_question_of_an_other_permission_has_permission_only_and_the_use_has_not() {
+    let t = yes_to_all();
+    let (pep, who, _) = setup(t.clone());
+    pep.decide(&who, &copy("test1", "test2"))
+        .into_result()
+        .unwrap();
+    let posts = t.posts();
+    assert_eq!(posts.len(), 2);
+    let other = posts[0].body.as_ref().unwrap();
+    assert_eq!(other["action"]["name"], "data.read");
+    assert_eq!(other["context"]["permission_only"], true);
+    assert!(other.pointer("/context/usage").is_none());
+    assert!(other.pointer("/context/approval").is_none());
+    let used = posts[1].body.as_ref().unwrap();
+    assert_eq!(used["action"]["name"], "data.write");
+    assert!(used.pointer("/context/permission_only").is_none());
+}
+
+#[test]
+fn p_5_5a_several_other_permissions_have_permission_only_in_the_shared_context() {
+    let t = yes_to_all();
+    let (pep, who, _) = setup(t.clone());
+    let operation = Operation::new("data.write", database("test2"))
+        .also("data.read", table("prod", "test1", "orders"))
+        .also("data.read", table("prod", "test1", "customers"));
+    pep.decide(&who, &operation).into_result().unwrap();
+    let posts = t.posts();
+    assert_eq!(
+        posts[0].body.as_ref().unwrap()["context"]["permission_only"],
+        true
+    );
+    assert!(
+        posts[1]
+            .body
+            .as_ref()
+            .unwrap()
+            .pointer("/context/permission_only")
+            .is_none()
+    );
+}
+
+#[test]
+fn p_17_8_a_reason_of_17_1_for_an_other_permission_is_an_answer_that_is_not_valid() {
+    let t = Scripted::answering(|q| {
+        if q["action"]["name"] == "data.read" {
+            json!({"decision": false, "context": {"reason": "approval_required"}})
+        } else {
+            yes(json!({}), Some(1))
+        }
+    });
+    let (pep, who, _) = setup(t.clone());
+    let r = refusal(pep.decide(&who, &copy("test1", "test2")));
+    assert_eq!(r.status(), 503);
+    assert_eq!(t.usage_posts(), 0);
+}
+
+#[test]
 fn p_5_5a_only_one_action_of_the_operation_takes_units() {
     let t = yes_to_all();
     let (pep, who, _) = setup(t.clone());

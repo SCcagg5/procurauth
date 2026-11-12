@@ -342,8 +342,8 @@ impl Pep {
 
     /// Ask the PDP for one operation, and take the units of the use (10.1).
     ///
-    /// For each other permission, the PEP first asks without `context.usage`
-    /// (5.5a, 10.1a). When one answer is `false`, the PEP refuses and sends no
+    /// For each other permission, the PEP first asks with `context.permission_only` and without
+    /// `context.usage` (5.5a, 10.1a). When one answer is `false`, the PEP refuses and sends no
     /// question with `context.usage`. Then it asks the use. When the action of the
     /// use lists a budget, this question has `context.usage` (6.4). With several
     /// actions for the use, the PEP asks them in order. It stops at the first
@@ -392,10 +392,10 @@ impl Pep {
         Ok(())
     }
 
-    /// Ask the other permissions of an operation, without `context.usage` (5.5a, 10.1a).
-    /// A permission that is also an alternative for the use is not asked twice (10.1).
-    /// When one answer is `false`, the PEP refuses. An answer with a reason of 17.1 is a refusal
-    /// too: the approval covers only the use of the operation (17.1, last paragraph).
+    /// Ask the other permissions of an operation, with `context.permission_only` and without
+    /// `context.usage` (5.5a, 10.1a). A permission that is also an alternative for the use is not
+    /// asked twice (10.1). When one answer is `false`, the PEP refuses. The PDP never answers a
+    /// reason of 17.1 to such a question (17.8). A PEP that gets one treats the answer as not valid.
     pub(crate) fn ask_others(
         &self,
         subject: &str,
@@ -408,7 +408,7 @@ impl Pep {
             .collect();
         let mut granted_others = Vec::with_capacity(others.len());
         if !others.is_empty() {
-            let answers = self.ask_plain(subject, &others, MatchMode::Node)?;
+            let answers = self.ask_plain(subject, &others, MatchMode::Node, true)?;
             for (permission, decision) in others.iter().zip(answers) {
                 if !decision.decision {
                     return Err(denied_other(&decision));
@@ -475,20 +475,30 @@ impl Pep {
         Ok(Ceilings::from_map(decision.context.limits.clone()))
     }
 
-    /// Ask permissions without `context.usage`, with the kept answers (10.1).
+    /// Ask permissions without `context.usage`, with the kept answers (10.1). With `permission_only`,
+    /// the questions have `context.permission_only` (5.5a) and a separate place in the kept answers.
     fn ask_plain(
         &self,
         subject: &str,
         permissions: &[&Permission],
         mode: MatchMode,
+        permission_only: bool,
     ) -> Result<Vec<Decision>, Refusal> {
+        let key_of = |permission: &Permission| {
+            let key = Key::new(subject, &permission.action, &permission.node, mode, false);
+            if permission_only {
+                key.permission_only()
+            } else {
+                key
+            }
+        };
         let now = self.clock.now_millis();
         let mut results: Vec<Option<Decision>> = vec![None; permissions.len()];
         let mut misses = Vec::new();
         {
             let mut cache = self.lock_cache();
             for (index, permission) in permissions.iter().enumerate() {
-                let key = Key::new(subject, &permission.action, &permission.node, mode, false);
+                let key = key_of(permission);
                 match cache.get(&key, now) {
                     Some(kept) => results[index] = Some(kept.decision),
                     None => misses.push(index),
@@ -503,6 +513,9 @@ impl Pep {
                 if mode == MatchMode::Subtree {
                     question = question.with_match(mode);
                 }
+                if permission_only {
+                    question = question.with_permission_only();
+                }
                 vec![
                     self.client
                         .ask(&question, false)
@@ -514,14 +527,14 @@ impl Pep {
                     .map(|&i| (permissions[i].action.as_str(), &permissions[i].node))
                     .collect();
                 self.client
-                    .ask_many(subject, mode, &items)
+                    .ask_many(subject, mode, permission_only, &items)
                     .map_err(Refusal::Unavailable)?
             };
             let mut cache = self.lock_cache();
             let ttl = cache.ttl_ms();
             for (&index, decision) in misses.iter().zip(answers) {
                 let permission = permissions[index];
-                let key = Key::new(subject, &permission.action, &permission.node, mode, false);
+                let key = key_of(permission);
                 cache.put(key, decision.clone(), now, ttl);
                 results[index] = Some(decision);
             }
@@ -553,7 +566,7 @@ impl Pep {
     }
 
     fn use_plain(&self, subject: &str, permission: &Permission) -> Result<Step, Refusal> {
-        let answers = self.ask_plain(subject, &[permission], MatchMode::Node)?;
+        let answers = self.ask_plain(subject, &[permission], MatchMode::Node, false)?;
         let Some(decision) = answers.into_iter().next() else {
             return Err(Refusal::Internal("no answer for a question".to_owned()));
         };
@@ -690,7 +703,7 @@ impl Pep {
             self.validate(permission, false)?;
         }
         let refs: Vec<&Permission> = permissions.iter().collect();
-        let answers = self.ask_plain(who.sub(), &refs, MatchMode::Subtree)?;
+        let answers = self.ask_plain(who.sub(), &refs, MatchMode::Subtree, false)?;
         Ok(answers.iter().map(|d| d.decision).collect())
     }
 
@@ -719,8 +732,9 @@ enum Step {
     Denied(Refusal),
 }
 
-/// The refusal for a `false` answer of another permission of the operation (5.5a). A reason of
-/// 17.1 does not start the approval flow, because the approval covers only the use.
+/// The refusal for a `false` answer of another permission of the operation (5.5a). The PDP gives no
+/// reason of 17.1 to a question with `context.permission_only` (17.8): the approval covers the action of
+/// the use only. A PEP that gets one treats the answer as not valid (10.3).
 fn denied_other(decision: &Decision) -> Refusal {
     if decision
         .context
@@ -728,10 +742,9 @@ fn denied_other(decision: &Decision) -> Refusal {
         .as_ref()
         .is_some_and(Reason::is_approval)
     {
-        return Refusal::Forbidden {
-            reason: None,
-            cause: DenialCause::OtherPermissionNeedsApproval,
-        };
+        return Refusal::Unavailable(UnavailableCause::Answer(
+            "a reason of 17.1 for a question with `context.permission_only`".to_owned(),
+        ));
     }
     denied(decision)
 }

@@ -7,7 +7,7 @@
   <a href="https://github.com/SCcagg5/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/SCcagg5/procurauth?color=4338ca&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/protocol-1.0-4338ca" alt="Protocol 1.0">
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
-  <img src="https://img.shields.io/badge/conformance-230%20cases-34d399" alt="230 conformance cases">
+  <img src="https://img.shields.io/badge/conformance-232%20cases-34d399" alt="232 conformance cases">
   <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
 </p>
 
@@ -26,7 +26,7 @@ ProcurAuth is an open specification for services that let AI agents act for peop
 
 A backend holds the users, their rights and the keys of their agents. A person makes a key for an agent. **A key never has more rights than the person who owns it.** A service does not know the backend. It speaks only [AuthZEN](https://openid.net/specs/authorization-api-1_0.html).
 
-This repository holds the protocol, the MCP binding, the JSON schemas, 230 conformance cases and the programs to test a service.
+This repository holds the protocol, the MCP binding, the JSON schemas, 232 conformance cases and the programs to test a service.
 
 <p align="center">
   <img src="docs/assets/rights.svg" alt="The rights of a key are the rights that its owner has and that the key also holds" width="90%">
@@ -148,7 +148,7 @@ life       ok   life 300 s, max 300 s
 ## Conformance
 
 <p align="center">
-  <img src="docs/assets/conformance.svg" alt="230 conformance cases: 117 for a PEP, 94 for a PDP and 19 for an edge" width="90%">
+  <img src="docs/assets/conformance.svg" alt="232 conformance cases: 117 for a PEP, 96 for a PDP and 19 for an edge" width="90%">
 </p>
 
 The cases are data, in `conformance/`. Each case cites a paragraph of the protocol. `conformance/COVERAGE.md` shows which paragraph has a case. To test your own service, write a profile and run the cases:

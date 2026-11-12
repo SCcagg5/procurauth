@@ -42,7 +42,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 5.3c | pdp | D38 |
 | 5.4 | pdp | none |
 | 5.5 | pdp | D49, D64 |
-| 5.5a | pdp | D72 |
+| 5.5a | pdp | D72, D95, D96 |
 | 6.1 | pdp | D46, D56, D94 |
 | 6.2 | pdp | D49, D68 |
 | 6.3 | pdp | D41, D42, D43, D44, D47, D48 |
@@ -76,7 +76,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 17.4a | pdp | D91 |
 | 17.5 | pdp | none |
 | 17.6 | pdp | D80, D85, D86, D87 |
-| 17.8 | pdp | D76, D82, D83, D92, D93 |
+| 17.8 | pdp | D76, D82, D83, D92, D93, D95, D96 |
 | 17.9 | pdp | none |
 | 17.9a | pdp | none |
 | 17.10 | pdp | none |

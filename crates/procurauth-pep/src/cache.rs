@@ -19,6 +19,9 @@ pub(crate) struct Key {
     nodes: Vec<(String, String)>,
     subtree: bool,
     usage_side: bool,
+    /// The question of an other permission of an operation (5.5a). Its answer ignores `confirm`, so
+    /// it never serves for a question of the use.
+    permission_only: bool,
 }
 
 impl Key {
@@ -39,7 +42,14 @@ impl Key {
                 .collect(),
             subtree: mode == MatchMode::Subtree,
             usage_side,
+            permission_only: false,
         }
+    }
+
+    /// The same key for the question of an other permission (5.5a).
+    pub(crate) fn permission_only(mut self) -> Self {
+        self.permission_only = true;
+        self
     }
 
     /// The same subject and the same resource with its chain, for any action.

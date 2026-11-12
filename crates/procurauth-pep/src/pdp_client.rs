@@ -280,10 +280,14 @@ impl PdpClient {
     /// Ask many questions without `context.usage`, for one subject, with one
     /// `context.match`. The PEP sends them in Access Evaluations requests that
     /// stay within the maxima of the PDP (10.7a). The answers come in the order of the questions.
+    ///
+    /// With `permission_only`, each question has `context.permission_only` equal to `true`: the
+    /// questions are for the other permissions of an operation (5.5a).
     pub(crate) fn ask_many(
         &self,
         subject: &str,
         mode: MatchMode,
+        permission_only: bool,
         items: &[(&str, &NodePath)],
     ) -> Result<Vec<Decision>, UnavailableCause> {
         if items.is_empty() {
@@ -298,12 +302,15 @@ impl PdpClient {
                 if mode == MatchMode::Subtree {
                     question = question.with_match(mode);
                 }
+                if permission_only {
+                    question = question.with_permission_only();
+                }
                 out.push(self.ask(&question, false)?);
             }
             return Ok(out);
         };
         let limits = self.batch_limits(&meta);
-        let envelope = envelope(subject, mode);
+        let envelope = envelope(subject, mode, permission_only);
         let mut out = Vec::with_capacity(items.len());
         for chunk in split(&envelope, items, limits)? {
             let body = chunk.to_string().into_bytes();
@@ -334,11 +341,18 @@ impl PdpClient {
 
 /// The part of an Access Evaluations request that all items share: the
 /// subject and `context.match`.
-fn envelope(subject: &str, mode: MatchMode) -> Map<String, Value> {
+fn envelope(subject: &str, mode: MatchMode, permission_only: bool) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert("subject".into(), json!({"type": "user", "id": subject}));
+    let mut context = Map::new();
     if mode == MatchMode::Subtree {
-        map.insert("context".into(), json!({"match": mode.as_str()}));
+        context.insert("match".into(), json!(mode.as_str()));
+    }
+    if permission_only {
+        context.insert("permission_only".into(), json!(true));
+    }
+    if !context.is_empty() {
+        map.insert("context".into(), Value::Object(context));
     }
     map
 }
@@ -441,7 +455,7 @@ mod tests {
         let nodes: Vec<NodePath> = (0..7).map(|i| node(&format!("h{i}"))).collect();
         let items: Vec<(&str, &NodePath)> = nodes.iter().map(|n| ("a.read", n)).collect();
         let requests = split(
-            &envelope("alice", MatchMode::Subtree),
+            &envelope("alice", MatchMode::Subtree, false),
             &items,
             BatchLimits {
                 max_items: 3,
@@ -467,7 +481,7 @@ mod tests {
         let items: Vec<(&str, &NodePath)> = nodes.iter().map(|n| ("a.read", n)).collect();
         let limit = 400;
         let requests = split(
-            &envelope("alice", MatchMode::Node),
+            &envelope("alice", MatchMode::Node, false),
             &items,
             BatchLimits {
                 max_items: 100,
@@ -490,7 +504,7 @@ mod tests {
     fn p_10_7a_one_question_above_the_maximum_is_an_error() {
         let n = node("h");
         let error = split(
-            &envelope("alice", MatchMode::Node),
+            &envelope("alice", MatchMode::Node, false),
             &[("a.read", &n)],
             BatchLimits {
                 max_items: 10,
@@ -505,7 +519,7 @@ mod tests {
     fn p_6_11_a_request_with_items_has_no_context_usage() {
         let n = node("h");
         let requests = split(
-            &envelope("alice", MatchMode::Subtree),
+            &envelope("alice", MatchMode::Subtree, false),
             &[("a.read", &n)],
             BatchLimits {
                 max_items: 10,

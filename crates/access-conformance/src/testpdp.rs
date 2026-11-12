@@ -47,6 +47,9 @@ struct WhenSpec {
     /// True to match only a question with no `context.approval` (protocol 17.1).
     #[serde(default)]
     no_effect: Option<bool>,
+    /// True to match only a question with `context.permission_only` (protocol 5.5a).
+    #[serde(default)]
+    permission_only: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -100,6 +103,7 @@ pub(crate) struct Rule {
     match_mode: Option<String>,
     effect: Option<String>,
     no_effect: Option<bool>,
+    permission_only: Option<bool>,
     reaction: Reaction,
 }
 
@@ -146,6 +150,7 @@ impl Rule {
             match_mode: spec.when.match_mode,
             effect: spec.when.effect,
             no_effect: spec.when.no_effect,
+            permission_only: spec.when.permission_only,
             reaction,
         })
     }
@@ -186,6 +191,11 @@ impl Rule {
         }
         if let Some(none) = self.no_effect
             && question.pointer("/context/approval").is_none() != none
+        {
+            return false;
+        }
+        if let Some(only) = self.permission_only
+            && question.pointer("/context/permission_only").is_some() != only
         {
             return false;
         }

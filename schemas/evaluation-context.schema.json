@@ -32,6 +32,10 @@
         "effect": { "$ref": "#/$defs/effect" }
       }
     },
+    "permission_only": {
+      "description": "In a request: the value true marks the question of an other permission of an operation, not of its use action (protocol 5.5a). The PDP then ignores confirm (protocol 17.8). The question has no usage and no approval.",
+      "const": true
+    },
     "evaluation_id": {
       "description": "In a false answer with the reason approval_required or approval_pending, for a question with an effect: a text that only the PDP reads (protocol 17.1). The PEP sends it back in the submission of a request (protocol 17.4).",
       "type": "string",
@@ -55,7 +59,7 @@
       "pattern": "^sha256:[0-9a-f]{64}$"
     },
     "request_context": {
-      "description": "The context of a question. The units are 1 (protocol 6.4). A question with usage has no match equal to subtree (protocol 6.11).",
+      "description": "The context of a question. The units are 1 (protocol 6.4). A question with usage has no match equal to subtree (protocol 6.11). A question with permission_only has no usage and no approval (protocol 5.5a).",
       "type": "object",
       "properties": {
         "usage": {
@@ -64,15 +68,24 @@
           "properties": { "units": { "const": 1 } }
         },
         "match": { "enum": ["node", "subtree"] },
-        "approval": { "$ref": "#/properties/approval" }
+        "approval": { "$ref": "#/properties/approval" },
+        "permission_only": { "$ref": "#/properties/permission_only" }
       },
-      "if": { "required": ["usage"] },
-      "then": {
-        "not": {
-          "required": ["match"],
-          "properties": { "match": { "const": "subtree" } }
+      "allOf": [
+        {
+          "if": { "required": ["usage"] },
+          "then": {
+            "not": {
+              "required": ["match"],
+              "properties": { "match": { "const": "subtree" } }
+            }
+          }
+        },
+        {
+          "if": { "required": ["permission_only"] },
+          "then": { "not": { "anyOf": [ { "required": ["usage"] }, { "required": ["approval"] } ] } }
         }
-      }
+      ]
     },
     "answer_context": {
       "description": "The context of an answer. The reason budget_exceeded comes with retry_after (protocol 11.1).",
@@ -98,6 +111,7 @@
   "examples": [
     { "usage": { "units": 1 } },
     { "match": "subtree" },
+    { "permission_only": true },
     { "limits": { "max_rows": 100, "max_duration": 30 }, "usage": { "units": 1 } },
     { "reason": "budget_exceeded", "retry_after": 12 },
     { "reason": "unknown_subject" },

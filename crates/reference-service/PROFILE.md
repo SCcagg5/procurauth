@@ -70,7 +70,7 @@ The table gives the request of each operation. The columns after it give the var
 
 For `use_ceiling`, the variable `ceiling` is `max_rows`. The variable `ceiling_value` is a whole number from 1 to 1000000, for example 100.
 
-For `use_multi`, the use is the write on the database `test2`. The other permission is the read of the table `orders` of `test1`, without `context.usage`.
+For `use_multi`, the use is the write on the database `test2`. The other permission is the read of the table `orders` of `test1`, with `context.permission_only` and without `context.usage`.
 
 For `read_actions` and `list_options`, no variable of the operation applies.
 
