@@ -48,6 +48,8 @@ The checks of `grants` and `options` that need the document run only when the do
 | document | 5.2 | `bad_path` | error | bad path | A `path` is not `<type>:<id>` segments, or an id is not percent-encoded as 5.2 says. |
 | document | 5.2 | `wrong_parent` | error | segment does not follow the types | The type of a segment does not have the type of the segment before it as its parent. |
 | document | 5.2 | `bad_limit_name` | error | bad limit name | A limit name does not have 1 to 32 characters, a to z first, then a to z, 0 to 9 or underscore. |
+| document | 5.2 | `empty_text` | error | label or description is empty | A description of a type, of an action or of a limit, or a label of a limit, is empty. It has 1 character or more. |
+| document | 5.2 | `action_not_on_type` | error | action does not list the type of the node | An action in the `actions` of a resource does not list the type of the last segment of the `path`. |
 | document | 6.1 | `bad_kind` | error | kind is not ceiling or budget | The `kind` is not `ceiling` or `budget`. |
 | document | 6.1 | `duplicate_limit_name` | error | duplicate limit name | A limit name occurs more than one time in the document. |
 | document | 6.1 | `budget_name_max` | error | budget name starts with max_ | A budget name starts with `max_` (6.1, 7.1). |
@@ -55,9 +57,10 @@ The checks of `grants` and `options` that need the document run only when the do
 | document | 6.1 | `budget_with_max` | error | budget with "max" | A budget declaration has `max`. |
 | document | 6.1 | `ceiling_without_bound` | error | ceiling without a bound | A ceiling declaration lacks `min` or `max`. |
 | document | 6.1 | `bad_bound` | error | bound is not a whole number | `min` or `max` is not a whole number of 0 or more. |
+| document | 6.1 | `number_too_large` | error | number is above 2^53-1 | `min` or `max` of a ceiling is above 9007199254740991, the largest integer that is safe in JSON. |
 | document | 6.1 | `min_above_max` | error | min is above max | `min` is above `max`. |
 | document | 6.1 | `budget_name_window` | warning | budget name has a window or a unit | A budget name has a part that gives a window or a unit, for example `per` or `minute`. 6.1 says that a budget name has none. |
-| document | 7.1 | `ceiling_name` | warning | ceiling name is not max_ and a noun | A ceiling name is not `max_` and a noun. |
+| document | 7.1 | `ceiling_name` | error | ceiling name is not max_ and a noun | A ceiling name does not start with `max_`. This makes the document bad (7.1). |
 | document | 5.3c | `above_reader_minimum` | warning | above the minimum of a reader | A size, a count or a length is above the minimum that a reader must accept: 64 KiB, 64 actions, 16 types, 256 resources, 16 limits, label 60, description 300, unit 20. A reader can treat the document as bad. |
 | grants | 3.5 | `bad_json` | error | text is not valid JSON | The text is not JSON, or an object has the same member two times. |
 | grants | 3.5 | `wrong_type` | error | value of a wrong type | The file, `grants` or a grant has a wrong JSON type. |
@@ -78,6 +81,7 @@ The checks of `grants` and `options` that need the document run only when the do
 | grants | 6.1 | `ceiling_out_of_range` | error | value of a ceiling is out of range | The value of a ceiling is below `min` or above `max` of its declaration. |
 | grants | 6.1 | `bad_budget_value` | error | budget value is not 1 to 4 items | The value of a budget is not an array of 1 to 4 items. |
 | grants | 6.1 | `bad_amount` | error | amount is not 1 or more | An `amount` is 0. It is a whole number from 1. |
+| grants | 6.1 | `number_too_large` | error | number is above 2^53-1 | The value of a ceiling, or an `amount`, is above 9007199254740991. |
 | grants | 6.1 | `bad_window` | error | window does not exist | A `window` is not `second`, `minute`, `hour` or `day`. |
 | grants | 6.1 | `duplicate_window` | error | duplicate window | Two items of one budget value have the same window. |
 | grants | 6.10 | `undeclared_limit` | warning | limit is not declared, the value gives nothing | The document does not declare the limit. The value gives nothing. |

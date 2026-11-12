@@ -10,9 +10,25 @@ use common::*;
 use fake_pdp::Options;
 use serde_json::{Value, json};
 
+/// The data of the PDP, with a grant of `data.append` that has `confirm` on the key of Alice. The `confirm` of the
+/// grant of Alice herself has no effect on her own questions (protocol 17.8), so the tests use her key.
+fn gated_data() -> Value {
+    let mut data = pdp_data();
+    for subject in data["subjects"].as_array_mut().unwrap() {
+        if subject["id"] == KEY_ALICE {
+            subject["grants"].as_array_mut().unwrap().push(json!({
+                "action": "data.append",
+                "resource": "service:datastore/host:prod/database:test2",
+                "confirm": true
+            }));
+        }
+    }
+    data
+}
+
 fn admin_stack() -> Stack {
     stack_with(
-        &pdp_data(),
+        &gated_data(),
         Options {
             admin: true,
             clock_start: Some(1_700_000_010),
@@ -77,7 +93,7 @@ fn status(s: &Stack, token: &str, id: &str) -> Value {
 #[test]
 fn mcp_5_7_the_call_waits_the_owner_approves_and_the_second_call_runs_one_time() {
     let s = admin_stack();
-    let token = s.edge.token("alice");
+    let token = s.edge.key_token(KEY_ALICE, "alice");
     let a = args(&json!([{"id": 51}]), &json!({"lease_s": 900}));
     // The first call: it runs nothing, and the result tells that the action waits.
     let first = result(&s.mcp(Some(&token), &call(7, "append_rows", &a)));
@@ -129,7 +145,7 @@ fn mcp_5_7_the_call_waits_the_owner_approves_and_the_second_call_runs_one_time()
 #[test]
 fn mcp_5_7a_a_declined_request_gives_approval_denied_with_no_text_of_the_owner() {
     let s = admin_stack();
-    let token = s.edge.token("alice");
+    let token = s.edge.key_token(KEY_ALICE, "alice");
     let a = args(&json!([{"id": 52}]), &json!({"lease_s": 900}));
     let first = result(&s.mcp(Some(&token), &call(7, "append_rows", &a)));
     let id = first["structuredContent"]["action"]["id"]
@@ -162,7 +178,7 @@ fn mcp_5_7a_a_declined_request_gives_approval_denied_with_no_text_of_the_owner()
 #[test]
 fn mcp_5_7_a_call_with_two_controls_or_a_bad_control_gets_invalid_argument_and_asks_nothing() {
     let s = admin_stack();
-    let token = s.edge.token("alice");
+    let token = s.edge.key_token(KEY_ALICE, "alice");
     let rows = json!([{"id": 1}]);
     for controls in [
         json!({"lease_s": 900, "until": "2030-01-01T00:00:00Z"}),
@@ -189,8 +205,9 @@ fn mcp_5_7_a_call_with_two_controls_or_a_bad_control_gets_invalid_argument_and_a
 #[test]
 fn mcp_5_7_a_call_with_no_control_cannot_give_a_lease_when_the_pdp_asks_for_an_approval() {
     let s = admin_stack();
-    let token = s.edge.token("alice");
-    // The grant of alice has `confirm` on `data.append`: the PDP asks for an approval.
+    let token = s.edge.key_token(KEY_ALICE, "alice");
+    // The grant of the key of alice has `confirm` on `data.append`: the PDP asks for an approval.
+    // The `confirm` of the grant of alice herself has no effect on her own questions (17.8).
     let reply = s.mcp(
         Some(&token),
         &call(7, "append_rows", &args(&json!([{"id": 1}]), &json!({}))),
@@ -217,7 +234,7 @@ fn mcp_5_7_a_call_with_no_control_cannot_give_a_lease_when_the_pdp_asks_for_an_a
 #[test]
 fn mcp_5_7b_a_request_of_another_subject_and_an_unknown_request_get_the_same_error() {
     let s = admin_stack();
-    let alice = s.edge.token("alice");
+    let alice = s.edge.key_token(KEY_ALICE, "alice");
     let first = result(&s.mcp(
         Some(&alice),
         &call(
@@ -254,7 +271,7 @@ fn mcp_5_7b_a_request_of_another_subject_and_an_unknown_request_get_the_same_err
 fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_when_it_names_a_tool() {
     let s = admin_stack();
     let reply = s.mcp(
-        Some(&s.edge.token("alice")),
+        Some(&s.edge.key_token(KEY_ALICE, "alice")),
         &rpc(7, "tools/list", json!({})),
     );
     let tools = result(&reply)["tools"].clone();
@@ -273,20 +290,20 @@ fn mcp_5_7b_the_status_tool_is_read_only_and_the_list_names_it_when_it_names_a_t
         .iter()
         .map(|t| t["name"].as_str().unwrap().to_owned())
         .collect();
-    assert!(!names.contains(&"append_rows".to_owned()));
+    assert!(names.contains(&"append_rows".to_owned()));
     assert!(names.contains(&"get_action_status".to_owned()));
 }
 
 #[test]
 fn p_17_12_the_pep_learns_only_the_verdict_the_id_and_the_code() {
     let s = admin_stack();
-    let token = s.edge.token("alice");
+    let token = s.edge.key_token(KEY_ALICE, "alice");
     let a = args(
         &json!([{"id": 53}]),
         &json!({"approval_ref": "ref_for_the_test"}),
     );
     // The test control registers the reference of the agent, with the intent.
-    let body = json!({"ref": "ref_for_the_test", "subject": "alice", "lease_s": 900,
+    let body = json!({"ref": "ref_for_the_test", "subject": KEY_ALICE, "lease_s": 900,
         "allow_custom": true})
     .to_string();
     let registered = send(

@@ -10,7 +10,9 @@ use serde_json::{Map, Value, json};
 
 use crate::finding::{Finding, JsonPath, Report, show};
 use crate::json::parse_str;
-use crate::names::{ACCESS_ACTION, MAX_TYPE_DEPTH, SERVICE, is_action_name, is_type_or_limit_name};
+use crate::names::{
+    ACCESS_ACTION, MAX_LIMIT_NUMBER, MAX_TYPE_DEPTH, SERVICE, is_action_name, is_type_or_limit_name,
+};
 use crate::path::{NodePath, NodeRef, PathError, format_below_service};
 use crate::read::{Obj, Unknown};
 
@@ -478,6 +480,18 @@ fn warn_count(report: &mut Report, path: &JsonPath, count: usize, minimum: usize
     }
 }
 
+/// 5.2, 6.1: a label and a description have 1 character or more.
+fn check_not_empty(report: &mut Report, path: &JsonPath, text: &str, present: bool, what: &str) {
+    if present && text.is_empty() {
+        report.error(
+            path,
+            "5.2",
+            "empty_text",
+            format!("The {what} is empty. It has 1 character or more."),
+        );
+    }
+}
+
 fn warn_length(report: &mut Report, path: &JsonPath, text: &str, minimum: usize, what: &str) {
     let length = text.chars().count();
     if length > minimum {
@@ -507,6 +521,8 @@ struct Scan {
     type_parent: HashMap<String, String>,
     limit_names: HashSet<String>,
     action_names: HashSet<String>,
+    /// The types that each action lists, by the name of the action (5.2).
+    action_types: HashMap<String, Vec<String>>,
 }
 
 impl Scan {
@@ -515,6 +531,7 @@ impl Scan {
             type_parent: HashMap::new(),
             limit_names: HashSet::new(),
             action_names: HashSet::new(),
+            action_types: HashMap::new(),
         };
         let items = |key: &str| top.peek_items(key);
         for item in items("resource_types") {
@@ -541,6 +558,17 @@ impl Scan {
                 && is_action_name(name)
             {
                 scan.action_names.insert(name.to_owned());
+                let types = item
+                    .get("resource_types")
+                    .and_then(Value::as_array)
+                    .map(|list| {
+                        list.iter()
+                            .filter_map(Value::as_str)
+                            .map(str::to_owned)
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                scan.action_types.entry(name.to_owned()).or_insert(types);
             }
         }
         scan
@@ -568,6 +596,13 @@ fn read_types(
         let parent = obj.string("parent", report).unwrap_or_default();
         let description = obj.string("description", report).unwrap_or_default();
         obj.finish(report);
+        check_not_empty(
+            report,
+            &path.key("description"),
+            description,
+            obj.has_string("description"),
+            "description",
+        );
         warn_length(
             report,
             &path.key("description"),
@@ -681,6 +716,13 @@ fn read_actions(items: &[Value], base: &JsonPath, scan: &Scan, report: &mut Repo
             );
         }
         obj.finish(report);
+        check_not_empty(
+            report,
+            &path.key("description"),
+            description,
+            obj.has_string("description"),
+            "description",
+        );
         warn_length(
             report,
             &path.key("description"),
@@ -788,6 +830,7 @@ fn read_resources(
         let nodes = text.map_or_else(Vec::new, |text| {
             check_resource_path(text, scan, &path.key("path"), report)
         });
+        let node_type = nodes.last().map(|node| node.node_type.as_str());
         if let Some(names) = &actions {
             let mut seen = HashSet::new();
             for (i, name) in names.iter().enumerate() {
@@ -805,6 +848,20 @@ fn read_resources(
                         "5.2",
                         "duplicate_action",
                         format!("Action `{name}` occurs more than one time."),
+                    );
+                } else if let Some(node_type) = node_type
+                    && scan
+                        .action_types
+                        .get(*name)
+                        .is_some_and(|types| !types.iter().any(|t| t == node_type))
+                {
+                    report.error(
+                        &apath,
+                        "5.2",
+                        "action_not_on_type",
+                        format!(
+                            "Action `{name}` does not list the type `{node_type}` of the node."
+                        ),
                     );
                 }
             }
@@ -894,6 +951,20 @@ fn read_limits(items: &[Value], base: &JsonPath, report: &mut Report) -> Vec<Lim
         let min_present = min_value.is_some();
         let max_present = max_value.is_some();
         obj.finish(report);
+        check_not_empty(
+            report,
+            &path.key("label"),
+            label,
+            obj.has_string("label"),
+            "label",
+        );
+        check_not_empty(
+            report,
+            &path.key("description"),
+            description,
+            obj.has_string("description"),
+            "description",
+        );
         warn_length(report, &path.key("label"), label, READER_MIN_LABEL, "label");
         warn_length(
             report,
@@ -970,11 +1041,11 @@ fn read_limits(items: &[Value], base: &JsonPath, report: &mut Report) -> Vec<Lim
             }
             Some(LimitKind::Ceiling) => {
                 if !name.starts_with("max_") && is_type_or_limit_name(name) {
-                    report.warning(
+                    report.error(
                         &path.key("name"),
                         "7.1",
                         "ceiling_name",
-                        format!("Ceiling name `{name}` should be `max_` and a noun."),
+                        format!("Ceiling name `{name}` must be `max_` and a noun."),
                     );
                 }
                 min = read_bound("min", min_value, &path, report);
@@ -1020,19 +1091,31 @@ fn read_bound(
         );
         return None;
     };
-    if let Some(number) = value.as_u64() {
-        Some(number)
-    } else {
-        report.error(
-            &path.key(key),
-            "6.1",
-            "bad_bound",
-            format!(
-                "Member `{key}`: expected a whole number of 0 or more, found {}.",
-                show(value)
-            ),
-        );
-        None
+    match value.as_u64() {
+        Some(number) if number <= MAX_LIMIT_NUMBER => Some(number),
+        Some(number) => {
+            report.error(
+                &path.key(key),
+                "6.1",
+                "number_too_large",
+                format!(
+                    "Member `{key}`: expected a whole number of at most {MAX_LIMIT_NUMBER}, found {number}."
+                ),
+            );
+            None
+        }
+        None => {
+            report.error(
+                &path.key(key),
+                "6.1",
+                "bad_bound",
+                format!(
+                    "Member `{key}`: expected a whole number of 0 or more, found {}.",
+                    show(value)
+                ),
+            );
+            None
+        }
     }
 }
 
@@ -1459,19 +1542,53 @@ mod tests {
     }
 
     #[test]
-    fn p_7_1_a_ceiling_name_should_start_with_max() {
+    fn p_7_1_a_ceiling_name_must_start_with_max() {
         let mut doc = section_13();
         doc["limits"][1]["name"] = json!("rows");
         doc["actions"][0]["limits"] = json!(["requests", "rows", "max_duration"]);
-        let found = findings_of(&doc);
-        assert_eq!(
-            found,
-            vec![(
-                "$.limits[1].name".to_owned(),
-                "ceiling_name",
-                Severity::Warning
-            )]
-        );
+        one_error(&doc, "$.limits[1].name", "ceiling_name");
+    }
+
+    #[test]
+    fn p_5_2_a_label_and_a_description_have_one_character_or_more() {
+        let mut doc = section_13();
+        doc["resource_types"][0]["description"] = json!("");
+        one_error(&doc, "$.resource_types[0].description", "empty_text");
+        let mut doc = section_13();
+        doc["actions"][1]["description"] = json!("");
+        one_error(&doc, "$.actions[1].description", "empty_text");
+        let mut doc = section_13();
+        doc["limits"][0]["label"] = json!("");
+        one_error(&doc, "$.limits[0].label", "empty_text");
+        let mut doc = section_13();
+        doc["limits"][2]["description"] = json!("");
+        one_error(&doc, "$.limits[2].description", "empty_text");
+    }
+
+    #[test]
+    fn p_5_2_an_action_of_a_resource_lists_the_type_of_its_node() {
+        let mut doc = section_13();
+        doc["actions"][1]["resource_types"] = json!(["service", "database"]);
+        // `data.write` does not list `host`, the type of `host:prod`.
+        doc["resources"][0]["actions"] = json!(["data.read", "data.write"]);
+        one_error(&doc, "$.resources[0].actions[1]", "action_not_on_type");
+        doc["resources"][0]["actions"] = json!(["data.read"]);
+        assert!(errors_of(&doc).is_empty());
+    }
+
+    #[test]
+    fn p_6_1_a_number_of_a_limit_is_at_most_2_to_the_53_minus_1() {
+        let mut doc = section_13();
+        doc["limits"][1]["max"] = json!(9_007_199_254_740_991_u64);
+        assert!(errors_of(&doc).is_empty());
+        doc["limits"][1]["max"] = json!(9_007_199_254_740_992_u64);
+        one_error(&doc, "$.limits[1].max", "number_too_large");
+        let mut doc = section_13();
+        doc["limits"][1]["min"] = json!(9_007_199_254_740_992_u64);
+        doc["limits"][1]["max"] = json!(u64::MAX);
+        let errors = errors_of(&doc);
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|(_, code)| *code == "number_too_large"));
     }
 
     #[test]

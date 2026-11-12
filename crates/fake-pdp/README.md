@@ -82,7 +82,7 @@ The data file is a JSON object. The schema is `schemas/fake-pdp-data.schema.json
 - `counters`: the first values of the counters. They apply to the window of the clock at start.
 - `failures`: the failures to make. The kinds are `error_503`, `delay` and `no_answer`.
 - `approvals`: the approval requests that exist at the start (protocol 17.6). The last entry for one subject, action, resource and effect is the latest. See "Approvals".
-- `confirm_all`: a boolean, false by default. This is a test mode. When it is true, each action except `access` needs an approval for each subject, as if each grant had `confirm` equal to true. Use it to test that a PEP follows protocol section 17 for each action of its document.
+- `confirm_all`: a boolean, false by default. This is a test mode. When it is true, each action except `access` and `mcp.session` needs an approval for each subject, as if each grant had `confirm` equal to true. This is the one case where a person needs an approval: a test of a PEP signs in as a person. Use it to test that a PEP follows protocol section 17 for each action of its document.
 - `clock` and `metadata`: see the table of keys.
 
 The example `examples/datastore.json` is the data of protocol section 13. It has Alice, her key, Bob and his key. The example `examples/datastore-with-counters.json` also has first counter values, metadata and a failure.
@@ -133,7 +133,7 @@ The PDP decides as the protocol says. The rules in short:
 - A key gets `true` only when a grant of the key and a grant of its owner both cover the node (3.5). For `subtree`, one node must exist that both sides cover (4.4).
 - `context.limits` has the lowest value among the grants of the asked action. A key never goes above its owner (7.3, 8.1, 8.4).
 - A `false` answer has a reason only for the reasons of 11.1: the four of the first version and the four of the approval (17.1). HTTP 200 stays the status.
-- A grant with `confirm` makes the action need an approval, on the grant of the key and on the grant of its owner (17.8). See "Approvals".
+- A grant with `confirm` makes the action need an approval, on the grant of the key and on the grant of its owner (17.8). The `confirm` of a grant of a person has no effect on the questions of that person, and it has no effect on `mcp.session`. See "Approvals".
 - A service without a good action document answers `false` with no reason, except for `access` on the service (11.1).
 
 When a credential belongs to one service, the PDP answers `invalid_resource` for a question about another service (12).
@@ -146,8 +146,8 @@ A question for such an action needs an approval. The PDP first decides as for a 
 
 - A question with no `context.approval.effect` gets `approval_required`, with no `evaluation_id`.
 - A question with an effect gets `approval_required` or `approval_pending`, with an `evaluation_id`. It gets `approval_denied` during the deny time. It gets `approval_expired` when it has usage and the approval is void (17.1).
-- An approval that can be used gives `true`. With usage, the PDP consumes the approval and takes the units in one atomic step (17.2). When a budget refuses, nothing is consumed.
-- A question with `context.match` equal to `subtree` and a question for `access` never need an approval (17.8).
+- An approval that can be used gives `true`. With usage, the PDP takes the units and consumes the approval in one step (17.2). When a budget refuses, nothing is consumed.
+- A question with `context.match` equal to `subtree`, a question for `access` and a question for `mcp.session` never need an approval (17.8). A question of a person never needs one.
 
 The API for a PEP is in the endpoints table. The credential of a service decides the access. A service with no action in its document gets HTTP 403. A request of another service or of another subject gets HTTP 404.
 

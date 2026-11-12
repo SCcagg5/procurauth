@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "properties": {
     "title": {
-      "description": "The title that the owner reads. It is a text of the service.",
+      "description": "The title that the owner reads. It is a text of the service. When it is absent, the PDP shows the name of the action (protocol 17.9).",
       "type": "string"
     },
     "fields": {

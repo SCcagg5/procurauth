@@ -1,0 +1,81 @@
+{
+  "id": "D93",
+  "title": "The confirm of a grant of the action mcp.session has no effect, for a person and for a key of its owner.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "session.json"
+  },
+  "steps": [
+    {
+      "name": "A person with confirm on mcp.session",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "erin"
+          },
+          "action": {
+            "name": "mcp.session"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key with confirm on mcp.session on its own grant and on the grant of its owner",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:session01"
+          },
+          "action": {
+            "name": "mcp.session"
+          },
+          "resource": {
+            "type": "service",
+            "id": "datastore"
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/reason": {
+            "absent": true
+          }
+        }
+      }
+    }
+  ]
+}

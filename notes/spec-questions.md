@@ -8,11 +8,23 @@ This file lists the places where the text of the protocol or of the MCP binding 
 2. **5.2.** Is an action with an empty list `resource_types` valid? No grant can be valid for such an action. The code accepts it with no finding.
 3. **5.2.** Must the id in `server` follow the rules of 4.1 (1 to 256 bytes, no control character)? The service is the root node. The code applies 4.1.
 4. **5.2.** Can a `label` or a `description` be empty? The text gives a maximum, not a minimum. The code accepts an empty text.
+
+   Status: Closed (lot PS1, decision 175): a label and a description have 1 character or more.
+
 5. **5.2.** Must the `actions` of a `resources` item list the type of the node? The text says only that each name is declared. The code does not check the type.
+
+   Status: Closed (lot PS1, decision 175): the document is bad when an action of a `resources` item does not list the type of the node.
+
 6. **5.2, 5.7.** Is the percent-encoding of an id in `path` strict? Paragraph 5.2 says that the encoded text is the only text form. The code refuses a lower-case escape and a reserved character that is not encoded.
 7. **7.1.** A ceiling name is `max_` and a noun. Does a ceiling name without `max_` make the document bad? The code gives a warning.
+
+   Status: Closed (lot PS1, decision 175): a ceiling name that does not start with `max_` makes the document bad.
+
 8. **6.1.** Does "whole number" include the JSON text `1.0`? The code refuses it for `min`, `max` and `amount`. A JSON Schema of type integer accepts it.
 9. **6.1.** Is there a largest value for `max` and `amount`? The text gives none. The code reads a whole number up to 2^64 - 1.
+
+   Status: Closed (lot PS1, decisions 175 and 176): the largest whole number of a limit is 2^53-1.
+
 10. **4.1.** Which characters are control characters? The code uses the Unicode category Cc: U+0000 to U+001F and U+007F to U+009F.
 
 ## Identity token
@@ -60,6 +72,9 @@ This file lists the places where the text of the protocol or of the MCP binding 
 38. **17.6.** Does the deny time end at `deny_until` or after it? Does the consume time end at `consume_before` or after it? The case D80 says that `consume_before` is the last good second. The code ends the deny time at `deny_until` (decision 109).
 39. **17.4.** The text says that the PDP bounds `wait` and publishes the bound. It does not say what happens above the bound. The code waits the bound and answers the verdict, with no error (decision 113).
 40. **17.4, 17.5.** The text does not say how a PDP publishes its bounds. The code uses twelve metadata members `procurauth_approval_*` (decision 112). The names are not in the protocol.
+
+   Status: Closed (lot PS1, decision 170): paragraph 17.4a defines the twelve names.
+
 41. **17.1, 17.4.** The submission has no subject, action or resource. The `evaluation_id` must give them back. A stateless id needs a long text, so the code keeps the binding in memory (decision 114).
 42. **17.5.** Does a renewal after the end of a lease count as a revival? The code says yes, because the first call that sees the end also makes the request `abandoned` (decision 110).
 43. **17.4.** A request for an effect that has an approval that can be used still gets a new request. Is this an error? The code makes the new request the latest approval (decision 108).
@@ -77,9 +92,21 @@ This file lists the places where the text of the protocol or of the MCP binding 
 ## Approval for every action (lot S7)
 
 51. **17.7a, 17.8.** A grant of a person can have `confirm`, and the approver is the owner only, so a person approves their own action. A person with an interactive session cannot wait, so the call gets HTTP 403 with `approval_cannot_wait`. We recommend that the PDP ignores `confirm` of a grant of a person for the questions of the person, because self-approval adds no check. It applies that `confirm` to the keys of the person only. Does the owner accept this rule?
+
+   Status: Decided by the owner on 2026-11-12 (decision 177). The `confirm` of a grant of a person has no effect on the questions of the person. It applies to the keys of the person.
+
 52. **17.7a, 15.** Only the MCP binding gives an interface that can wait (open point 7, spec questions 28 and 50). A service with an HTTP route only, or a web interface, can never wait, so no approval can run its actions. We recommend an HTTP form with the answer 202 and the body `{"action": {...}}` of the binding. The controls of 17.5 go in the query or in a header. Does the owner want to define it?
+
+   Status: Decided by the owner on 2026-11-12 (decision 183): a route of a plain HTTP service keeps HTTP 403 with `approval_cannot_wait`. A standalone key stays outside the approval.
+
 53. **17.7, 5.5a, spec question 29.** An operation that needs a second permission fails when the PDP asks for an approval for that permission. A `confirm` on `data.read` then stops each copy. We recommend that one approval covers the whole operation: the PEP sends the effect of the operation with each permission, and one submission lists them. Until then, the portal must not offer `confirm` for an action that an operation uses as an other permission. Does the owner want a design for it?
+
+   Status: Still open: it needs a decision of the owner (decision 182). The text does not change.
+
 54. **17.1, 17.7, 10.1, spec question 25.** The PEP asks first with no effect, and it computes the effect only on a reason of 17.1 (decision 150). A gated use then costs three questions: one with no effect, one with the effect, and one with usage. The other design sends the effect in each question and costs two for each use. Does the owner accept the lazy design?
 55. **Binding 5.7, spec question 31.** A call with no control argument gets `invalid_argument` when the PDP asks for an approval (decision 156). A service could use a default lease from its own configuration instead. Then an agent never needs to know in advance. We recommend the error, because the lease is the choice of the agent. Does the owner agree?
 56. **Binding 3.6a, 17.7a.** The action `mcp.session` is for the methods with no tool, for example `ping`. It must follow section 17, but such a method cannot wait. A grant with `confirm` on it makes `ping` and `initialize` fail. We recommend that the PDP ignores `confirm` for `mcp.session`, like it does for `access`. Does the owner agree?
+
+   Status: Decided by the owner on 2026-11-12 (decision 179): `confirm` has no effect on `mcp.session`, and a PDP SHOULD refuse such a grant.
+
 57. **17.3a.** A service must name the operation in `op` when an action serves more than one operation. The text gives the member `tool` only for the MCP binding. A service with no MCP endpoint has no name. Does the owner want a member name for other interfaces?

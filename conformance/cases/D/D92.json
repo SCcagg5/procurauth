@@ -1,0 +1,113 @@
+{
+  "id": "D92",
+  "title": "The confirm of a grant of a person has no effect on the questions of the person. It applies to the keys of the person.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.8"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "Carol has confirm on data.write, and her own question gets true",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "carol"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          },
+          "context": {
+            "usage": {
+              "units": 1
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/reason": {
+            "absent": true
+          },
+          "/context/evaluation_id": {
+            "absent": true
+          }
+        }
+      }
+    },
+    {
+      "name": "A key of Carol with no grant of confirm needs an approval",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "key:ownconf01"
+          },
+          "action": {
+            "name": "data.write"
+          },
+          "resource": {
+            "type": "database",
+            "id": "analytics",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                },
+                {
+                  "type": "host",
+                  "id": "prod"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": false
+          },
+          "/context/reason": {
+            "equals": "approval_required"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "D94",
+  "title": "A ceiling value of 2^53-1, the largest whole number of a limit, is a valid value and the answer gives it exactly.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.1",
+    "7.3"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "bignumber.json"
+  },
+  "steps": [
+    {
+      "name": "A read on the host with the ceiling 9007199254740991",
+      "request": {
+        "endpoint": "evaluation",
+        "body": {
+          "subject": {
+            "type": "user",
+            "id": "gina"
+          },
+          "action": {
+            "name": "data.read"
+          },
+          "resource": {
+            "type": "host",
+            "id": "prod",
+            "properties": {
+              "ancestors": [
+                {
+                  "type": "service",
+                  "id": "datastore"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/decision": {
+            "equals": true
+          },
+          "/context/limits/max_rows": {
+            "equals": 9007199254740991
+          }
+        }
+      }
+    }
+  ]
+}

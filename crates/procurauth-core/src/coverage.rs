@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 use crate::action_document::{ActionDocument, LimitKind};
 use crate::grants::Grant;
 use crate::limits::{LimitValue, combine_sides, lowest};
-use crate::names::ACCESS_ACTION;
+use crate::names::{ACCESS_ACTION, SESSION_ACTION};
 use crate::path::NodePath;
 
 /// True when a grant on `grant` covers `node` (4.3): the node is the grant
@@ -74,13 +74,31 @@ pub fn key_subtree_applies(
     })
 }
 
+/// True when `confirm` can have an effect on `action` (17.8).
+/// It has none on `access` and none on `mcp.session`.
+pub fn confirm_has_effect(action: &str) -> bool {
+    action != ACCESS_ACTION && action != SESSION_ACTION
+}
+
 /// True when the action needs an approval on `node` for the grants of one side (17.8):
-/// a grant of `action` that covers `node` has `confirm`. The action `access` never needs one.
+/// a grant of `action` that covers `node` has `confirm`. The actions `access` and `mcp.session` never need one.
 pub fn confirm_required(grants: &[Grant], action: &str, node: &NodePath) -> bool {
-    action != ACCESS_ACTION
+    confirm_has_effect(action)
         && grants
             .iter()
             .any(|g| g.confirm && g.action == action && covers(&g.resource, node))
+}
+
+/// True when the action needs an approval on `node` for a question of the subject (17.8).
+/// `owner_grants` is `None` for a person: the `confirm` of a grant of a person has no effect on the
+/// questions of the person. For a key, the grants of the key and the grants of its owner both count.
+pub fn subject_confirm_required(
+    own_grants: &[Grant],
+    owner_grants: Option<&[Grant]>,
+    action: &str,
+    node: &NodePath,
+) -> bool {
+    owner_grants.is_some_and(|owner| key_confirm_required(own_grants, owner, action, node))
 }
 
 /// True when the action needs an approval on `node` for a key (17.8).
@@ -168,7 +186,8 @@ mod tests {
                 {"name": "data.read", "resource_types": ["service", "host", "database", "table"],
                  "description": "R.", "limits": ["requests", "max_rows", "max_duration"]},
                 {"name": "data.write", "resource_types": ["service", "host", "database", "table"],
-                 "description": "W.", "limits": ["requests", "max_duration"]}
+                 "description": "W.", "limits": ["requests", "max_duration"]},
+                {"name": "mcp.session", "resource_types": ["service"], "description": "S."}
             ],
             "limits": [
                 {"name": "requests", "label": "R", "description": "R.", "unit": "request", "kind": "budget"},
@@ -429,6 +448,42 @@ mod tests {
             &access,
             "access",
             &path("service:datastore")
+        ));
+    }
+
+    #[test]
+    fn p_17_8_confirm_has_no_effect_on_mcp_session_and_on_the_questions_of_a_person() {
+        let doc = document();
+        let side = grants(
+            &json!([
+                {"action": "mcp.session", "resource": "service:datastore", "confirm": true},
+                {"action": "data.write", "resource": "service:datastore/host:prod", "confirm": true}
+            ]),
+            &doc,
+        );
+        let service = path("service:datastore");
+        let node = path("service:datastore/host:prod/database:a");
+        assert!(!confirm_has_effect("mcp.session"));
+        assert!(!confirm_required(&side, "mcp.session", &service));
+        assert!(confirm_required(&side, "data.write", &node));
+        // The subject is a person: no owner side, no approval.
+        assert!(!subject_confirm_required(&side, None, "data.write", &node));
+        // The subject is a key: its owner has `confirm`, so the key needs an approval.
+        let key = grants(
+            &json!([{"action": "data.write", "resource": "service:datastore/host:prod"}]),
+            &doc,
+        );
+        assert!(subject_confirm_required(
+            &key,
+            Some(&side),
+            "data.write",
+            &node
+        ));
+        assert!(!subject_confirm_required(
+            &key,
+            Some(&side),
+            "mcp.session",
+            &service
         ));
     }
 

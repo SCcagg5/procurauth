@@ -18,7 +18,7 @@
       "$ref": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect"
     },
     "op": {
-      "description": "The values that decide what the operation does (protocol 17.3). The numbers are integers from -(2^53-1) to 2^53-1.",
+      "description": "The values that decide what the operation does (protocol 17.3). The numbers are integers from -(2^53-1) to 2^53-1. The size of op and view together is at most the published member procurauth_approval_max_command_bytes (protocol 17.4a).",
       "type": "object"
     },
     "view": { "$ref": "https://sccagg5.github.io/procurauth/schemas/approval-view.schema.json" },
@@ -28,7 +28,7 @@
       "minLength": 1
     },
     "lease_s": {
-      "description": "The seconds of the lease, in the mode of the lease (protocol 17.5). The PDP bounds the value and never changes it.",
+      "description": "The seconds of the lease, in the mode of the lease (protocol 17.5). The schema gives only the floor of 1. The PDP bounds the value with the published members procurauth_approval_lease_min_seconds and procurauth_approval_lease_max_seconds (protocol 17.4a), and it never changes the value.",
       "type": "integer",
       "minimum": 1
     },

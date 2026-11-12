@@ -1,0 +1,44 @@
+{
+  "id": "D90",
+  "title": "The PDP publishes four members: the idle time, the size of a request, the number of items and the time of an answer with usage.",
+  "role": "pdp",
+  "paragraphs": [
+    "6.9",
+    "10.7",
+    "10.7a"
+  ],
+  "requirement": "MUST",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "A read of the metadata",
+      "request": {
+        "endpoint": "metadata"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/access_evaluation_endpoint": {
+            "present": true
+          },
+          "/procurauth_idle_max_seconds": {
+            "present": true
+          },
+          "/procurauth_evaluations_max_bytes": {
+            "present": true
+          },
+          "/procurauth_evaluations_max_items": {
+            "present": true
+          },
+          "/procurauth_usage_max_seconds": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

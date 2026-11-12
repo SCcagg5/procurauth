@@ -56,7 +56,7 @@ The `op` of a call has the member `tool`, the name of the tool. It also has each
 
 A tool that only asks the owner of the key has no action in the map of the tools [CONTRACT, 9.1]. It sends no other data out of the system and it changes no resource. It is not a use. It sends no question and needs no approval.
 
-3.6a A request for an MCP method with no tool asks the action `mcp.session` on the resource of type `service` with the id of the service (protocol 4.1). Such methods are `initialize`, `ping`, `server/discover` and the notifications. The service declares the action `mcp.session` in its action document (protocol 5.2). When this action lists a budget, each such request is one use (protocol 6.4). Such a request cannot wait (protocol 17.7a). For a reason of protocol 17.1, the service answers as 5.1 says, with no effect and no submission.
+3.6a A request for an MCP method with no tool asks the action `mcp.session` on the resource of type `service` with the id of the service (protocol 4.1). Such methods are `initialize`, `ping`, `server/discover` and the notifications. The service declares the action `mcp.session` in its action document (protocol 5.2). When this action lists a budget, each such request is one use (protocol 6.4). Such a request cannot wait (protocol 17.7a). The `confirm` of a grant has no effect on this action (protocol 17.8), so the PDP gives no approval for it. A tool never uses the action `mcp.session`, because the action cannot be approved. A reason of protocol 17.1 for such a request is a fault of the PDP: the service answers as 5.1 says, with no effect and no submission.
 
 3.6 A `tools/list` is not a use. Its questions are questions for a display (protocol 2, Use), and section 4 gives them.
 

@@ -859,3 +859,47 @@ fn p_17_4_a_subject_that_has_too_many_requests_that_wait_gets_429() {
         (429, json!({"error": "rate_limited", "retry_after": 60}))
     );
 }
+
+#[test]
+fn p_17_8_the_confirm_of_a_grant_of_a_person_has_no_effect_on_the_questions_of_the_person() {
+    // Carol has `confirm` on `data.write`, and her key has none. The key needs an approval.
+    let server = start_admin(&directory());
+    let own = ask(&server, &question("carol", "data.write", ANALYTICS, true));
+    assert_eq!(own["decision"], true, "{own}");
+    assert!(own["context"]["reason"].is_null(), "{own}");
+    assert_eq!(own["context"]["usage"]["units"], 0, "{own}");
+    let key = ask(&server, &ask_effect("key:ownconf01", None, false));
+    assert_eq!(key["context"]["reason"], "approval_required", "{key}");
+}
+
+#[test]
+fn p_17_8_the_confirm_of_a_grant_of_mcp_session_has_no_effect() {
+    let text = include_str!("../../../conformance/directories/session.json");
+    let server = start_admin(&serde_json::from_str(text).unwrap());
+    for subject in ["erin", "key:session01"] {
+        let answer = ask(&server, &question(subject, "mcp.session", "", false));
+        assert_eq!(answer["decision"], true, "{subject}: {answer}");
+        assert!(answer["context"]["reason"].is_null(), "{subject}: {answer}");
+    }
+}
+
+#[test]
+fn p_17_9_a_view_has_no_mandatory_member() {
+    let server = start_admin(&directory());
+    for (index, view) in [
+        json!({}),
+        json!({"title": "Write"}),
+        json!({"body": "/sql"}),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let op = json!({"tool": "run_write_query", "sql": "SELECT 1", "n": index});
+        let id = evaluation_id(&server, KEY, &op);
+        let reply = submit(
+            &server,
+            &submission(&id, &op, json!({"lease_s": 60, "view": view})),
+        );
+        assert_eq!(reply.status, 201, "{index}: {}", reply.text());
+    }
+}

@@ -19,8 +19,8 @@ use procurauth_core::authzen::{
     check_resource, check_usage_placement, evaluations_answer_to_value,
 };
 use procurauth_core::coverage::{
-    ceilings_of_key, ceilings_of_side, confirm_required, granted, key_confirm_required,
-    key_granted, key_subtree_applies, subtree_applies,
+    ceilings_of_key, ceilings_of_side, granted, key_granted, key_subtree_applies,
+    subject_confirm_required, subtree_applies,
 };
 use procurauth_core::directory::{Directory, KeyState, ServiceEntry, SubjectEntry};
 use procurauth_core::grants::Grant;
@@ -147,8 +147,40 @@ impl ReferencePdp {
             .position(|s| s.credential_sha256.as_deref() == Some(digest.as_str()))
     }
 
+    /// The metadata of the PDP: the four members of 6.9, 10.7 and 10.7a, and the members of 17.4a.
+    fn metadata() -> Response {
+        Response {
+            status: 200,
+            body: json!({
+                "policy_decision_point": "http://reference.example",
+                "access_evaluation_endpoint": "http://reference.example/access/v1/evaluation",
+                "access_evaluations_endpoint": "http://reference.example/access/v1/evaluations",
+                "procurauth_idle_max_seconds": 30,
+                "procurauth_evaluations_max_bytes": 1_048_576,
+                "procurauth_evaluations_max_items": 100,
+                "procurauth_usage_max_seconds": 5,
+                "procurauth_approval_lease_min_seconds": 30,
+                "procurauth_approval_lease_max_seconds": 604_800,
+                "procurauth_approval_grace_seconds": 120,
+                "procurauth_approval_revive_seconds": 604_800,
+                "procurauth_approval_max_revivals": 3,
+                "procurauth_approval_max_life_seconds": 7_776_000,
+                "procurauth_approval_wait_max_seconds": 25,
+                "procurauth_approval_consume_seconds": 300,
+                "procurauth_approval_deny_seconds": 300,
+                "procurauth_approval_evaluation_ttl_seconds": 300,
+                "procurauth_approval_ref_ttl_seconds": 900,
+                "procurauth_approval_max_command_bytes": 65_536,
+            }),
+        }
+    }
+
     /// Answer a request of the endpoint `evaluation` or `evaluations`.
     fn handle(&mut self, endpoint: &str, headers: &Map<String, Value>, body: &Value) -> Response {
+        // The metadata needs no credential (10.7).
+        if endpoint == "metadata" {
+            return Self::metadata();
+        }
         let Some(index) = self.service_index(headers) else {
             return Response {
                 status: 401,
@@ -287,10 +319,13 @@ impl ReferencePdp {
                 Some(owner) => ceilings_of_key(document, own, &owner.grants, action, node),
             },
         };
-        let needs_approval = match owner {
-            None => confirm_required(own, action, node),
-            Some(owner) => key_confirm_required(own, &owner.grants, action, node),
-        };
+        // The `confirm` of a grant of a person has no effect on the questions of the person (17.8).
+        let needs_approval = subject_confirm_required(
+            own,
+            owner.map(|owner| owner.grants.as_slice()),
+            action,
+            node,
+        );
         let mut usable = None;
         if needs_approval {
             let gate = context.approval_effect.as_deref().map_or(

@@ -1,9 +1,10 @@
 {
   "id": "D23",
-  "title": "A node id that is empty, longer than 256 bytes or holds a control character gives false.",
+  "title": "A node id that is empty, longer than 256 bytes or holds a control character gives false with the reason invalid_resource.",
   "role": "pdp",
   "paragraphs": [
-    "4.1"
+    "4.1",
+    "11.1"
   ],
   "requirement": "MUST",
   "notes": "Question 1 in notes/spec-questions-cases.md asks which reason the answer has. The case does not check it.",
@@ -48,6 +49,9 @@
         "json": {
           "/decision": {
             "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
           }
         }
       }
@@ -89,6 +93,9 @@
         "json": {
           "/decision": {
             "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
           }
         }
       }
@@ -130,6 +137,9 @@
         "json": {
           "/decision": {
             "equals": false
+          },
+          "/context/reason": {
+            "equals": "invalid_resource"
           }
         }
       }

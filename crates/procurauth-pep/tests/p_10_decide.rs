@@ -356,6 +356,24 @@ fn p_10_3_a_status_other_than_200_gives_503() {
 }
 
 #[test]
+fn p_17_1_an_evaluation_id_of_more_than_1024_bytes_makes_the_answer_not_valid() {
+    for (size, valid) in [(1024, true), (1025, false)] {
+        let t = Scripted::answering(move |_| {
+            json!({"decision": false,
+                "context": {"reason": "approval_required", "evaluation_id": "e".repeat(size)}})
+        });
+        let (pep, who, _) = setup(t);
+        let r = refusal(pep.decide(&who, &read(orders())));
+        assert_eq!(
+            matches!(r, Refusal::Unavailable(_)),
+            !valid,
+            "{size}: {r:?}"
+        );
+        assert_eq!(r.status(), if valid { 403 } else { 503 }, "{size}");
+    }
+}
+
+#[test]
 fn p_10_3_an_answer_that_is_not_valid_gives_503() {
     let bodies: Vec<&[u8]> = vec![
         b"",

@@ -43,7 +43,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 5.4 | pdp | none |
 | 5.5 | pdp | D49, D64 |
 | 5.5a | pdp | D72 |
-| 6.1 | pdp | D46, D56 |
+| 6.1 | pdp | D46, D56, D94 |
 | 6.2 | pdp | D49, D68 |
 | 6.3 | pdp | D41, D42, D43, D44, D47, D48 |
 | 6.4 | pdp | D58 |
@@ -51,12 +51,12 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 6.6 | pdp | D06, D51, D72 |
 | 6.7 | pdp | D45, D53, D54, D55, D56 |
 | 6.8 | pdp | none |
-| 6.9 | pdp | none |
+| 6.9 | pdp | D90 |
 | 6.10 | pdp | D52, D57 |
 | 6.11 | pdp | D59, D60, D61, D62 |
 | 6.12 | pdp | D52, D54, D63, D77 |
 | 7.1 | pdp | D64 |
-| 7.3 | pdp | D01, D05, D64, D65, D66, D67, D68, D72 |
+| 7.3 | pdp | D01, D05, D64, D65, D66, D67, D68, D72, D94 |
 | 7.4 | pdp | none |
 | 7.5 | pdp | D68 |
 | 7.6 | pdp | D73 |
@@ -64,18 +64,19 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 8.2 | pdp | D57, D65, D71 |
 | 8.3 | pdp | D22, D39, D69, D74 |
 | 8.4 | pdp | D05, D53, D55, D70, D71 |
-| 10.7 | pdp | none |
-| 10.7a | pdp | none |
-| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75, D76, D84, D88 |
+| 10.7 | pdp | D90 |
+| 10.7a | pdp | D90 |
+| 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D23, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75, D76, D84, D88 |
 | 11.2 | pdp | D02, D30, D73 |
 | 12 | pdp | D16, D40, D53, D55 |
 | 17.1 | pdp | D76, D77, D78, D79, D80, D83, D84, D85, D86, D87, D88, D89 |
 | 17.2 | pdp | D77, D78, D81 |
 | 17.3 | pdp | none |
 | 17.4 | pdp | none |
+| 17.4a | pdp | D91 |
 | 17.5 | pdp | none |
 | 17.6 | pdp | D80, D85, D86, D87 |
-| 17.8 | pdp | D76, D82, D83 |
+| 17.8 | pdp | D76, D82, D83, D92, D93 |
 | 17.9 | pdp | none |
 | 17.9a | pdp | none |
 | 17.10 | pdp | none |
@@ -207,12 +208,10 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 5.4 | pdp | The labels and the descriptions are in English. | A program cannot check the language of a text. The rule is for the service. |
 | 5.5 | pdp | A service MUST NOT ask two actions with context.usage for one operation. | The sentence states a rule for the PEP. The PDP part of the paragraph has cases. |
 | 6.8 | pdp | A PDP with several instances counts each counter one time for all of them. | A case needs several instances of the PDP, and the runner sees one endpoint. |
-| 6.9 | pdp | When the PDP cannot read or change a counter, it answers HTTP 503. It publishes the longest time of an answer. | A case cannot make the store of the counters fail. The PDP can publish the time in its documentation. |
+| 6.9 | pdp | When the PDP cannot read or change a counter, it answers HTTP 503. | A case cannot make the store of the counters fail. The case D90 tests the published time. |
 | 7.1 | pdp | A service MUST NOT declare a ceiling where a higher value is stricter. | The rule is for the document of the service. The lowest value of 8.1 depends on it, and its cases cover that part. |
 | 7.4 | pdp | A ceiling applies to each use of the action, on each route of the service. | The sentence states a rule for the PEP. |
 | 7.5 | pdp | A PEP that cannot apply a ceiling treats the answer as false. | The sentence states a rule for the PEP. The PDP part of the paragraph has cases. |
-| 10.7 | pdp | The PDP publishes the longest time that it keeps an idle connection open. | The PDP can publish the time in its documentation. A case cannot read it. |
-| 10.7a | pdp | The PDP publishes the largest body and the largest number of items of one Access Evaluations request. | The PDP can publish the values in its documentation. A case cannot read them. |
 | 11.1 | pdp | A retry_after of 11.2 seconds gives 12. | The clock of a case has whole seconds, so the time to the end of a window has no fraction. |
 | 12 | pdp | The credential of each service SHOULD have at least 128 random bits. The PDP SHOULD keep only its SHA-256 digest. | A case cannot see the credential or the way that the PDP stores it. |
 | 12 | pdp | The PDP is a single point of failure, and the protocol accepts it. | The sentence is a remark. It states no rule for a case. |
@@ -221,7 +220,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 17.4 | pdp | The PDP serves the narrow API with three routes, and only these routes. | A case has no endpoint for the approval API in this version. The tests of a PDP that gives approvals cover the routes. |
 | 17.5 | pdp | The lease, the abandon, the end of a request and the revival of a request. | A case cannot make time pass during a request, and it has no step that answers or renews a request. |
 | 17.6 | pdp | The PDP sets consume_before and the deny time from its own settings. The consume window is not shorter than lease_s. | The settings of the PDP give both times. The cases D80 and D85 test the end of each window. |
-| 17.9 | pdp | The PDP checks each submission before it keeps it. | A case has no endpoint for the approval API in this version. |
+| 17.9 | pdp | The PDP checks each submission before it keeps it. A `view` has optional members, and `{}` is valid. | A case has no endpoint for the approval API in this version. The tests of `fake-pdp` cover a `view` with a title only and the object `{}`. |
 | 17.9a | pdp | The explanation never enters the effect, and the PEP never sees it. | The agent gives the explanation to the PDP by a channel outside this protocol. A case has no step on that channel. |
 | 17.10 | pdp | A PDP SHOULD encrypt the body at rest, delete it after a published time, and never write it in a log. | A case cannot see the storage or the logs of the PDP. The level of the rule is SHOULD. |
 | 17.11 | pdp | The PDP accepts an answer only from the owner, with shown_effect equal to the effect. A refusal can have a text. | The answer of a person is outside the protocol. A case has no step that answers an approval. |

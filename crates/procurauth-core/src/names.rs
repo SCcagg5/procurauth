@@ -9,6 +9,12 @@ use thiserror::Error;
 pub const MAX_ID_BYTES: usize = 256;
 /// The deepest type in the tree of types (4.1).
 pub const MAX_TYPE_DEPTH: usize = 4;
+/// The action of the methods that have no tool (binding 3.6a). It has no effect to approve (17.8).
+pub const SESSION_ACTION: &str = "mcp.session";
+/// The largest whole number of a limit: 2^53 - 1, the largest integer that is safe in JSON (6.1).
+pub const MAX_LIMIT_NUMBER: u64 = 9_007_199_254_740_991;
+/// The longest `evaluation_id`, in bytes (17.1).
+pub const MAX_EVALUATION_ID_BYTES: usize = 1024;
 /// The name of the root type.
 pub const SERVICE: &str = "service";
 /// The action that opens a service to a subject (8.3). A document never lists it.

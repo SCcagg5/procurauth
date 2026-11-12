@@ -125,6 +125,14 @@ pub const RULES: &[Rule] = &[
         "segment does not follow the types",
     ),
     row(D, "5.2", "bad_limit_name", E, "bad limit name"),
+    row(D, "5.2", "empty_text", E, "label or description is empty"),
+    row(
+        D,
+        "5.2",
+        "action_not_on_type",
+        E,
+        "action does not list the type of the node",
+    ),
     row(D, "6.1", "bad_kind", E, "kind is not ceiling or budget"),
     row(D, "6.1", "duplicate_limit_name", E, "duplicate limit name"),
     row(
@@ -144,6 +152,7 @@ pub const RULES: &[Rule] = &[
         "ceiling without a bound",
     ),
     row(D, "6.1", "bad_bound", E, "bound is not a whole number"),
+    row(D, "6.1", "number_too_large", E, "number is above 2^53-1"),
     row(D, "6.1", "min_above_max", E, "min is above max"),
     row(
         D,
@@ -156,7 +165,7 @@ pub const RULES: &[Rule] = &[
         D,
         "7.1",
         "ceiling_name",
-        W,
+        E,
         "ceiling name is not max_ and a noun",
     ),
     row(
@@ -227,6 +236,7 @@ pub const RULES: &[Rule] = &[
         "budget value is not 1 to 4 items",
     ),
     row(G, "6.1", "bad_amount", E, "amount is not 1 or more"),
+    row(G, "6.1", "number_too_large", E, "number is above 2^53-1"),
     row(G, "6.1", "bad_window", E, "window does not exist"),
     row(G, "6.1", "duplicate_window", E, "duplicate window"),
     row(

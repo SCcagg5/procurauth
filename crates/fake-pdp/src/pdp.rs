@@ -18,8 +18,8 @@ use procurauth_core::authzen::{
     Decision, EvaluationRequest, MatchMode, Reason, RequestContext, SUBJECT_TYPE, check_resource,
 };
 use procurauth_core::coverage::{
-    ceilings_of_key, ceilings_of_side, confirm_required, granted, key_confirm_required,
-    key_granted, key_subtree_applies, subtree_applies,
+    ceilings_of_key, ceilings_of_side, confirm_has_effect, granted, key_granted,
+    key_subtree_applies, subject_confirm_required, subtree_applies,
 };
 use procurauth_core::directory::{Directory, KeyState, SubjectEntry};
 use procurauth_core::grants::Grant;
@@ -212,11 +212,11 @@ impl Pdp {
 
         // The approval (17.1, 17.8). The grants decided first: only an allowed question gets here.
         let now_seconds = now_millis / 1000;
-        let needs_approval = (directory.confirm_all && action != ACCESS_ACTION)
-            || match owner_grants {
-                None => confirm_required(own_grants, action, &node),
-                Some(og) => key_confirm_required(own_grants, og, action, &node),
-            };
+        // The `confirm` of a grant of a person has no effect on the questions of the person, and no
+        // grant makes `access` or `mcp.session` need an approval (17.8). The test mode `confirm_all`
+        // is the one exception: it also gates a person, because a test of a PEP signs in as a person.
+        let needs_approval = (directory.confirm_all && confirm_has_effect(action))
+            || subject_confirm_required(own_grants, owner_grants, action, &node);
         let mut approval_to_consume = None;
         if needs_approval {
             let Some(effect) = context.approval_effect.as_deref() else {

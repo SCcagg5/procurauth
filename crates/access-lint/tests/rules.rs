@@ -119,6 +119,8 @@ rule_tests! {
     p_5_2_document_bad_path: Document, "5.2", "bad_path";
     p_5_2_document_wrong_parent: Document, "5.2", "wrong_parent";
     p_5_2_document_bad_limit_name: Document, "5.2", "bad_limit_name";
+    p_5_2_document_empty_text: Document, "5.2", "empty_text";
+    p_5_2_document_action_not_on_type: Document, "5.2", "action_not_on_type";
     p_6_1_document_bad_kind: Document, "6.1", "bad_kind";
     p_6_1_document_duplicate_limit_name: Document, "6.1", "duplicate_limit_name";
     p_6_1_document_budget_name_max: Document, "6.1", "budget_name_max";
@@ -126,6 +128,7 @@ rule_tests! {
     p_6_1_document_budget_with_max: Document, "6.1", "budget_with_max";
     p_6_1_document_ceiling_without_bound: Document, "6.1", "ceiling_without_bound";
     p_6_1_document_bad_bound: Document, "6.1", "bad_bound";
+    p_6_1_document_number_too_large: Document, "6.1", "number_too_large";
     p_6_1_document_min_above_max: Document, "6.1", "min_above_max";
     p_6_1_document_budget_name_window: Document, "6.1", "budget_name_window";
     p_7_1_document_ceiling_name: Document, "7.1", "ceiling_name";
@@ -149,6 +152,7 @@ rule_tests! {
     p_6_1_grants_ceiling_out_of_range: Grants, "6.1", "ceiling_out_of_range";
     p_6_1_grants_bad_budget_value: Grants, "6.1", "bad_budget_value";
     p_6_1_grants_bad_amount: Grants, "6.1", "bad_amount";
+    p_6_1_grants_number_too_large: Grants, "6.1", "number_too_large";
     p_6_1_grants_bad_window: Grants, "6.1", "bad_window";
     p_6_1_grants_duplicate_window: Grants, "6.1", "duplicate_window";
     p_6_10_grants_undeclared_limit: Grants, "6.10", "undeclared_limit";

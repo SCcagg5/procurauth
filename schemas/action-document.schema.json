@@ -60,7 +60,7 @@
           "description": "The parent: service, or a type that the document declares.",
           "$ref": "#/$defs/type_name"
         },
-        "description": { "type": "string" }
+        "description": { "type": "string", "minLength": 1 }
       }
     },
     "action": {
@@ -81,7 +81,7 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/type_name" }
         },
-        "description": { "type": "string" },
+        "description": { "type": "string", "minLength": 1 },
         "limits": {
           "description": "The names of the limits of the action (protocol 6.2). Each name is declared in the member limits of the document.",
           "type": "array",
@@ -116,25 +116,31 @@
       "required": ["name", "label", "description", "unit", "kind"],
       "properties": {
         "name": { "$ref": "#/$defs/type_name" },
-        "label": { "type": "string" },
-        "description": { "type": "string" },
+        "label": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
         "unit": { "type": "string" },
         "kind": { "enum": ["ceiling", "budget"] },
         "min": {
-          "description": "The lowest value of a ceiling. A whole number of 0 or more. It is not above max.",
+          "description": "The lowest value of a ceiling. A whole number from 0 to 2^53-1. It is not above max.",
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "max": {
-          "description": "The highest value of a ceiling. A whole number of 0 or more.",
+          "description": "The highest value of a ceiling. A whole number from 0 to 2^53-1.",
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 9007199254740991
         }
       },
       "allOf": [
         {
           "if": { "properties": { "kind": { "const": "ceiling" } }, "required": ["kind"] },
-          "then": { "required": ["min", "max"] }
+          "then": {
+            "description": "A ceiling has min and max. Its name is max_ and a noun (protocol 7.1).",
+            "required": ["min", "max"],
+            "properties": { "name": { "pattern": "^max_" } }
+          }
         },
         {
           "if": { "properties": { "kind": { "const": "budget" } }, "required": ["kind"] },

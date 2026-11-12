@@ -22,7 +22,9 @@ An id has the letter of the series and a number of two or three digits. The seri
 
 The numbers of a series have no gap. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9. These cases are in this directory, and they have exactly these ids. Each of them cites a paragraph of the binding and has the condition `no_mcp_endpoint`.
 
-The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U117, the series D with D76 to D89, and the series E with E19. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
+The cases of the approval profile (protocol section 17) have these ids. The case U30 is rewritten: it tests the binding paragraphs 3.5a and 5.7. The series U continues with U100 to U117, the series D with D76 to D94, and the series E with E19.
+
+The cases D90 to D94 test the metadata members, the person and `mcp.session` with `confirm`, and the largest number of a limit. The case D23 also checks the reason of a bad id. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
 
 The ids V01 and V02 are not case ids. They name two groups of vectors in `vectors/effect.json`. The schema `schemas/effect-vectors.schema.json` defines the format of this file. `COVERAGE.md` lists the groups.
 
@@ -76,6 +78,8 @@ Each file validates against the schema `fake-pdp-data`. The reader of the core g
 | `services.json` | Three services with a credential each: two with a document and one with no good document. |
 | `access.json` | Persons and keys with and without a grant of `access`. |
 | `maxdoc.json` | A service with the largest document that a reader must accept (protocol 5.3c). |
+| `session.json` | The service `datastore` with the action `mcp.session`. A person and a key of that person have a grant of `mcp.session` with `confirm` (protocol 17.8). |
+| `bignumber.json` | The service `datastore` with a ceiling whose `max` is 9007199254740991, and a person with this value on a grant (protocol 6.1). |
 | `approvals.json` | The service `datastore`. Keys with a grant that has `confirm`, on the side of the key and on the side of the owner. Approvals in each status, with the times of `consume_before` and of the deny time (protocol 17.6). The test PDP reads the members `confirm` and `approvals` when it gives approvals. |
 
 ### Tokens
@@ -250,7 +254,7 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 
 The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. A PDP MAY give no approval: it then gates no action and never answers a reason of protocol 17.1. For an edge, the runner holds it unless the profile has `edge.keys.confirm_access`. An edge asks only the action `access`, so it never asks for an approval.
 
-The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
+The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
 
 The profile of a PEP with an MCP endpoint has the member `approval_calls`: one entry for each action of the action document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The case U111 fails when the document has an action with no entry.
 

@@ -12,7 +12,7 @@ use serde_json::{Map, Value, json};
 
 use crate::action_document::{ActionDocument, LimitKind};
 use crate::finding::{JsonPath, Report, show, type_word};
-use crate::names::is_type_or_limit_name;
+use crate::names::{MAX_LIMIT_NUMBER, is_type_or_limit_name};
 use crate::read::{Obj, Unknown};
 
 /// The length of a window of a budget (6.1).
@@ -197,9 +197,20 @@ fn read_ceiling(
         );
         return None;
     };
+    if number > MAX_LIMIT_NUMBER {
+        report.error(
+            path,
+            "6.1",
+            "number_too_large",
+            format!(
+                "Value of ceiling `{name}`: expected a whole number of at most {MAX_LIMIT_NUMBER}, found {number}."
+            ),
+        );
+        return None;
+    }
     if let Some(decl) = declaration {
         let low = decl.min.unwrap_or(0);
-        let high = decl.max.unwrap_or(u64::MAX);
+        let high = decl.max.unwrap_or(MAX_LIMIT_NUMBER);
         if number < low || number > high {
             report.error(
                 path,
@@ -263,6 +274,18 @@ fn read_budget(
                 "Member `amount`: expected a whole number from 1, found 0.",
             );
         }
+        if let Some(amount) = amount
+            && amount > MAX_LIMIT_NUMBER
+        {
+            report.error(
+                &item_path.key("amount"),
+                "6.1",
+                "number_too_large",
+                format!(
+                    "Member `amount`: expected a whole number of at most {MAX_LIMIT_NUMBER}, found {amount}."
+                ),
+            );
+        }
         let window = window_text.and_then(|text| {
             let window = Window::parse(text);
             if window.is_none() {
@@ -288,7 +311,9 @@ fn read_budget(
                 format!("Window `{}` occurs more than one time.", window.as_str()),
             );
         }
-        if let (Some(amount), Some(window)) = (amount, window) {
+        if let (Some(amount), Some(window)) = (amount, window)
+            && amount <= MAX_LIMIT_NUMBER
+        {
             out.push(BudgetItem { amount, window });
         }
     }

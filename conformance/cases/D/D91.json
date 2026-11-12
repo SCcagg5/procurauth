@@ -1,0 +1,66 @@
+{
+  "id": "D91",
+  "title": "A PDP that gives approvals publishes the twelve members of its approval limits in the metadata.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.4a"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support"
+  ],
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "A read of the metadata",
+      "request": {
+        "endpoint": "metadata"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/procurauth_approval_lease_min_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_lease_max_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_grace_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_revive_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_max_revivals": {
+            "present": true
+          },
+          "/procurauth_approval_max_life_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_wait_max_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_consume_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_deny_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_evaluation_ttl_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_ref_ttl_seconds": {
+            "present": true
+          },
+          "/procurauth_approval_max_command_bytes": {
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

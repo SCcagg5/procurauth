@@ -14,7 +14,9 @@ use thiserror::Error;
 use crate::action_document::{ActionDocument, NodeError};
 use crate::effect::is_effect;
 use crate::finding::{Finding, JsonPath, Report, show, type_word};
-use crate::names::{IdError, SERVICE, is_type_or_limit_name, validate_id};
+use crate::names::{
+    IdError, MAX_EVALUATION_ID_BYTES, MAX_LIMIT_NUMBER, SERVICE, is_type_or_limit_name, validate_id,
+};
 use crate::path::{NodePath, NodeRef, PathError};
 use crate::read::{Obj, Unknown};
 
@@ -103,14 +105,12 @@ pub enum ChainError {
 }
 
 impl ChainError {
-    /// The reason that a PDP gives for this error (11.1). A bad id has no
-    /// reason in 11.1, so the answer has none.
+    /// The reason that a PDP gives for this error (11.1). A bad id is an invalid resource (11.1).
     pub fn reason(&self) -> Option<Reason> {
         match self {
             Self::AncestorsNotArray | Self::AncestorNotObject { .. } => {
                 Some(Reason::InvalidRequest)
             }
-            Self::BadId { .. } => None,
             _ => Some(Reason::InvalidResource),
         }
     }
@@ -939,7 +939,20 @@ fn read_decision(value: &Value, path: &JsonPath, report: &mut Report) -> Option<
             }
             // The PEP never reads `evaluation_id` (17.1). A value that is not a text is ignored.
             if let Some(Value::String(id)) = ctx.optional("evaluation_id") {
-                context.evaluation_id = Some(id.clone());
+                if id.len() > MAX_EVALUATION_ID_BYTES {
+                    // 17.1: an id of more than 1024 bytes makes the answer not valid.
+                    report.error(
+                        &ctx_path.key("evaluation_id"),
+                        "17.1",
+                        "evaluation_id_too_long",
+                        format!(
+                            "Member `evaluation_id` has {} bytes. The maximum is {MAX_EVALUATION_ID_BYTES}.",
+                            id.len()
+                        ),
+                    );
+                } else {
+                    context.evaluation_id = Some(id.clone());
+                }
             }
             if context.reason == Some(Reason::BudgetExceeded) && context.retry_after.is_none() {
                 report.error(
@@ -981,7 +994,7 @@ fn read_limits(value: &Value, path: &JsonPath, context: &mut AnswerContext, repo
             );
             continue;
         }
-        match item.as_u64() {
+        match item.as_u64().filter(|n| *n <= MAX_LIMIT_NUMBER) {
             Some(number) => {
                 context.limits.insert(name.clone(), number);
             }
@@ -990,7 +1003,7 @@ fn read_limits(value: &Value, path: &JsonPath, context: &mut AnswerContext, repo
                 "7.3",
                 "bad_ceiling",
                 format!(
-                    "Ceiling `{name}`: expected a whole number of 0 or more, found {}. A budget value never appears in an answer.",
+                    "Ceiling `{name}`: expected a whole number from 0 to 9007199254740991, found {}. A budget value never appears in an answer.",
                     show(item)
                 ),
             ),
@@ -1242,7 +1255,7 @@ mod tests {
         );
         let error = check_resource(&doc, &r).unwrap_err();
         assert!(matches!(error, ChainError::BadId { index: 1, .. }));
-        assert_eq!(error.reason(), None);
+        assert_eq!(error.reason(), Some(Reason::InvalidResource));
         let r = resource(
             json!({"type": "host", "id": "a/b c%2F", "properties": {"ancestors": [{"type": "service", "id": "datastore"}]}}),
         );
@@ -1336,6 +1349,26 @@ mod tests {
         let error = ctx(with_op).unwrap_err();
         assert_eq!(error[0].code, "unknown_member");
         assert_eq!(error[0].path.as_str(), "$.context.approval.op");
+    }
+
+    #[test]
+    fn p_17_1_an_evaluation_id_has_1024_bytes_at_most() {
+        let id = |n: usize| {
+            json!({"decision": false,
+                "context": {"reason": "approval_required", "evaluation_id": "e".repeat(n)}})
+        };
+        assert!(Decision::from_value(&id(1024)).is_ok());
+        let error = Decision::from_value(&id(1025)).unwrap_err();
+        assert_eq!(error[0].code, "evaluation_id_too_long");
+    }
+
+    #[test]
+    fn p_7_3_a_ceiling_of_an_answer_is_at_most_2_to_the_53_minus_1() {
+        let answer = |n: u64| json!({"decision": true, "context": {"limits": {"max_rows": n}}});
+        let ok = Decision::from_value(&answer(9_007_199_254_740_991)).unwrap();
+        assert_eq!(ok.context.limits["max_rows"], 9_007_199_254_740_991);
+        let error = Decision::from_value(&answer(9_007_199_254_740_992)).unwrap_err();
+        assert_eq!(error[0].code, "bad_ceiling");
     }
 
     #[test]

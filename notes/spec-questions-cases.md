@@ -3,6 +3,9 @@
 This file lists the places where the text of the protocol or of the MCP binding has two possible meanings. A conformance case had to choose one of them. Each item gives the paragraph, the question, the case that is concerned, and the meaning that the case takes. The cases take the most literal meaning. The owner decides if the text needs a change. The file `notes/spec-questions.md` lists the questions of the code.
 
 1. **4.1, 11.1.** Which reason does a PDP give for a node id that is empty, has more than 256 bytes or has a control character? Paragraph 11.1 lists no reason for it, and 11.2 says that any other false answer has no reason. The case D23 checks the decision false and does not check the reason.
+
+   Status: Closed (lot PS1, decision 186): the reason is `invalid_resource`, and the case D23 checks it.
+
 2. **10.3, 11.1.** Is an answer with `budget_exceeded` and a `retry_after` that is 0, or a text, not valid? Paragraph 11.1 says that `retry_after` is a whole number of 1 or more. The case U67 expects HTTP 503. No case tests an answer with `budget_exceeded` and no `retry_after`.
 3. **8.3, 9.8.** Which status does an edge give to a key with a valid text whose subject has no true decision for `access`? Paragraph 9.8 gives HTTP 401 with `invalid_token` to an edge that refuses a key. The case E10 takes this meaning.
 4. **4.3, 5.2.** Does a grant on a node above cover a node whose type is not in `resource_types` of the asked action? Paragraph 4.3 says that a grant covers each node below it. Paragraph 5.2 says that `resource_types` gives the types on which a grant is valid. No case tests this point.
