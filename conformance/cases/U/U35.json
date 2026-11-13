@@ -1,10 +1,11 @@
 {
   "id": "U35",
-  "title": "When the other permission is false, the PEP refuses the operation and sends no question with context.usage.",
+  "title": "When the other permission is false, the PEP refuses the operation and sends no question with context.usage. It can be a route or a tool.",
   "role": "pep",
   "paragraphs": [
     "5.5a",
-    "10.1a"
+    "10.1a",
+    "mcp:3.7"
   ],
   "requirement": "MUST",
   "skip_if": [
@@ -48,7 +49,7 @@
   },
   "steps": [
     {
-      "name": "The PDP refuses the permission without usage",
+      "name": "The PDP refuses the permission without usage, through the HTTP route",
       "request": {
         "operation": "use_multi",
         "token": "person"
@@ -56,6 +57,38 @@
       "expect": {
         "status": {
           "equals": 403
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The PDP refuses the permission without usage, through the tool",
+      "skip_if": [
+        "no_mcp_endpoint"
+      ],
+      "request": {
+        "operation": "mcp_call_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32602
+          }
         },
         "pdp_questions": [
           {

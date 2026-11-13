@@ -406,6 +406,54 @@ fn a_service_whose_session_action_lists_a_budget_passes_the_117_cases() {
 }
 
 #[test]
+fn a_pep_with_the_tool_form_of_the_two_permission_use_runs_u34_and_u35() {
+    // The PEP is an MCP server: the profile has `mcp_call_multi` and no `use_multi`.
+    let features = Features {
+        tool_multi_only: true,
+        ..Features::full()
+    };
+    let out = run_pep_features(
+        "pep_tool_multi_only",
+        Defects::default(),
+        true,
+        features,
+        &["--cases", "U34,U35,U96,U97"],
+    );
+    assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
+    assert_eq!(
+        out.summary(),
+        "4 cases: 4 passed, 0 failed, 0 skipped",
+        "{}",
+        out.stdout
+    );
+}
+
+#[test]
+fn p_10_1a_a_tool_that_asks_with_usage_before_the_other_permission_fails_u35_and_u97() {
+    let features = Features {
+        tool_multi_only: true,
+        ..Features::full()
+    };
+    let out = run_pep_features(
+        "pep_tool_multi_only_usage_first",
+        Defects {
+            usage_before_other_permission: true,
+            ..Defects::default()
+        },
+        true,
+        features,
+        &["--cases", "U34,U35,U96,U97"],
+    );
+    assert_eq!(out.code, 1);
+    assert_eq!(failing(&out), vec!["U35", "U97"]);
+    assert!(
+        out.line("U35").contains("through the tool"),
+        "{}",
+        out.line("U35")
+    );
+}
+
+#[test]
 fn p_5_7_a_route_that_accepts_a_bad_parameter_fails_the_cases_of_the_status_400() {
     let out = full(
         "pep_options_bad",
@@ -431,7 +479,8 @@ fn p_mcp_a_refused_tool_with_another_error_than_an_unknown_tool_fails_the_cases_
         &[],
     );
     assert_eq!(out.code, 1);
-    assert_eq!(failing(&out), vec!["U26", "U89", "U92", "U97"]);
+    // U35 has a step for the tool: it fails too, because the refusal of its second permission is the same refusal.
+    assert_eq!(failing(&out), vec!["U26", "U35", "U89", "U92", "U97"]);
 }
 
 #[test]

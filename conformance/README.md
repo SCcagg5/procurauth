@@ -134,13 +134,13 @@ These are the operations. The list is closed. A new operation needs a change of 
 | `use_budget` | One use of an action that lists a budget, on a node below the service. |
 | `use_ceiling` | One use of an action that lists a ceiling. |
 | `use_service` | One use on the service itself. |
-| `use_multi` | One use of an action that lists a budget, and that needs one more permission, on another action or another node. |
+| `use_multi` | One use of an action that lists a budget, and that needs one more permission, on another action or another node. It is an HTTP route. |
 | `read_actions` | A read of the action document. |
 | `list_options` | A read of the first level of the options route. |
 | `mcp_call_plain` | A `tools/call` of a tool whose action lists no budget. |
 | `mcp_call_budget` | A `tools/call` of a tool whose action lists a budget. |
 | `mcp_call_input` | A `tools/call` that ends with `InputRequiredResult`. |
-| `mcp_call_multi` | A `tools/call` of a tool that needs two permissions. |
+| `mcp_call_multi` | A `tools/call` of a tool that needs two permissions. It is the MCP form of `use_multi`. |
 | `mcp_call_approval` | A `tools/call` of the tool of one action. The runner runs each case that uses it once for each entry of `pep.approval_calls`: one for each action of the service (protocol 5.2b). |
 | `mcp_approve` | The approval of the call of the step before, and the run of the tool. |
 | `mcp_refuse` | The refusal of the approval of the call of the step before. |
@@ -248,7 +248,7 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `no_mcp_endpoint` | The service has no MCP endpoint. |
 | `no_budget_session` | The action `mcp.session` lists no budget (binding 3.6a). |
 | `no_input_tool` | The service has no tool that asks the client for input. |
-| `no_multi_action` | The service has no use that needs two permissions. |
+| `no_multi_action` | The service has no use that needs two permissions: no HTTP route and no tool. |
 | `single_key_set` | The key set of the edge holds one key only. |
 | `no_approval_support` | The PDP or the edge gives no approval (protocol section 17). |
 
@@ -257,6 +257,10 @@ The condition `no_approval_support` depends on the target. For a PDP, the runner
 The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93, D95, D96 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
 
 The profile of a PEP with an MCP endpoint has the member `approval_calls`: one entry for each action of the action document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The case U111 fails when the document has an action with no entry.
+
+A PEP declares `use_multi`, `mcp_call_multi` or both. The cases U34 and U35 have one step for each form. The step of `use_multi` checks the HTTP route. The step of `mcp_call_multi` checks the tool, and it has the condition `no_mcp_endpoint`. The runner skips a step whose operation the profile does not define. A case passes when at least one step runs and no step fails.
+
+Both steps check the same facts. The question of the other permission has `context.permission_only` equal to `true`. It has no `context.usage` and no `context.approval`. The question of the use has no `permission_only`.
 
 The checks enforce these rules. A step that uses `use_budget`, `use_ceiling`, `use_multi`, `list_options`, an MCP operation, or the variables `mcp_path` and `options_type`, has the condition that goes with it. The condition is in the step or in the case.
 

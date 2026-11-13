@@ -146,10 +146,11 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | mcp:3.5a | pep | U30 |
 | mcp:3.6 | pep | U18 |
 | mcp:3.6a | pep | U29, U95, U114 |
-| mcp:3.7 | pep | U96, U97 |
+| mcp:3.7 | pep | U34, U35, U96, U97 |
 | mcp:4.1 | pep | U26, U88 |
 | mcp:4.2 | pep | U26, U89 |
 | mcp:4.3 | pep | none |
+| mcp:4.3a | pep | none |
 | mcp:4.4 | pep | none |
 | mcp:5.1 | pep | U23, U26, U28, U29, U89, U90, U91, U94, U97, U114 |
 | mcp:5.1a | pep | U92 |
@@ -264,6 +265,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | mcp:3.2 | pep | The map of the tools is not in the MCP messages. | A case cannot read the map of the service. |
 | mcp:4.1 | pep | The service sends the questions of a tools/list in one Access Evaluations request. | The model counts questions, not requests. |
 | mcp:4.3 | pep | For one subject, two requests give the same list while the answers of the PDP do not change. | A case cannot compare the answers of two steps. |
+| mcp:4.3a | pep | The schema and the description of each tool in `tools/list` tell the control arguments and the retry. | The text is free, and a matcher cannot judge it. The runner reads no description. |
 | mcp:4.4 | pep | The paragraph gives an example of the load on the PDP. | The paragraph is informative. It states no rule. |
 | mcp:5.7 | pep | The service waits at most wait_s seconds for a verdict, and it bounds wait_s. | The bound is a setting of the service, and a case cannot wait. |
 | mcp:5.7a | pep | The codes approval_unavailable, approval_rate_limited and invalid_argument, and HTTP 503 for another answer of the approval API. | A case for each one needs a step for each answer of the approval API. This version tests the codes that follow a reason of the PDP (U105). |

@@ -69,6 +69,8 @@ A tool that only asks the owner of the key has no action in the map of the tools
 
 4.3 The service keeps the order of the tools of [CONTRACT, 4.2], without the tools that 4.1 removes. For one subject, two requests give the same list while the answers of the PDP do not change. The service MAY keep the answers of 4.1 for `cache_ttl` at most (protocol 10.1).
 
+4.3a The `inputSchema` of each tool SHOULD describe the control arguments of 5.7 as optional arguments. The description of each tool SHOULD say two things. The first is that the call can need an approval. The second is that the retry after the approval repeats the same arguments and exactly one of `approval_ref`, `lease_s` and `until`. An agent reads only `tools/list`, so it needs this text.
+
 4.4 For one `tools/list`, tools with the same action share one item (4.1), so the items are not more than the actions of the action document (protocol 5.3c). Example: with 20 actions and one `tools/list` each minute on each service, the PDP gets approximately 17 requests (333 items) each second for 1,000 services. For 10,000 services, it gets approximately 167 requests (3,333 items) each second. The kept answers of 4.3 take one entry for each subject and action of one service. For 1,000 subjects and 20 actions, they take 20,000 entries, approximately 2 MB at 100 bytes each. This number is the same for 1,000 and for 10,000 services.
 
 ## 5. Refusals of a service
@@ -105,6 +107,8 @@ A tool that only asks the owner of the key has no action in the map of the tools
 5.7 Each tool accepts these optional control arguments: `approval_ref`, `wait_s`, `supersedes`, `lease_s` and `until`. The service sends them to the approval API as protocol 17.4 gives (protocol 17.9a). They never enter the effect. `wait_s` is the most seconds that the service waits for a verdict, and the service bounds it. A call gives at most one of `approval_ref`, `lease_s` and `until`. A call with more than one, or with a bad type, gets the tool error `invalid_argument` (5.7a), and the service asks the PDP nothing.
 
 A call with none of the three runs when the PDP asks for no approval. When the PDP asks for an approval and the call has none of the three, the service cannot give a lease. It submits nothing, and the call gets the tool error `invalid_argument` (5.7a).
+
+The retry of a call after an approval repeats the same arguments and exactly one of `approval_ref`, `lease_s` and `until` (protocol 17.7). A service MAY refuse a retry with none of the three. The tool error is `invalid_argument`, also when the approval waits. The agent therefore keeps one control argument in each retry. Section 10 has an example.
 
 When protocol 17.7 tells that the action waits, the service answers HTTP 200 with a result that is not an error. Its `structuredContent.action` has `id` (the `request_id`), `status` equal to `awaiting_approval`, `code` and `executed` equal to `false`. The second item of `content` is a fixed text that starts with `NOT EXECUTED`. The service copies no value of the request into it (5.6). The result has this form:
 ```json
@@ -212,6 +216,15 @@ The answer, when the budget is spent:
 The service then answers HTTP 200, with the tool error of 5.3 as the `result` of the request with the `id` 7.
 
 **Two permissions for one tool.** The tool `copy_table` copies the table `orders` of `test1` into `test2`, as in protocol 10.1a. For Alice, the service asks `data.read` on the table without `context.usage`, then `data.write` on `test2` with `context.usage`. Both answers are `true`, and the copy takes one unit from each counter of Alice (protocol 6.7). For the key, the first answer is `false`, because the key has no grant on `test1`. The service gives `-32602` and sends no question with `context.usage` (3.7).
+
+**The retry after an approval.** The first call of `write_rows` has the argument `lease_s`, and the service answers `awaiting_approval` (5.7). The owner approves. The agent calls `write_rows` again, with the same arguments and with `lease_s` again:
+```json
+{ "jsonrpc": "2.0", "id": 9, "method": "tools/call",
+  "params": { "name": "write_rows",
+              "arguments": { "host": "prod", "database": "test2", "table": "orders", "rows": [ { "id": 1 } ], "lease_s": 600 },
+              "_meta": { "io.modelcontextprotocol/protocolVersion": "2026-07-28" } } }
+```
+A retry without `lease_s`, `approval_ref` and `until` can get the tool error `invalid_argument` (5.7), although the approval waits.
 
 **A refusal at the edge.** An agent sends a key text that the edge does not know. The edge answers with no body (6.1) and no `resource_metadata` (6.3):
 ```text

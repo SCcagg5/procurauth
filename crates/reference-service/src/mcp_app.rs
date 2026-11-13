@@ -49,8 +49,9 @@ fn tool(name: &str, action: &str, description: &str, schema: Value) -> ToolSpec 
 /// The sentence that each tool description has (binding 5.7).
 const APPROVAL_NOTE: &str = " The call can need the approval of the owner, and the decision point decides. \
     If it does, the tool gives an action in the status awaiting_approval with executed false, and the tool did not run. \
-    After the approval, call the tool again with the same arguments. Read the verdict with get_action_status. \
-    A call gives at most one of approval_ref, lease_s and until. A call that needs an approval and has none gets invalid_argument. \
+    After the approval, call the tool again with the same arguments and exactly one of approval_ref, lease_s and until. \
+    Read the verdict with get_action_status. A call gives at most one of approval_ref, lease_s and until. \
+    A call that needs an approval and has none gets invalid_argument, also in a retry. \
     The arguments wait_s and supersedes are optional.";
 
 /// Add the control arguments of binding 5.7 to the schema of a tool.

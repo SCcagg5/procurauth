@@ -581,6 +581,10 @@ The PEP never runs an action after an answer to a question that has `context.app
 
 An operation can need permissions on other actions (5.5a). The approval gates the action of the use only, and it covers only the use. The PEP asks each other permission with `context.permission_only`, as 5.5a and 10.1a say. The PDP gives no reason of 17.1 for such a question, so the other permissions never wait and never fail closed because of `confirm` (15, item 8).
 
+The retry of a call. A PEP can tell the agent that an action waits. The agent then calls again. Each retry has the same arguments and exactly one control argument: `approval_ref`, `lease_s` or `until` (17.5). The same arguments give the same effect (17.3). A service MAY refuse a retry with no control argument, also when the approval waits [MCP-BINDING, 5.7]. A changed argument gives another effect, and it needs its own approval.
+
+Example: the first call has the arguments `{"host": "prod", "table": "orders", "lease_s": 600}`. The retry has the same arguments, with `lease_s` again.
+
 The PEP sends the control arguments of the agent to the PDP in the form that 17.4 gives, and no other text of the agent. It never reads an `approval_ref` or an intent. It gives the agent only the verdict (17.12). A verdict that the PEP does not know is `void`.
 
 17.7a A call can wait when its interface has two things. The first is a result that tells the agent that the action waits, with the id and the code of the request. The second is a way for the agent to give one of the controls of 17.5. The MCP binding gives both for a `tools/call` [MCP-BINDING, 5.7]. A call that cannot wait is, for example, a request of a key to an HTTP route. Another is an MCP method that has no tool, when the service asks an action other than `mcp.session` for it.

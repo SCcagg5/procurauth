@@ -118,7 +118,7 @@ The cases use abstract operations. The profile of a PEP maps each one to a reque
 | Operation | Needs |
 | --- | --- |
 | `use_plain` | `method`, `path`, `action`, `resource_type`, `resource_id`, `ancestors`. |
-| `use_budget`, `use_multi` | The same as `use_plain`. |
+| `use_budget`, `use_multi` | The same as `use_plain`. A PEP that has no HTTP route for a use with two permissions declares `mcp_call_multi` and not `use_multi`. |
 | `use_ceiling` | The same as `use_plain`, with `ceiling` and `ceiling_value`. Choose a request whose result does not go past `ceiling_value`. A PEP applies the ceiling (protocol 7.5, 10.2), and the case U37 expects a status 2xx. |
 | `use_service` | `method`, `path`, `action`. The node is the service. |
 | `read_actions`, `list_options` | Nothing. The runner uses the default routes of the protocol. `list_options` needs `options_type`. |
@@ -136,7 +136,7 @@ An operation that the profile does not define makes the runner skip the steps th
 | `no_mcp_endpoint` | The profile has no `mcp` or no `mcp_path`. |
 | `no_budget_session` | `pep.mcp.session_budget` is false. |
 | `no_input_tool` | The profile has no `mcp_call_input`. |
-| `no_multi_action` | The profile has no `use_multi` and no `mcp_call_multi`. |
+| `no_multi_action` | The profile has no `use_multi` and no `mcp_call_multi`. The cases U34 and U35 run the step of the operation that the profile defines, and they skip the other step. |
 | `no_token_cache` | `edge.token_cache` is false. |
 | `single_key_set` | The key set of `edge.trust` holds one key. |
 | `no_approval_support` | For a PDP: `pdp.approvals` is false and `pdp.spawn_fake_pdp` is not true. For an edge: `edge.keys.confirm_access` is absent. The condition never holds for a PEP: section 17 is mandatory for a service (protocol 1.3, 5.2b). The runner skips the cases of protocol section 17 for a PDP or an edge when it holds. |

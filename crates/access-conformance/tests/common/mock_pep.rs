@@ -1118,6 +1118,8 @@ pub struct Features {
     pub options: bool,
     pub mcp: bool,
     pub multi: bool,
+    /// The profile has `mcp_call_multi` and no `use_multi`, as a PEP that is an MCP server only.
+    pub tool_multi_only: bool,
     pub session_budget: bool,
 }
 
@@ -1128,6 +1130,7 @@ impl Features {
             options: false,
             mcp: false,
             multi: false,
+            tool_multi_only: false,
             session_budget: false,
         }
     }
@@ -1138,6 +1141,7 @@ impl Features {
             options: true,
             mcp: true,
             multi: true,
+            tool_multi_only: false,
             session_budget: false,
         }
     }
@@ -1201,7 +1205,7 @@ pub fn profile_with(
     if features.options {
         pep["options_type"] = json!("host");
     }
-    if features.multi {
+    if features.multi && !features.tool_multi_only {
         pep["operations"]["use_multi"] = json!({
             "method": "GET", "path": "/copy/orders", "action": "data.copy",
             "resource_type": "table", "resource_id": "orders", "ancestors": chain()
